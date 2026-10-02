@@ -350,3 +350,163 @@ export interface DataCenterLocation {
   confidence: number;
   note: string;
 }
+
+// ----------------------------------------------------
+// DYNAMIC ENVIRONMENTAL INTELLIGENCE SYSTEM TYPES
+// ----------------------------------------------------
+
+export type JobStatus =
+  | 'QUEUED'
+  | 'COLLECTING_DATA'
+  | 'RESEARCHING'
+  | 'ANALYZING'
+  | 'SIMULATING'
+  | 'COMPLETED'
+  | 'FAILED';
+
+export type JobStepKey =
+  | 'coordinates'
+  | 'weather'
+  | 'gis'
+  | 'satellite'
+  | 'webResearch'
+  | 'heatModel'
+  | 'interventions'
+  | 'simulation';
+
+export type JobStepStatus = 'pending' | 'running' | 'completed' | 'failed';
+
+export interface JobStepProgress {
+  key: JobStepKey;
+  label: string;
+  status: JobStepStatus;
+  detail?: string;
+  timestamp?: string;
+}
+
+export interface EnvironmentalFeatureVector {
+  airTemperature: number;
+  humidity: number;
+  windSpeed: number;
+  solarRadiation: number;
+  surfaceTemperature: number;
+  vegetationIndex: number;
+  treeCoverage: number;
+  roadCoverage: number;
+  buildingCoverage: number;
+  waterCoverage: number;
+  trafficIntensity: number;
+  industrialDensity: number;
+  populationDensity: number;
+  albedoAverage: number;
+  coolingDeficit: number;
+}
+
+export type EvidenceSourceLevel =
+  | 'LEVEL_1_OFFICIAL_GOV'
+  | 'LEVEL_2_SCIENTIFIC_RESEARCH'
+  | 'LEVEL_3_STRUCTURED_DATASETS'
+  | 'LEVEL_4_COMMERCIAL_API'
+  | 'LEVEL_5_REPUTABLE_REPORTING'
+  | 'LEVEL_6_GENERAL_WEB';
+
+export interface EvidenceObject {
+  id: string;
+  claim: string;
+  factor: string;
+  sourceType: EvidenceSourceLevel;
+  source: string;
+  url?: string;
+  observation: string;
+  retrievedAt: string;
+  publishedAt?: string;
+  confidence: number; // 0.0 - 1.0
+  measurement?: {
+    value: number | string;
+    unit: string;
+  };
+  corroborated: boolean;
+}
+
+export interface ResearchGraphNode {
+  id: string;
+  label: string;
+  type: 'location' | 'climate' | 'vegetation' | 'built_environment' | 'roads' | 'traffic' | 'surface_temp' | 'industrial' | 'water';
+  evidenceCount: number;
+  primaryFinding: string;
+}
+
+export interface ResearchGraphEdge {
+  from: string;
+  to: string;
+  relation: string;
+  confidence: number;
+}
+
+export interface EvidenceKnowledgeGraph {
+  nodes: ResearchGraphNode[];
+  edges: ResearchGraphEdge[];
+  evidenceItems: EvidenceObject[];
+}
+
+export type DiscoveredCauseCategory =
+  | 'NATURAL'
+  | 'HUMAN'
+  | 'BUILT ENVIRONMENT'
+  | 'WEATHER'
+  | 'ENERGY'
+  | 'TRANSPORTATION'
+  | 'LAND COVER'
+  | 'URBAN FORM';
+
+export type CausalityStatus =
+  | 'OBSERVED'
+  | 'ASSOCIATED'
+  | 'LIKELY_CONTRIBUTOR'
+  | 'CONFIRMED_CAUSAL';
+
+export interface DiscoveredHeatCause {
+  id: string;
+  name: string;
+  category: DiscoveredCauseCategory;
+  causalityStatus: CausalityStatus;
+  confidence: number; // 0 - 100%
+  evidenceSummary: string;
+  supportingEvidenceIds: string[];
+  quantifiedContribution?: string;
+}
+
+export interface InterventionSimulationResult {
+  scenarioName: string;
+  selectedInterventions: string[];
+  currentSurfaceTemp: number;
+  modeledSurfaceTempRange: [number, number];
+  potentialSurfaceChange: [number, number];
+  currentAirTemp: number;
+  modeledAirTempRange: [number, number];
+  potentialAirChange: [number, number];
+  confidence: ConfidenceLevel;
+  modelName: string;
+  assumptions: string[];
+  interactionNotes: string;
+}
+
+export interface AnalysisJob {
+  jobId: string;
+  location: {
+    type: 'Point';
+    coordinates: [number, number]; // [lng, lat]
+  };
+  locationName: string;
+  radius: number; // meters
+  status: JobStatus;
+  startedAt: string;
+  completedAt?: string;
+  steps: Record<JobStepKey, JobStepStatus>;
+  stepList: JobStepProgress[];
+  featureVector?: EnvironmentalFeatureVector;
+  discoveredCauses?: DiscoveredHeatCause[];
+  evidenceGraph?: EvidenceKnowledgeGraph;
+  simulationOutcome?: InterventionSimulationResult;
+  error?: string;
+}

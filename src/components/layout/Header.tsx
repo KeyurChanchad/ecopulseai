@@ -14,15 +14,19 @@ import {
   AlertTriangle,
   MapPin,
   Key,
+  Building2,
+  TreePine,
+  Compass,
+  Loader2,
+  Navigation,
 } from 'lucide-react';
-import { CityHotspot } from '../../types';
-import { searchLocations } from '../../services/locationService';
+import { searchGlobalPlaces, GeocodingResult } from '../../services/geocodingService';
 
 interface HeaderProps {
   currentTab: 'map' | 'dashboard' | 'simulator' | 'timeline' | 'reports';
   onTabChange: (tab: 'map' | 'dashboard' | 'simulator' | 'timeline' | 'reports') => void;
   onSelectCity: (cityId: string) => void;
-  onSelectCoords: (lat: number, lng: number) => void;
+  onSelectCoords: (lat: number, lng: number, placeName?: string, fullAddress?: string) => void;
   onOpenMethodology: () => void;
   onOpenReports: () => void;
   onOpenApiSettings?: () => void;
@@ -40,18 +44,48 @@ export const Header: React.FC<HeaderProps> = ({
   selectedCityName,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<CityHotspot[]>([]);
+  const [searchResults, setSearchResults] = useState<GeocodingResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Debounced live geocoding across villages, towns, cities worldwide
   useEffect(() => {
-    if (searchQuery.trim().length > 0) {
-      setSearchResults(searchLocations(searchQuery));
-      setIsSearchOpen(true);
-    } else {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) {
       setSearchResults([]);
       setIsSearchOpen(false);
+      setIsSearching(false);
+      return;
     }
+
+    setIsSearching(true);
+    setIsSearchOpen(true);
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    const timer = setTimeout(async () => {
+      try {
+        const results = await searchGlobalPlaces(trimmed, controller.signal);
+        setSearchResults(results);
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          console.error('Search geocoding error:', err);
+        }
+      } finally {
+        setIsSearching(false);
+      }
+    }, 280);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [searchQuery]);
 
   // Click outside to close search
@@ -65,12 +99,8 @@ export const Header: React.FC<HeaderProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSelectSearchResult = (city: CityHotspot) => {
-    if (city.id.startsWith('custom-')) {
-      onSelectCoords(city.lat, city.lng);
-    } else {
-      onSelectCity(city.id);
-    }
+  const handleSelectSearchResult = (item: GeocodingResult) => {
+    onSelectCoords(item.lat, item.lng, item.name, item.displayName);
     setSearchQuery('');
     setIsSearchOpen(false);
   };
@@ -99,7 +129,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="h-16 bg-slate-900/95 backdrop-blur border-b border-slate-800 text-slate-100 flex items-center justify-between px-4 z-40 relative select-none">
+    <header className="h-16 bg-slate-900 border-b border-slate-800 text-slate-100 flex items-center justify-between px-4 z-50 relative select-none">
       {/* Brand & Platform Identity */}
       <div className="flex items-center space-x-3 shrink-0">
         <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 via-slate-800 to-orange-500/20 border border-emerald-500/30 shadow-lg shadow-emerald-500/10">
@@ -127,75 +157,123 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Global Search Bar (with Cities, Addresses, and Coordinate parsing) */}
       <div className="relative w-80 md:w-96" ref={searchContainerRef}>
-        <div className="flex items-center bg-slate-950/80 border border-slate-700/80 hover:border-slate-600 focus-within:border-emerald-500/80 rounded-lg px-3 py-1.5 transition-all shadow-inner">
-          <Search className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
+        <div className="flex items-center bg-slate-950 border border-slate-700 hover:border-slate-500 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 rounded-xl px-3 py-2 transition-all shadow-md">
+          {isSearching ? (
+            <Loader2 className="w-4 h-4 text-emerald-400 mr-2 shrink-0 animate-spin" />
+          ) : (
+            <Search className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
+          )}
           <input
             type="text"
-            className="bg-transparent text-sm w-full text-slate-100 placeholder-slate-500 focus:outline-none"
-            placeholder="Search city, address, or coords (e.g. 23.02, 72.57)..."
+            className="bg-transparent text-sm w-full text-slate-100 placeholder-slate-400 focus:outline-none font-medium"
+            placeholder="Search village, city, address, or coords..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => {
               if (searchQuery.trim().length > 0) setIsSearchOpen(true);
             }}
           />
+          {searchQuery && (
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setSearchResults([]);
+                setIsSearchOpen(false);
+              }}
+              className="text-slate-400 hover:text-white p-1 mr-1 text-sm font-bold"
+              title="Clear search"
+            >
+              ✕
+            </button>
+          )}
           <button
             onClick={handleUseCurrentLocation}
             title="Locate via GPS"
-            className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-emerald-400 transition"
+            className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-emerald-400 transition"
           >
             <Crosshair className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* Search Results Dropdown */}
+        {/* 100% Solid Opaque Search Results Dropdown (No Transparency / Bleed-Through) */}
         {isSearchOpen && (
-          <div className="absolute left-0 right-0 top-full mt-1.5 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden z-50 max-h-80 overflow-y-auto">
-            <div className="p-2 border-b border-slate-800 text-[11px] uppercase tracking-wider font-mono text-slate-400 flex items-center justify-between">
-              <span>Matching Hotspots & Locations</span>
-              <span className="text-[10px] text-slate-500">{searchResults.length} results</span>
+          <div className="absolute left-0 top-full mt-2 w-[340px] sm:w-[480px] md:w-[540px] bg-slate-950 border-2 border-slate-700 rounded-2xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] overflow-hidden z-[9999] max-h-[480px] overflow-y-auto ring-1 ring-white/10 select-text">
+            {/* Header bar */}
+            <div className="px-4 py-2.5 border-b border-slate-800 text-xs font-mono font-bold text-slate-200 flex items-center justify-between bg-slate-900">
+              <span className="flex items-center space-x-2 text-emerald-400 uppercase tracking-wider text-[11px]">
+                <Globe2 className="w-4 h-4" />
+                <span>Global Locations & Hotspots</span>
+              </span>
+              <span className="text-[11px] text-slate-400 font-semibold">
+                {isSearching ? 'Searching worldwide...' : `${searchResults.length} places found`}
+              </span>
             </div>
-            {searchResults.length === 0 ? (
-              <div className="p-4 text-center text-xs text-slate-400">
-                No location match found. Try entering coordinate pairs e.g. <span className="text-emerald-400 font-mono">23.0225, 72.5714</span>.
+
+            {searchResults.length === 0 && !isSearching ? (
+              <div className="p-6 text-center text-xs text-slate-300 bg-slate-950">
+                No location match found for &quot;<strong className="text-white">{searchQuery}</strong>&quot;.<br />
+                Try typing a city, village, landmark, or coordinates (e.g.{' '}
+                <span className="text-emerald-400 font-mono font-bold">23.0225, 72.5714</span>).
               </div>
             ) : (
-              searchResults.map((city) => (
-                <button
-                  key={city.id}
-                  onClick={() => handleSelectSearchResult(city)}
-                  className="w-full text-left px-3.5 py-2.5 hover:bg-slate-800/80 transition flex items-center justify-between border-b border-slate-800/50 last:border-b-0"
-                >
-                  <div className="flex items-center space-x-2.5">
-                    <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <div>
-                      <div className="text-sm font-medium text-slate-200">{city.name}</div>
-                      <div className="text-[11px] text-slate-400">
-                        {city.state ? `${city.state}, ` : ''}{city.country} • {city.climateZone}
+              <div className="divide-y divide-slate-800/80 bg-slate-950">
+                {searchResults.map((item) => {
+                  const isVillage = item.type === 'Village';
+                  const isStreet = item.type === 'Street';
+                  const isCoord = item.type === 'Coordinate';
+
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleSelectSearchResult(item)}
+                      className="w-full text-left px-4 py-3 bg-slate-900 hover:bg-slate-800/90 transition-colors flex items-center justify-between group"
+                    >
+                      <div className="flex items-start space-x-3 overflow-hidden mr-3">
+                        <div className="p-2 rounded-xl bg-slate-800 text-emerald-400 group-hover:bg-emerald-500/20 group-hover:text-emerald-300 transition-colors shrink-0 mt-0.5 border border-slate-700">
+                          {isVillage ? (
+                            <TreePine className="w-4 h-4 text-emerald-400" />
+                          ) : isStreet ? (
+                            <Navigation className="w-4 h-4 text-orange-400" />
+                          ) : isCoord ? (
+                            <Compass className="w-4 h-4 text-cyan-400" />
+                          ) : (
+                            <Building2 className="w-4 h-4 text-blue-400" />
+                          )}
+                        </div>
+                        <div className="overflow-hidden space-y-1">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors truncate">
+                              {item.name}
+                            </span>
+                            <span
+                              className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border shrink-0 ${
+                                isVillage
+                                  ? 'bg-emerald-950 text-emerald-300 border-emerald-700'
+                                  : isStreet
+                                  ? 'bg-orange-950 text-orange-300 border-orange-700'
+                                  : isCoord
+                                  ? 'bg-cyan-950 text-cyan-300 border-cyan-700'
+                                  : 'bg-blue-950 text-blue-300 border-blue-700'
+                              }`}
+                            >
+                              {item.type}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-300 leading-snug line-clamp-2">
+                            {item.displayName}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center space-x-1.5 justify-end">
-                      <span className="text-xs font-mono font-bold text-orange-400">{city.airTemp}°C</span>
-                      <span
-                        className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-semibold ${
-                          city.category === 'Extreme'
-                            ? 'bg-purple-900/40 text-purple-300'
-                            : city.category === 'Very High'
-                            ? 'bg-rose-900/40 text-rose-300'
-                            : city.category === 'High'
-                            ? 'bg-orange-900/40 text-orange-300'
-                            : 'bg-amber-900/40 text-amber-300'
-                        }`}
-                      >
-                        {city.category}
-                      </span>
-                    </div>
-                    <div className="text-[10px] text-slate-500 font-mono">Score: {city.heatScore}/100</div>
-                  </div>
-                </button>
-              ))
+
+                      <div className="shrink-0 text-right pl-2">
+                        <span className="text-[11px] font-mono font-semibold text-emerald-400 block bg-slate-950 px-2 py-1 rounded-md border border-slate-800">
+                          {item.lat.toFixed(4)}°, {item.lng.toFixed(4)}°
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </div>
         )}

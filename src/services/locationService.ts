@@ -19,6 +19,7 @@ import {
   EnvironmentalDomainAnalysis,
   ScenarioZone,
   AnalysisRadius,
+  EvidenceObject,
 } from '../types';
 
 export interface FullLocationProfile {
@@ -31,10 +32,11 @@ export interface FullLocationProfile {
   projections: FutureProjections;
   domains: EnvironmentalDomainAnalysis;
   scenarioZones: ScenarioZone[];
+  evidenceItems?: EvidenceObject[];
 }
 
 // Famous landmarks and neighborhoods dictionary for instant offline resolution
-const LANDMARK_DICTIONARY: Record<string, { lat: number; lng: number; name: string; city: string; country: string }> = {
+export const LANDMARK_DICTIONARY: Record<string, { lat: number; lng: number; name: string; city: string; country: string }> = {
   'times square': { lat: 40.7580, lng: -73.9855, name: 'Times Square, Manhattan', city: 'New York City', country: 'United States' },
   'times square, new york': { lat: 40.7580, lng: -73.9855, name: 'Times Square, Manhattan', city: 'New York City', country: 'United States' },
   'sg highway': { lat: 23.0305, lng: 72.5085, name: 'SG Highway, Bodakdev', city: 'Ahmedabad', country: 'India' },

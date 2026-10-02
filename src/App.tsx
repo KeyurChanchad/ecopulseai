@@ -10,6 +10,8 @@ import { MethodologyModal } from './components/modals/MethodologyModal';
 import { ApiSettingsModal } from './components/modals/ApiSettingsModal';
 import { SelectedLocationPanel } from './components/location/SelectedLocationPanel';
 import { WhyHotExplorationModal } from './components/dashboard/WhyHotExplorationModal';
+import { AnalysisProgressModal } from './components/jobs/AnalysisProgressModal';
+import { EvidenceGraphModal } from './components/evidence/EvidenceGraphModal';
 import {
   GLOBAL_CITIES,
   INITIAL_MAP_LAYERS,
@@ -21,7 +23,16 @@ import {
   reverseGeocode,
   FullLocationProfile,
 } from './services/locationService';
-import { MapLayerConfig, CityHotspot, Recommendation, ScenarioSimulationParams, AnalysisRadius } from './types';
+import { runLocationAnalysisOrchestrator } from './services/agents/orchestrator';
+import {
+  MapLayerConfig,
+  CityHotspot,
+  Recommendation,
+  ScenarioSimulationParams,
+  AnalysisRadius,
+  AnalysisJob,
+  EvidenceKnowledgeGraph,
+} from './types';
 import {
   Layers,
   Flame,
@@ -35,6 +46,8 @@ import {
   Sparkles,
   Compass,
   Brain,
+  Network,
+  Cpu,
 } from 'lucide-react';
 import { getHeatCategoryColor } from './services/heatModel';
 
@@ -52,6 +65,12 @@ export const App: React.FC = () => {
     lng: AHMEDABAD_PROFILE.location.longitude,
   });
 
+  // Dynamic Analysis Job State (Section 34 & 35)
+  const [currentJob, setCurrentJob] = useState<AnalysisJob | null>(null);
+  const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
+  const [isEvidenceGraphOpen, setIsEvidenceGraphOpen] = useState(false);
+  const [evidenceGraph, setEvidenceGraph] = useState<EvidenceKnowledgeGraph | null>(null);
+
   // GIS Map Layers
   const [layers, setLayers] = useState<MapLayerConfig[]>(INITIAL_MAP_LAYERS);
   const [isLayerPanelOpen, setIsLayerPanelOpen] = useState(false);
@@ -66,67 +85,131 @@ export const App: React.FC = () => {
   // Simulator Initial Preload
   const [simulatorParams, setSimulatorParams] = useState<Partial<ScenarioSimulationParams>>({});
 
-  // Handlers
-  const handleSelectCity = (cityId: string, radius = selectedRadius) => {
-    setIsAnalyzing(true);
-    setIsTargetPanelOpen(true);
-    const newProfile = getLocationProfile(cityId, radius);
-    setProfile(newProfile);
-    setSelectedCoordinates({
-      lat: newProfile.location.latitude,
-      lng: newProfile.location.longitude,
-    });
-    setTimeout(() => setIsAnalyzing(false), 250);
-  };
-
-  const handleSelectCoords = async (lat: number, lng: number, radius = selectedRadius) => {
-    setSelectedCoordinates({ lat, lng });
-    setIsTargetPanelOpen(true);
+  // Dynamic Orchestration Trigger (Sections 2, 34, 35, 42)
+  const triggerDynamicInvestigation = async (
+    lat: number,
+    lng: number,
+    locName: string,
+    cityName: string,
+    countryName: string,
+    radius: AnalysisRadius = selectedRadius
+  ) => {
+    setIsProgressModalOpen(true);
     setIsAnalyzing(true);
 
-    // Initial instant computation so UI immediately responds
-    let newProfile = getProfileForCoordinates(lat, lng, radius);
-    setProfile(newProfile);
-
-    // Reverse geocode via OpenStreetMap Nominatim for accurate physical street/city address
     try {
-      const geo = await reverseGeocode(lat, lng);
-      if (geo.address && geo.address !== 'Selected Geographic Point') {
-        newProfile = {
-          ...newProfile,
-          location: {
-            ...newProfile.location,
-            name: geo.city !== 'Selected Region' ? geo.city : newProfile.location.name,
-            address: geo.address,
-            city: geo.city,
-            country: geo.country,
-          },
-        };
-        setProfile(newProfile);
+      const outcome = await runLocationAnalysisOrchestrator({
+        latitude: lat,
+        longitude: lng,
+        locationName: locName,
+        city: cityName,
+        country: countryName,
+        radius,
+        onProgress: (job) => {
+          setCurrentJob({ ...job });
+        },
+      });
+
+      setCurrentJob(outcome.job);
+      setProfile(outcome.profile);
+      if (outcome.job.evidenceGraph) {
+        setEvidenceGraph(outcome.job.evidenceGraph);
       }
-    } catch {
-      // Graceful fallback already handled by getProfileForCoordinates
+    } catch (err) {
+      console.error('Dynamic analysis investigation error:', err);
     } finally {
       setIsAnalyzing(false);
     }
   };
 
+  // Handlers
+  const handleSelectCity = (cityId: string, radius = selectedRadius) => {
+    setIsTargetPanelOpen(true);
+    const city = GLOBAL_CITIES.find((c) => c.id === cityId);
+    if (city) {
+      setSelectedCoordinates({ lat: city.lat, lng: city.lng });
+      triggerDynamicInvestigation(city.lat, city.lng, city.name, city.name, city.country, radius);
+    } else {
+      const newProfile = getLocationProfile(cityId, radius);
+      setProfile(newProfile);
+      setSelectedCoordinates({
+        lat: newProfile.location.latitude,
+        lng: newProfile.location.longitude,
+      });
+      triggerDynamicInvestigation(
+        newProfile.location.latitude,
+        newProfile.location.longitude,
+        newProfile.location.name,
+        newProfile.location.city,
+        newProfile.location.country,
+        radius
+      );
+    }
+  };
+
+  const handleSelectCoords = async (
+    lat: number,
+    lng: number,
+    placeName?: string,
+    fullAddress?: string,
+    radius = selectedRadius
+  ) => {
+    setSelectedCoordinates({ lat, lng });
+    setIsTargetPanelOpen(true);
+
+    // Initial instant computation so UI immediately responds
+    let newProfile = getProfileForCoordinates(lat, lng, radius, fullAddress);
+    if (placeName) {
+      newProfile.location.name = placeName;
+    }
+    if (fullAddress) {
+      newProfile.location.address = fullAddress;
+    }
+    setProfile(newProfile);
+
+    let resolvedCity = placeName || newProfile.location.city;
+    let resolvedCountry = newProfile.location.country;
+    let resolvedName = placeName || newProfile.location.name;
+
+    // Reverse geocode via OpenStreetMap Nominatim if address wasn't passed directly
+    if (!fullAddress) {
+      try {
+        const geo = await reverseGeocode(lat, lng);
+        if (geo.address && geo.address !== 'Selected Geographic Point') {
+          resolvedCity = geo.city !== 'Selected Region' ? geo.city : resolvedCity;
+          resolvedCountry = geo.country || resolvedCountry;
+          resolvedName = geo.city !== 'Selected Region' ? geo.city : resolvedName;
+          newProfile = {
+            ...newProfile,
+            location: {
+              ...newProfile.location,
+              name: resolvedName,
+              address: geo.address,
+              city: resolvedCity,
+              country: resolvedCountry,
+            },
+          };
+          setProfile(newProfile);
+        }
+      } catch {
+        // Graceful fallback
+      }
+    }
+
+    // Launch multi-agent investigation workflow
+    triggerDynamicInvestigation(lat, lng, resolvedName, resolvedCity, resolvedCountry, radius);
+  };
+
   const handleRadiusChange = (radius: AnalysisRadius) => {
     setSelectedRadius(radius);
-    setIsAnalyzing(true);
-    if (profile.location.id && !profile.location.id.startsWith('custom-')) {
-      const newProfile = getLocationProfile(profile.location.id, radius);
-      setProfile(newProfile);
-    } else {
-      const newProfile = getProfileForCoordinates(
-        profile.location.latitude,
-        profile.location.longitude,
-        radius,
-        profile.location.address
-      );
-      setProfile(newProfile);
-    }
-    setTimeout(() => setIsAnalyzing(false), 300);
+    triggerDynamicInvestigation(
+      selectedCoordinates.lat,
+      selectedCoordinates.lng,
+      profile.location.name,
+      profile.location.city,
+      profile.location.country,
+      radius
+    );
   };
 
   const handleToggleLayer = (layerId: string) => {
@@ -201,7 +284,16 @@ export const App: React.FC = () => {
                     longitude={profile.location.longitude}
                     selectedRadius={selectedRadius}
                     onChangeRadius={handleRadiusChange}
-                    onAnalyze={() => handleRadiusChange(selectedRadius)}
+                    onAnalyze={() =>
+                      triggerDynamicInvestigation(
+                        profile.location.latitude,
+                        profile.location.longitude,
+                        profile.location.name,
+                        profile.location.city,
+                        profile.location.country,
+                        selectedRadius
+                      )
+                    }
                     onClose={() => setIsTargetPanelOpen(false)}
                     isAnalyzing={isAnalyzing}
                   />
@@ -244,18 +336,35 @@ export const App: React.FC = () => {
                 </div>
                 <div className="flex items-center space-x-1.5 pt-1">
                   <button
+                    onClick={() =>
+                      triggerDynamicInvestigation(
+                        profile.location.latitude,
+                        profile.location.longitude,
+                        profile.location.name,
+                        profile.location.city,
+                        profile.location.country,
+                        selectedRadius
+                      )
+                    }
+                    className="flex-1 py-1.5 px-2 text-center font-bold text-[11px] rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 text-emerald-300 transition flex items-center justify-center space-x-1"
+                    title="Launch Dynamic Investigation Job"
+                  >
+                    <Cpu className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Investigate</span>
+                  </button>
+                  <button
                     onClick={() => setIsWhyHotModalOpen(true)}
-                    className="flex-1 py-1.5 px-2 text-center font-bold text-xs rounded-lg bg-orange-600/30 hover:bg-orange-600/50 border border-orange-500/40 text-orange-300 transition flex items-center justify-center space-x-1"
+                    className="flex-1 py-1.5 px-2 text-center font-bold text-[11px] rounded-lg bg-orange-600/30 hover:bg-orange-600/50 border border-orange-500/40 text-orange-300 transition flex items-center justify-center space-x-1"
                   >
                     <Brain className="w-3.5 h-3.5 text-orange-400" />
                     <span>Why Hot?</span>
                   </button>
                   <button
                     onClick={() => setCurrentTab('dashboard')}
-                    className="flex-1 py-1.5 px-2 text-center font-semibold text-xs rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 text-emerald-300 transition flex items-center justify-center space-x-1"
+                    className="flex-1 py-1.5 px-2 text-center font-semibold text-[11px] rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition flex items-center justify-center space-x-1"
                   >
                     <span>Dashboard</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
+                    <ChevronRight className="w-3 h-3" />
                   </button>
                 </div>
               </div>
@@ -308,6 +417,8 @@ export const App: React.FC = () => {
               onOpenSimulatorWithAction={handleOpenSimulatorWithAction}
               onOpenReport={() => setIsReportOpen(true)}
               onOpenWhyHotModal={() => setIsWhyHotModalOpen(true)}
+              onOpenEvidenceGraph={() => setIsEvidenceGraphOpen(true)}
+              activeJobId={currentJob?.jobId}
               onChangeRadius={handleRadiusChange}
             />
           </div>
@@ -381,6 +492,25 @@ export const App: React.FC = () => {
         heatScore={profile.heatScore}
         diagnosis={profile.diagnosis}
         contributors={profile.contributors}
+      />
+
+      {/* Phase 3: Dynamic Analysis Progress Modal (Section 34 & 35) */}
+      <AnalysisProgressModal
+        job={currentJob}
+        isOpen={isProgressModalOpen}
+        onClose={() => setIsProgressModalOpen(false)}
+        onViewResults={() => {
+          setIsProgressModalOpen(false);
+          setCurrentTab('dashboard');
+        }}
+      />
+
+      {/* Phase 3: Evidence Knowledge Graph Modal (Section 14 & 15) */}
+      <EvidenceGraphModal
+        isOpen={isEvidenceGraphOpen}
+        onClose={() => setIsEvidenceGraphOpen(false)}
+        graph={evidenceGraph}
+        locationName={profile.location.name}
       />
     </div>
   );

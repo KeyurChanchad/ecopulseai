@@ -20,6 +20,7 @@ import {
   ExternalLink,
   Compass,
   Brain,
+  Network,
 } from 'lucide-react';
 import { getHeatCategoryColor } from '../../services/heatModel';
 
@@ -28,6 +29,8 @@ interface LocationDashboardProps {
   onOpenSimulatorWithAction: (rec: Recommendation) => void;
   onOpenReport: () => void;
   onOpenWhyHotModal?: () => void;
+  onOpenEvidenceGraph?: () => void;
+  activeJobId?: string;
   onChangeRadius?: (radius: AnalysisRadius) => void;
 }
 
@@ -36,6 +39,8 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
   onOpenSimulatorWithAction,
   onOpenReport,
   onOpenWhyHotModal,
+  onOpenEvidenceGraph,
+  activeJobId,
   onChangeRadius,
 }) => {
   const { location, weather, heatScore, contributors, recommendations, diagnosis, projections, domains } = profile;
@@ -56,6 +61,14 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
               </span>
               <span className="text-slate-600">•</span>
               <span className="text-slate-400">Zone: {location.climateZone}</span>
+              {activeJobId && (
+                <>
+                  <span className="text-slate-600">•</span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-800 border border-slate-700 text-emerald-400">
+                    Job: {activeJobId}
+                  </span>
+                </>
+              )}
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 tracking-tight">
@@ -101,6 +114,17 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
               >
                 <Brain className="w-4 h-4" />
                 <span>Why is this place hot?</span>
+              </button>
+            )}
+
+            {/* Section 14: Evidence Knowledge Graph Button */}
+            {onOpenEvidenceGraph && (
+              <button
+                onClick={onOpenEvidenceGraph}
+                className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 hover:text-white flex items-center space-x-1.5 transition shadow"
+              >
+                <Network className="w-3.5 h-3.5 text-orange-400" />
+                <span>Evidence Graph</span>
               </button>
             )}
 

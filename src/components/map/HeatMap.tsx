@@ -12,6 +12,9 @@ import {
   Info,
   Server,
   Key,
+  Satellite,
+  Mountain,
+  Moon,
 } from 'lucide-react';
 import { CityHotspot, MapLayerConfig, DataCenterLocation, ScenarioZone, AnalysisRadius } from '../../types';
 import { getHeatCategoryColor } from '../../services/heatModel';
@@ -51,13 +54,14 @@ export const HeatMap: React.FC<HeatMapProps> = ({
   const heatZonesLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const selectedPinMarkerRef = useRef<L.Marker | null>(null);
 
-  const [basemap, setBasemap] = useState<'dark' | 'satellite' | 'street'>('dark');
+  const [basemap, setBasemap] = useState<'satellite' | 'street' | 'terrain' | 'dark'>('satellite');
   const [showLayerDropdown, setShowLayerDropdown] = useState(false);
 
   // Free, high-performance basemap tile providers (NO API KEY REQUIRED by default)
-  // 1. Dark: Esri World Dark Gray Canvas (public & keyless)
-  // 2. Satellite: Esri World Imagery (public & keyless)
-  // 3. Street/Terrain: OpenStreetMap official (free, open source)
+  // 1. Satellite: Esri World Imagery (public & keyless) + Reference labels
+  // 2. Street: OpenStreetMap official (free, open source worldwide)
+  // 3. Terrain: Esri World Topo Map (elevation & contours)
+  // 4. Dark: Esri World Dark Gray Canvas
   const cartoKey = typeof window !== 'undefined' 
     ? (localStorage.getItem('ecopulse_carto_key') || (import.meta.env.VITE_CARTO_API_KEY as string) || '') 
     : '';
@@ -66,24 +70,26 @@ export const HeatMap: React.FC<HeatMapProps> = ({
     : '';
 
   const basemapUrls = {
-    dark: cartoKey 
-      ? `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?api_key=${cartoKey}`
-      : 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
     satellite: googleKey
       ? `https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}&key=${googleKey}`
       : 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     street: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    terrain: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+    dark: cartoKey 
+      ? `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?api_key=${cartoKey}`
+      : 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
   };
 
   // Initialize Map
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
+    // Up to zoom 20 for full village and street level zoomability
     const map = L.map(mapContainerRef.current, {
       center: [selectedCoordinates.lat, selectedCoordinates.lng],
-      zoom: 4,
+      zoom: 12,
       minZoom: 2,
-      maxZoom: 18,
+      maxZoom: 20,
       zoomControl: false,
       attributionControl: true,
     });
@@ -91,20 +97,26 @@ export const HeatMap: React.FC<HeatMapProps> = ({
     // Add zoom control to top-right
     L.control.zoom({ position: 'topright' }).addTo(map);
 
-    // Initial tile layer
+    // Initial tile layer with maxZoom 20
     const tileLayer = L.tileLayer(basemapUrls[basemap], {
       attribution: '&copy; OpenStreetMap contributors &copy; Esri &copy; CARTO',
       subdomains: 'abcd',
-      maxZoom: 19,
+      maxZoom: 20,
+      maxNativeZoom: 19,
     }).addTo(map);
 
     tileLayerRef.current = tileLayer;
 
-    // If dark basemap without CARTO key, add Esri reference labels
-    if (basemap === 'dark' && !cartoKey) {
+    // Satellite hybrid labels (places, village names, roads)
+    if (basemap === 'satellite' && !googleKey) {
+      referenceLayerRef.current = L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+        { maxZoom: 20, maxNativeZoom: 19 }
+      ).addTo(map);
+    } else if (basemap === 'dark' && !cartoKey) {
       referenceLayerRef.current = L.tileLayer(
         'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
-        { maxZoom: 19 }
+        { maxZoom: 20, maxNativeZoom: 16 }
       ).addTo(map);
     }
 
@@ -145,22 +157,31 @@ export const HeatMap: React.FC<HeatMapProps> = ({
     const newTile = L.tileLayer(basemapUrls[basemap], {
       attribution: '&copy; OpenStreetMap &copy; Esri &copy; CARTO',
       subdomains: 'abcd',
-      maxZoom: 19,
+      maxZoom: 20,
+      maxNativeZoom: 19,
     }).addTo(mapInstanceRef.current);
     tileLayerRef.current = newTile;
 
-    if (basemap === 'dark' && !cartoKey) {
+    if (basemap === 'satellite' && !googleKey) {
+      referenceLayerRef.current = L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+        { maxZoom: 20, maxNativeZoom: 19 }
+      ).addTo(mapInstanceRef.current);
+    } else if (basemap === 'dark' && !cartoKey) {
       referenceLayerRef.current = L.tileLayer(
         'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
-        { maxZoom: 19 }
+        { maxZoom: 20, maxNativeZoom: 16 }
       ).addTo(mapInstanceRef.current);
     }
   }, [basemap]);
 
-  // Center on selected location when changed
+  // Center on selected location when changed (smooth flyTo down to village level)
   useEffect(() => {
     if (!mapInstanceRef.current) return;
-    mapInstanceRef.current.flyTo([selectedCoordinates.lat, selectedCoordinates.lng], 9, {
+    const currentZoom = mapInstanceRef.current.getZoom();
+    const targetZoom = Math.max(currentZoom, 13);
+
+    mapInstanceRef.current.flyTo([selectedCoordinates.lat, selectedCoordinates.lng], targetZoom, {
       duration: 1.5,
       easeLinearity: 0.25,
     });
@@ -467,94 +488,75 @@ export const HeatMap: React.FC<HeatMapProps> = ({
       {/* Leaflet DOM container */}
       <div ref={mapContainerRef} className="w-full h-full z-0" />
 
-      {/* Floating Basemap Switcher & GIS Controls */}
-      <div className="absolute top-4 left-4 z-20 flex flex-col space-y-2">
-        <div className="bg-slate-900/90 backdrop-blur border border-slate-700/80 p-1 rounded-xl shadow-2xl flex items-center space-x-1">
-          <button
-            onClick={() => setBasemap('dark')}
-            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
-              basemap === 'dark'
-                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Dark GIS
-          </button>
+      {/* Google Maps Style Basemap Mode Switcher (Bottom-Left) */}
+      <div className="absolute bottom-4 left-4 z-20 flex flex-col space-y-2">
+        <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700/80 p-1.5 rounded-2xl shadow-2xl flex items-center space-x-1.5">
           <button
             onClick={() => setBasemap('satellite')}
-            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
+            title="High-resolution aerial satellite imagery with street & village labels"
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
               basemap === 'satellite'
-                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                : 'text-slate-300 hover:bg-slate-800'
             }`}
           >
-            Satellite
+            <Satellite className="w-3.5 h-3.5" />
+            <span>Satellite</span>
           </button>
+
           <button
             onClick={() => setBasemap('street')}
-            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
+            title="Default road, street, and village map with full OpenStreetMap detail"
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
               basemap === 'street'
-                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                : 'text-slate-300 hover:bg-slate-800'
             }`}
           >
-            Light Terrain
+            <MapIcon className="w-3.5 h-3.5" />
+            <span>Default</span>
+          </button>
+
+          <button
+            onClick={() => setBasemap('terrain')}
+            title="Topographic contours, elevation relief, and natural features"
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+              basemap === 'terrain'
+                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                : 'text-slate-300 hover:bg-slate-800'
+            }`}
+          >
+            <Mountain className="w-3.5 h-3.5" />
+            <span>Terrain</span>
+          </button>
+
+          <button
+            onClick={() => setBasemap('dark')}
+            title="Dark GIS environmental analysis canvas"
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+              basemap === 'dark'
+                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                : 'text-slate-300 hover:bg-slate-800'
+            }`}
+          >
+            <Moon className="w-3.5 h-3.5" />
+            <span>Dark</span>
           </button>
 
           {onOpenApiSettings && (
             <button
               onClick={onOpenApiSettings}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-slate-800 transition ml-1"
-              title="API Keys & Tile Providers (No key needed by default)"
+              className="p-1.5 rounded-xl text-slate-400 hover:text-emerald-400 hover:bg-slate-800 transition ml-1"
+              title="Configure Google Maps or CARTO custom tile keys"
             >
               <Key className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
-
-        {/* Quick Layer Switcher Button */}
-        <div className="relative">
-          <button
-            onClick={() => setShowLayerDropdown(!showLayerDropdown)}
-            className="bg-slate-900/90 backdrop-blur border border-slate-700 px-3 py-1.5 rounded-xl shadow-xl flex items-center space-x-2 text-xs font-semibold text-slate-200 hover:bg-slate-800 transition"
-          >
-            <Layers className="w-3.5 h-3.5 text-emerald-400" />
-            <span>GIS Map Layers ({activeLayers.filter((l) => l.active).length})</span>
-          </button>
-
-          {showLayerDropdown && (
-            <div className="absolute top-full left-0 mt-2 w-72 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2 z-30 max-h-96 overflow-y-auto">
-              <div className="text-[11px] font-mono uppercase text-slate-400 pb-1 mb-1 border-b border-slate-800 flex justify-between items-center">
-                <span>Toggle Environmental Overlays</span>
-                <span className="text-[10px] text-slate-500">14 Layers</span>
-              </div>
-              <div className="space-y-1">
-                {activeLayers.map((layer) => (
-                  <button
-                    key={layer.id}
-                    onClick={() => onToggleLayer(layer.id)}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition ${
-                      layer.active
-                        ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
-                        : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-200'
-                    }`}
-                  >
-                    <span className="truncate">{layer.label}</span>
-                    {layer.active ? (
-                      <Eye className="w-3.5 h-3.5 text-emerald-400 shrink-0 ml-2" />
-                    ) : (
-                      <EyeOff className="w-3.5 h-3.5 text-slate-500 shrink-0 ml-2" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
       </div>
 
-      {/* Interactive Map Legend (Bottom Left) */}
-      <div className="absolute bottom-4 left-4 z-20 bg-slate-900/90 backdrop-blur border border-slate-800 p-3 rounded-xl shadow-2xl max-w-xs text-xs">
+      {/* Interactive Map Legend (Bottom Right) */}
+      <div className="absolute bottom-4 right-4 z-20 bg-slate-900/90 backdrop-blur border border-slate-800 p-3 rounded-xl shadow-2xl max-w-xs text-xs hidden sm:block">
         <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-800">
           <span className="font-semibold text-slate-200 flex items-center space-x-1.5">
             <Flame className="w-3.5 h-3.5 text-orange-400" />
@@ -576,7 +578,7 @@ export const HeatMap: React.FC<HeatMapProps> = ({
 
         <div className="mt-2 text-[10px] text-slate-400 pt-1.5 border-t border-slate-800/80 flex items-center space-x-1">
           <Info className="w-3 h-3 text-slate-500 shrink-0" />
-          <span>Click any location on Earth or city bubble to interrogate microclimate.</span>
+          <span>Zoom up to level 20 to inspect any village, street, or house.</span>
         </div>
       </div>
 
