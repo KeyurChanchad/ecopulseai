@@ -8,6 +8,8 @@ import { LayerControlPanel } from './components/layers/LayerControlPanel';
 import { ReportModal } from './components/reports/ReportModal';
 import { MethodologyModal } from './components/modals/MethodologyModal';
 import { ApiSettingsModal } from './components/modals/ApiSettingsModal';
+import { SelectedLocationPanel } from './components/location/SelectedLocationPanel';
+import { WhyHotExplorationModal } from './components/dashboard/WhyHotExplorationModal';
 import {
   GLOBAL_CITIES,
   INITIAL_MAP_LAYERS,
@@ -16,9 +18,10 @@ import {
 import {
   getLocationProfile,
   getProfileForCoordinates,
+  reverseGeocode,
   FullLocationProfile,
 } from './services/locationService';
-import { MapLayerConfig, CityHotspot, Recommendation, ScenarioSimulationParams } from './types';
+import { MapLayerConfig, CityHotspot, Recommendation, ScenarioSimulationParams, AnalysisRadius } from './types';
 import {
   Layers,
   Flame,
@@ -30,6 +33,8 @@ import {
   TrendingUp,
   MapPin,
   Sparkles,
+  Compass,
+  Brain,
 } from 'lucide-react';
 import { getHeatCategoryColor } from './services/heatModel';
 
@@ -37,8 +42,11 @@ export const App: React.FC = () => {
   // Navigation & View State
   const [currentTab, setCurrentTab] = useState<'map' | 'dashboard' | 'simulator' | 'timeline' | 'reports'>('map');
 
-  // Active Selected Location Profile
+  // Active Selected Location Profile & Analysis Radius
   const [profile, setProfile] = useState<FullLocationProfile>(AHMEDABAD_PROFILE);
+  const [selectedRadius, setSelectedRadius] = useState<AnalysisRadius>('5km');
+  const [isTargetPanelOpen, setIsTargetPanelOpen] = useState(true);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedCoordinates, setSelectedCoordinates] = useState<{ lat: number; lng: number }>({
     lat: AHMEDABAD_PROFILE.location.latitude,
     lng: AHMEDABAD_PROFILE.location.longitude,
@@ -52,25 +60,73 @@ export const App: React.FC = () => {
   const [isMethodologyOpen, setIsMethodologyOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isApiSettingsOpen, setIsApiSettingsOpen] = useState(false);
+  const [isWhyHotModalOpen, setIsWhyHotModalOpen] = useState(false);
   const [keyRefreshCounter, setKeyRefreshCounter] = useState(0);
 
   // Simulator Initial Preload
   const [simulatorParams, setSimulatorParams] = useState<Partial<ScenarioSimulationParams>>({});
 
   // Handlers
-  const handleSelectCity = (cityId: string) => {
-    const newProfile = getLocationProfile(cityId);
+  const handleSelectCity = (cityId: string, radius = selectedRadius) => {
+    setIsAnalyzing(true);
+    setIsTargetPanelOpen(true);
+    const newProfile = getLocationProfile(cityId, radius);
     setProfile(newProfile);
     setSelectedCoordinates({
       lat: newProfile.location.latitude,
       lng: newProfile.location.longitude,
     });
+    setTimeout(() => setIsAnalyzing(false), 250);
   };
 
-  const handleSelectCoords = (lat: number, lng: number) => {
-    const newProfile = getProfileForCoordinates(lat, lng);
-    setProfile(newProfile);
+  const handleSelectCoords = async (lat: number, lng: number, radius = selectedRadius) => {
     setSelectedCoordinates({ lat, lng });
+    setIsTargetPanelOpen(true);
+    setIsAnalyzing(true);
+
+    // Initial instant computation so UI immediately responds
+    let newProfile = getProfileForCoordinates(lat, lng, radius);
+    setProfile(newProfile);
+
+    // Reverse geocode via OpenStreetMap Nominatim for accurate physical street/city address
+    try {
+      const geo = await reverseGeocode(lat, lng);
+      if (geo.address && geo.address !== 'Selected Geographic Point') {
+        newProfile = {
+          ...newProfile,
+          location: {
+            ...newProfile.location,
+            name: geo.city !== 'Selected Region' ? geo.city : newProfile.location.name,
+            address: geo.address,
+            city: geo.city,
+            country: geo.country,
+          },
+        };
+        setProfile(newProfile);
+      }
+    } catch {
+      // Graceful fallback already handled by getProfileForCoordinates
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleRadiusChange = (radius: AnalysisRadius) => {
+    setSelectedRadius(radius);
+    setIsAnalyzing(true);
+    if (profile.location.id && !profile.location.id.startsWith('custom-')) {
+      const newProfile = getLocationProfile(profile.location.id, radius);
+      setProfile(newProfile);
+    } else {
+      const newProfile = getProfileForCoordinates(
+        profile.location.latitude,
+        profile.location.longitude,
+        radius,
+        profile.location.address
+      );
+      setProfile(newProfile);
+    }
+    setTimeout(() => setIsAnalyzing(false), 300);
   };
 
   const handleToggleLayer = (layerId: string) => {
@@ -124,11 +180,41 @@ export const App: React.FC = () => {
                 selectedCityId={profile.location.id}
                 selectedCoordinates={selectedCoordinates}
                 activeLayers={layers}
+                scenarioZones={profile.scenarioZones}
+                analysisRadius={selectedRadius}
                 onSelectCity={handleSelectCity}
                 onMapClick={handleSelectCoords}
                 onToggleLayer={handleToggleLayer}
                 onOpenApiSettings={() => setIsApiSettingsOpen(true)}
               />
+
+              {/* Floating Selected Location Intelligence Panel (Top Left) */}
+              {isTargetPanelOpen ? (
+                <div className="absolute top-4 left-4 z-20 max-w-sm w-full">
+                  <SelectedLocationPanel
+                    locationName={profile.location.name}
+                    address={
+                      profile.location.address ||
+                      `${profile.location.latitude.toFixed(4)}, ${profile.location.longitude.toFixed(4)}`
+                    }
+                    latitude={profile.location.latitude}
+                    longitude={profile.location.longitude}
+                    selectedRadius={selectedRadius}
+                    onChangeRadius={handleRadiusChange}
+                    onAnalyze={() => handleRadiusChange(selectedRadius)}
+                    onClose={() => setIsTargetPanelOpen(false)}
+                    isAnalyzing={isAnalyzing}
+                  />
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsTargetPanelOpen(true)}
+                  className="absolute top-4 left-4 z-20 bg-slate-900/90 backdrop-blur border border-slate-700 px-3 py-2 rounded-xl shadow-2xl flex items-center space-x-2 text-xs font-semibold text-slate-200 hover:bg-slate-800 transition"
+                >
+                  <Compass className="w-4 h-4 text-emerald-400" />
+                  <span>Location Target ({selectedRadius})</span>
+                </button>
+              )}
 
               {/* Floating Layer Drawer Toggle (Right Side) */}
               <button
@@ -156,13 +242,22 @@ export const App: React.FC = () => {
                   <div>Surface LST: <strong className="text-amber-400">{profile.weather.surfaceTemperature}°C</strong></div>
                   <div>UHI Delta: <strong className="text-purple-400">+{profile.weather.uhiDelta}°C</strong></div>
                 </div>
-                <button
-                  onClick={() => setCurrentTab('dashboard')}
-                  className="w-full py-1 text-center font-semibold text-xs rounded bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 text-emerald-300 transition flex items-center justify-center space-x-1"
-                >
-                  <span>Open Deep Intelligence</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
+                <div className="flex items-center space-x-1.5 pt-1">
+                  <button
+                    onClick={() => setIsWhyHotModalOpen(true)}
+                    className="flex-1 py-1.5 px-2 text-center font-bold text-xs rounded-lg bg-orange-600/30 hover:bg-orange-600/50 border border-orange-500/40 text-orange-300 transition flex items-center justify-center space-x-1"
+                  >
+                    <Brain className="w-3.5 h-3.5 text-orange-400" />
+                    <span>Why Hot?</span>
+                  </button>
+                  <button
+                    onClick={() => setCurrentTab('dashboard')}
+                    className="flex-1 py-1.5 px-2 text-center font-semibold text-xs rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 text-emerald-300 transition flex items-center justify-center space-x-1"
+                  >
+                    <span>Dashboard</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -212,6 +307,8 @@ export const App: React.FC = () => {
               profile={profile}
               onOpenSimulatorWithAction={handleOpenSimulatorWithAction}
               onOpenReport={() => setIsReportOpen(true)}
+              onOpenWhyHotModal={() => setIsWhyHotModalOpen(true)}
+              onChangeRadius={handleRadiusChange}
             />
           </div>
         )}
@@ -273,6 +370,17 @@ export const App: React.FC = () => {
         isOpen={isApiSettingsOpen}
         onClose={() => setIsApiSettingsOpen(false)}
         onKeysUpdated={() => setKeyRefreshCounter((c) => c + 1)}
+      />
+
+      {/* Phase 2: Why Is This Place Hot? Causal Analysis Modal */}
+      <WhyHotExplorationModal
+        isOpen={isWhyHotModalOpen}
+        onClose={() => setIsWhyHotModalOpen(false)}
+        location={profile.location}
+        weather={profile.weather}
+        heatScore={profile.heatScore}
+        diagnosis={profile.diagnosis}
+        contributors={profile.contributors}
       />
     </div>
   );

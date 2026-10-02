@@ -13,7 +13,7 @@ import {
   Server,
   Key,
 } from 'lucide-react';
-import { CityHotspot, MapLayerConfig, DataCenterLocation } from '../../types';
+import { CityHotspot, MapLayerConfig, DataCenterLocation, ScenarioZone, AnalysisRadius } from '../../types';
 import { getHeatCategoryColor } from '../../services/heatModel';
 import { MOCK_DATA_CENTERS } from '../../data/mockData';
 
@@ -22,6 +22,8 @@ interface HeatMapProps {
   selectedCityId: string;
   selectedCoordinates: { lat: number; lng: number };
   activeLayers: MapLayerConfig[];
+  scenarioZones?: ScenarioZone[];
+  analysisRadius?: AnalysisRadius;
   onSelectCity: (cityId: string) => void;
   onMapClick: (lat: number, lng: number) => void;
   onToggleLayer: (layerId: string) => void;
@@ -33,6 +35,8 @@ export const HeatMap: React.FC<HeatMapProps> = ({
   selectedCityId,
   selectedCoordinates,
   activeLayers,
+  scenarioZones = [],
+  analysisRadius = '5km',
   onSelectCity,
   onMapClick,
   onToggleLayer,
@@ -397,7 +401,66 @@ export const HeatMap: React.FC<HeatMapProps> = ({
         .bindTooltip('UHI Thermal Boundary (+4.8°C Urban Excess)')
         .addTo(heatZonesLayerGroupRef.current);
     }
-  }, [activeLayers, selectedCoordinates]);
+
+    // Render Analysis Radius Buffer Circle (Section 42)
+    const radiusMetersMap: Record<AnalysisRadius, number> = {
+      '500m': 500,
+      '1km': 1000,
+      '5km': 5000,
+      '10km': 10000,
+      '25km': 25000,
+    };
+    const radiusMeters = radiusMetersMap[analysisRadius] || 5000;
+
+    L.circle([lat, lng], {
+      radius: radiusMeters,
+      color: '#06b6d4',
+      fillColor: '#0891b2',
+      fillOpacity: 0.06,
+      weight: 1.5,
+      dashArray: '6, 6',
+    })
+      .bindTooltip(`Spatial Analysis Buffer (${analysisRadius})`, { permanent: false })
+      .addTo(heatZonesLayerGroupRef.current);
+
+    // Section 34: Scenario Map Intervention Zones
+    if (scenarioZones && scenarioZones.length > 0) {
+      scenarioZones.forEach((zone) => {
+        const zoneCircle = L.circle([zone.lat, zone.lng], {
+          radius: zone.radiusMeters,
+          color: zone.colorHex,
+          fillColor: zone.colorHex,
+          fillOpacity: 0.35,
+          weight: 2,
+        });
+
+        zoneCircle.bindPopup(`
+          <div class="p-3 bg-slate-900 text-slate-100 min-w-[240px]">
+            <div class="flex items-center space-x-1.5 pb-2 mb-2 border-b border-slate-800">
+              <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${zone.colorHex}"></span>
+              <strong class="text-xs font-bold text-slate-100">${zone.label}</strong>
+            </div>
+            <div class="space-y-1.5 text-xs text-slate-300">
+              <p class="text-[11px] text-emerald-300 bg-emerald-950/40 p-1.5 rounded border border-emerald-800/40">
+                <strong>Action:</strong> ${zone.recommendedAction}
+              </p>
+              <p class="text-[11px] text-slate-400">
+                <strong>Reason:</strong> ${zone.reason}
+              </p>
+              <div class="grid grid-cols-2 gap-1 pt-1 font-mono text-[10px] text-slate-400">
+                <div>Surface: <strong class="text-amber-400">-${zone.estimatedSurfaceDropC}°C</strong></div>
+                <div>Ambient: <strong class="text-orange-400">-${zone.estimatedAmbientDropC}°C</strong></div>
+                <div>Confidence: <strong class="text-emerald-400">${zone.confidence}</strong></div>
+                <div>Cost: <strong class="text-slate-200">${zone.costCategory}</strong></div>
+              </div>
+            </div>
+          </div>
+        `);
+
+        zoneCircle.addTo(heatZonesLayerGroupRef.current!);
+      });
+    }
+  }, [activeLayers, selectedCoordinates, scenarioZones, analysisRadius]);
 
   return (
     <div className="relative w-full h-full overflow-hidden select-none bg-slate-950">

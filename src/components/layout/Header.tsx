@@ -75,19 +75,26 @@ export const Header: React.FC<HeaderProps> = ({
     setIsSearchOpen(false);
   };
 
+  const [isLocating, setIsLocating] = useState(false);
+
   const handleUseCurrentLocation = () => {
     if (navigator.geolocation) {
+      setIsLocating(true);
       navigator.geolocation.getCurrentPosition(
         (pos) => {
+          setIsLocating(false);
           onSelectCoords(pos.coords.latitude, pos.coords.longitude);
         },
         (err) => {
-          // If denied, fallback to Ahmedabad
-          onSelectCity('ahmedabad');
-        }
+          setIsLocating(false);
+          alert(
+            'Unable to access current location.\n\nPlease:\n• Enable browser location permission\nOR\n• Search your location manually.'
+          );
+        },
+        { timeout: 8000 }
       );
     } else {
-      onSelectCity('ahmedabad');
+      alert('Geolocation is not supported by your browser.');
     }
   };
 
