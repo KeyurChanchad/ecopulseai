@@ -744,6 +744,9 @@ export const App: React.FC = () => {
         contributors={profile.contributors}
         recommendations={profile.recommendations}
         geometricMetrics={profile.geometricMetrics}
+        industryIntelligence={profile.industryIntelligence}
+        dataCenterIntelligence={profile.dataCenterIntelligence}
+        structuredRecommendations={profile.structuredRecommendations}
         onOpenSimulatorWithAction={handleOpenSimulatorWithAction}
       />
 

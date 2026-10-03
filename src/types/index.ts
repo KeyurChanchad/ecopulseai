@@ -93,10 +93,20 @@ export interface HeatContributor {
     affectedLinearKm?: number;
     energyImpactMW?: number;
   };
+  engineeringConstraints?: {
+    feasibility: 'high' | 'medium' | 'low' | 'unfeasible';
+    aiDecision: 'FEASIBLE' | 'FEASIBLE_WITH_CONSTRAINTS' | 'NOT_FEASIBLE';
+    constraints: string[];
+    unfeasibleReason?: string;
+  };
   pairedSolution?: {
     title: string;
     action: string;
     expectedEffect: string;
+    expectedImpact?: {
+      surfaceTemperature: string;
+      airTemperature: string;
+    };
     tempDropSurfaceRange: [number, number];
     tempDropAmbientRange: [number, number];
     feasibility?: 'Immediate' | 'Short-Term' | 'Strategic Long-Term';
@@ -556,6 +566,62 @@ export interface InterventionSimulationResult {
   interactionNotes: string;
 }
 
+export interface StructuredRecommendation {
+  id: string;
+  cause: string;
+  evidence: string[];
+  intervention: string;
+  reason: string;
+  location: {
+    lat: number;
+    lng: number;
+  };
+  feasibility: 'high' | 'medium' | 'low' | 'unfeasible';
+  aiDecision: 'FEASIBLE' | 'FEASIBLE_WITH_CONSTRAINTS' | 'NOT_FEASIBLE';
+  constraints: string[];
+  unfeasibleReason?: string;
+  expectedImpact: {
+    surfaceTemperature: string;
+    airTemperature: string;
+  };
+  tempDropSurfaceRange: [number, number];
+  tempDropAmbientRange: [number, number];
+  confidence: number;
+  confidenceRating: 'High' | 'Medium' | 'Low';
+  sources: string[];
+  coBenefits: string[];
+  modelVersion: string;
+}
+
+export interface IndustryIntelligenceReport {
+  detected: boolean;
+  facilityName: string;
+  industryCategory: string;
+  specificProcess: string;
+  majorHeatSource: string;
+  coolingSystem: string;
+  heatReleaseZone: string;
+  feasibleMitigation: string;
+  wasteHeatRecoveryOpportunity: string;
+  regulatoryCompliance: string;
+}
+
+export interface DataCenterIntelligenceReport {
+  detected: boolean;
+  facilityName: string;
+  estimatedITLoadMW: number;
+  coolingArchitecture: string;
+  efficiencyMetrics: {
+    pueEstimate: number;
+    wueEstimate: number;
+    sensibleHeatFluxWm2: number;
+  };
+  coolingOptimizationOptions: string[];
+  wasteHeatReuseFeasibility: string;
+  advancedCoolingScenarios: string;
+  materialsEvaluationNote: string;
+}
+
 export interface AnalysisJob {
   jobId: string;
   location: {
@@ -574,5 +640,10 @@ export interface AnalysisJob {
   evidenceGraph?: EvidenceKnowledgeGraph;
   simulationOutcome?: InterventionSimulationResult;
   geometricMetrics?: GeometricSearchMetrics;
+  recommendations?: Recommendation[];
+  structuredRecommendations?: StructuredRecommendation[];
+  industryIntelligence?: IndustryIntelligenceReport;
+  dataCenterIntelligence?: DataCenterIntelligenceReport;
+  aiDiagnosis?: AIDiagnosis;
   error?: string;
 }

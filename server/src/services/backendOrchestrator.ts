@@ -243,6 +243,9 @@ export async function createAndRunBackendJob(input: CreateJobInput) {
       jobData.stepList[6].status = 'completed';
       jobData.stepList[6].detail = `${aiResult.recommendations.length} tailored mitigation strategies formulated`;
       jobData.recommendations = aiResult.recommendations;
+      jobData.structuredRecommendations = aiResult.structuredRecommendations;
+      jobData.industryIntelligence = aiResult.industryIntelligence;
+      jobData.dataCenterIntelligence = aiResult.dataCenterIntelligence;
       jobData.aiDiagnosis = aiResult.aiDiagnosis;
 
       // Step 8: Coupled Simulation

@@ -134,6 +134,7 @@ export async function runLocationAnalysisOrchestrator(
       whatChecked: cause.whatChecked,
       evidenceType: cause.evidenceType || 'LIVE',
       geometricContribution: cause.geometricContribution,
+      engineeringConstraints: cause.engineeringConstraints,
       pairedSolution: cause.pairedSolution,
       impact: (cause.confidence > 90 ? 'Very High' : cause.confidence > 80 ? 'High' : 'Medium') as any,
       impactPercent: Math.round(100 / Math.max(1, serverCauses.length)),
@@ -164,6 +165,9 @@ export async function runLocationAnalysisOrchestrator(
       analysisRadius: radius,
     },
     geometricMetrics: (currentJob as any).geometricMetrics,
+    structuredRecommendations: (currentJob as any).structuredRecommendations,
+    industryIntelligence: (currentJob as any).industryIntelligence,
+    dataCenterIntelligence: (currentJob as any).dataCenterIntelligence,
     weather: {
       ...baseProfile.weather,
       airTemperature: currentJob.featureVector?.airTemperature ?? baseProfile.weather.airTemperature,

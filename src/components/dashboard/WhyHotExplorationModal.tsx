@@ -1,4 +1,15 @@
-import { AIDiagnosis, HeatScoreData, WeatherObservation, LocationData, HeatContributor, Recommendation, GeometricSearchMetrics } from '../../types';
+import {
+  AIDiagnosis,
+  HeatScoreData,
+  WeatherObservation,
+  LocationData,
+  HeatContributor,
+  Recommendation,
+  GeometricSearchMetrics,
+  IndustryIntelligenceReport,
+  DataCenterIntelligenceReport,
+  StructuredRecommendation,
+} from '../../types';
 import { HeatCausesAndSolutionsAccordion } from './HeatCausesAndSolutionsAccordion';
 import {
   Brain,
@@ -28,6 +39,9 @@ interface WhyHotExplorationModalProps {
   contributors: HeatContributor[];
   recommendations?: Recommendation[];
   geometricMetrics?: GeometricSearchMetrics;
+  industryIntelligence?: IndustryIntelligenceReport;
+  dataCenterIntelligence?: DataCenterIntelligenceReport;
+  structuredRecommendations?: StructuredRecommendation[];
   onOpenSimulatorWithAction?: (rec: Recommendation) => void;
 }
 
@@ -41,6 +55,9 @@ export const WhyHotExplorationModal: React.FC<WhyHotExplorationModalProps> = ({
   contributors,
   recommendations = [],
   geometricMetrics,
+  industryIntelligence,
+  dataCenterIntelligence,
+  structuredRecommendations,
   onOpenSimulatorWithAction,
 }) => {
   if (!isOpen) return null;
@@ -125,6 +142,9 @@ export const WhyHotExplorationModal: React.FC<WhyHotExplorationModalProps> = ({
               contributors={contributors}
               recommendations={recommendations}
               geometricMetrics={geometricMetrics}
+              industryIntelligence={industryIntelligence}
+              dataCenterIntelligence={dataCenterIntelligence}
+              structuredRecommendations={structuredRecommendations}
               onOpenSimulatorWithAction={onOpenSimulatorWithAction}
               defaultExpandedIndex={0}
             />

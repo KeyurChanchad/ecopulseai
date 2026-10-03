@@ -12,6 +12,9 @@ import {
   AnalysisRadius,
   EvidenceObject,
   GeometricSearchMetrics,
+  StructuredRecommendation,
+  IndustryIntelligenceReport,
+  DataCenterIntelligenceReport,
 } from '../types';
 import { calculateHeatIndex, calculateEcoPulseHeatScore } from './heatModel';
 
@@ -27,6 +30,9 @@ export interface FullLocationProfile {
   scenarioZones: ScenarioZone[];
   evidenceItems?: EvidenceObject[];
   geometricMetrics?: GeometricSearchMetrics;
+  structuredRecommendations?: StructuredRecommendation[];
+  industryIntelligence?: IndustryIntelligenceReport;
+  dataCenterIntelligence?: DataCenterIntelligenceReport;
 }
 
 // Global landmark coordinates dictionary for rapid coordinate resolution

@@ -290,6 +290,9 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
             contributors={contributors}
             recommendations={recommendations}
             geometricMetrics={profile.geometricMetrics}
+            industryIntelligence={profile.industryIntelligence}
+            dataCenterIntelligence={profile.dataCenterIntelligence}
+            structuredRecommendations={profile.structuredRecommendations}
             onOpenSimulatorWithAction={onOpenSimulatorWithAction}
             defaultExpandedIndex={0}
           />

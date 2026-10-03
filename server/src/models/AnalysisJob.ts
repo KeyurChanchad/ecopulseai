@@ -54,7 +54,7 @@ const AnalysisJobSchema = new Schema<IAnalysisJob>({
   discoveredCauses: { type: [Schema.Types.Mixed] as any, default: [] },
   simulationOutcome: { type: Schema.Types.Mixed },
   error: { type: String },
-});
+}, { strict: false });
 
 AnalysisJobSchema.index({ jobId: 1 });
 AnalysisJobSchema.index({ location: '2dsphere' });

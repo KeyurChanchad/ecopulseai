@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { HeatContributor, Recommendation, GeometricSearchMetrics } from '../../types';
+import {
+  HeatContributor,
+  Recommendation,
+  GeometricSearchMetrics,
+  IndustryIntelligenceReport,
+  DataCenterIntelligenceReport,
+  StructuredRecommendation,
+} from '../../types';
 import {
   ChevronDown,
   Flame,
@@ -18,12 +25,26 @@ import {
   Zap,
   Eye,
   Maximize2,
+  AlertTriangle,
+  XCircle,
+  ShieldAlert,
+  ShieldCheck,
+  Factory,
+  Server,
+  Activity,
+  Layers,
+  Thermometer,
+  Wind,
+  Info,
 } from 'lucide-react';
 
 interface HeatCausesAndSolutionsAccordionProps {
   contributors: HeatContributor[];
   recommendations: Recommendation[];
   geometricMetrics?: GeometricSearchMetrics;
+  industryIntelligence?: IndustryIntelligenceReport;
+  dataCenterIntelligence?: DataCenterIntelligenceReport;
+  structuredRecommendations?: StructuredRecommendation[];
   onOpenSimulatorWithAction?: (rec: Recommendation) => void;
   defaultExpandedIndex?: number;
 }
@@ -32,6 +53,9 @@ export const HeatCausesAndSolutionsAccordion: React.FC<HeatCausesAndSolutionsAcc
   contributors,
   recommendations,
   geometricMetrics,
+  industryIntelligence,
+  dataCenterIntelligence,
+  structuredRecommendations,
   onOpenSimulatorWithAction,
   defaultExpandedIndex = 0,
 }) => {
@@ -159,6 +183,38 @@ export const HeatCausesAndSolutionsAccordion: React.FC<HeatCausesAndSolutionsAcc
     }
   };
 
+  const getDecisionBadge = (decision?: string, feasibility?: string) => {
+    switch (decision) {
+      case 'FEASIBLE':
+        return (
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-600/80 flex items-center space-x-1 shrink-0">
+            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+            <span>FEASIBLE</span>
+          </span>
+        );
+      case 'FEASIBLE_WITH_CONSTRAINTS':
+        return (
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-amber-950/80 text-amber-300 border border-amber-600/80 flex items-center space-x-1 shrink-0">
+            <AlertTriangle className="w-3 h-3 text-amber-400" />
+            <span>CONSTRAINED</span>
+          </span>
+        );
+      case 'NOT_FEASIBLE':
+        return (
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-rose-950/80 text-rose-300 border border-rose-600/80 flex items-center space-x-1 shrink-0">
+            <XCircle className="w-3 h-3 text-rose-400" />
+            <span>NOT FEASIBLE (AI Decision)</span>
+          </span>
+        );
+      default:
+        return feasibility ? (
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-semibold">
+            {feasibility}
+          </span>
+        ) : null;
+    }
+  };
+
   const getCategoryIcon = (category: string, emoji?: string) => {
     if (emoji) {
       return <span className="text-base leading-none select-none">{emoji}</span>;
@@ -273,6 +329,117 @@ export const HeatCausesAndSolutionsAccordion: React.FC<HeatCausesAndSolutionsAcc
               <span className="text-[9px] text-slate-500 font-mono block">
                 {Math.round((1 - geometricMetrics.canyonMorphology.skyViewFactorSVF) * 100)}% radiation trapped
               </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Specialized Industry Intelligence Module (Section 6 & 11) */}
+      {industryIntelligence && industryIntelligence.detected && (
+        <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-amber-950/30 border border-amber-500/40 rounded-2xl p-4 space-y-3 shadow-lg">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-500/20 pb-2">
+            <div className="flex items-center space-x-2">
+              <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                <Factory className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-xs sm:text-sm font-bold text-amber-200">
+                  Industrial Facility Intelligence: {industryIntelligence.facilityName}
+                </h4>
+                <p className="text-[11px] text-amber-400/80 font-mono">
+                  {industryIntelligence.industryCategory} • {industryIntelligence.specificProcess}
+                </p>
+              </div>
+            </div>
+            <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-amber-950/80 text-amber-300 border border-amber-700 font-bold flex items-center space-x-1">
+              <Activity className="w-3 h-3 text-amber-400 animate-pulse" />
+              <span>Process Thermal Surveillance</span>
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-1.5">
+              <span className="text-[10px] font-mono uppercase text-slate-400 block font-semibold">
+                Major Heat Source &amp; Dispersion
+              </span>
+              <p className="text-slate-200 leading-relaxed font-sans">{industryIntelligence.majorHeatSource}</p>
+              <div className="text-[11px] text-slate-400 font-mono pt-1">
+                Release Zone: <strong className="text-amber-300">{industryIntelligence.heatReleaseZone}</strong>
+              </div>
+            </div>
+
+            <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-1.5">
+              <span className="text-[10px] font-mono uppercase text-emerald-400 block font-semibold">
+                Waste Heat Recovery (ORC / District Reuse)
+              </span>
+              <p className="text-slate-200 leading-relaxed font-sans">
+                {industryIntelligence.wasteHeatRecoveryOpportunity}
+              </p>
+              <div className="text-[11px] text-slate-400 font-mono pt-1">
+                Mitigation: <strong className="text-emerald-300">{industryIntelligence.feasibleMitigation}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-[10px] font-mono text-slate-400 bg-slate-950/60 p-2 rounded-lg border border-slate-800 flex flex-wrap items-center justify-between gap-2">
+            <span>Regulatory &amp; Stack Standards: {industryIntelligence.regulatoryCompliance}</span>
+            <span className="text-amber-400 font-bold">Closed-Loop Heat Interception Verified</span>
+          </div>
+        </div>
+      )}
+
+      {/* Specialized Data Center Intelligence Module (Section 6 & 12) */}
+      {dataCenterIntelligence && dataCenterIntelligence.detected && (
+        <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-cyan-950/30 border border-cyan-500/40 rounded-2xl p-4 space-y-3 shadow-lg">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-cyan-500/20 pb-2">
+            <div className="flex items-center space-x-2">
+              <div className="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                <Server className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-xs sm:text-sm font-bold text-cyan-200">
+                  Data Center Intelligence: {dataCenterIntelligence.facilityName}
+                </h4>
+                <p className="text-[11px] text-cyan-400/80 font-mono">
+                  Computing IT Load: ~{dataCenterIntelligence.estimatedITLoadMW} MW • {dataCenterIntelligence.coolingArchitecture}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-700 font-bold">
+                PUE: {dataCenterIntelligence.efficiencyMetrics.pueEstimate}
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-teal-950/80 text-teal-300 border border-teal-700 font-bold">
+                WUE: {dataCenterIntelligence.efficiencyMetrics.wueEstimate} L/kWh
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-1.5">
+              <span className="text-[10px] font-mono uppercase text-cyan-400 block font-semibold">
+                Liquid Cooling &amp; Optimization
+              </span>
+              <ul className="space-y-1 text-slate-300 font-sans">
+                {dataCenterIntelligence.coolingOptimizationOptions.map((opt, oIdx) => (
+                  <li key={oIdx} className="flex items-start gap-1.5">
+                    <span className="text-cyan-400">▹</span>
+                    <span>{opt}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-1.5">
+              <span className="text-[10px] font-mono uppercase text-emerald-400 block font-semibold">
+                District Waste-Heat Reuse &amp; Storage
+              </span>
+              <p className="text-slate-200 leading-relaxed font-sans">
+                {dataCenterIntelligence.wasteHeatReuseFeasibility}
+              </p>
+              <p className="text-[11px] text-slate-400 font-mono pt-1">
+                Thermal PCM Buffering: {dataCenterIntelligence.materialsEvaluationNote}
+              </p>
             </div>
           </div>
         </div>
@@ -488,33 +655,90 @@ export const HeatCausesAndSolutionsAccordion: React.FC<HeatCausesAndSolutionsAcc
                             </p>
                           </div>
 
-                          {/* Cooling Impact Delta Grid */}
-                          <div className="grid grid-cols-2 gap-2 text-center font-mono">
-                            <div className="bg-emerald-950/30 border border-emerald-800/40 p-2 rounded-lg">
-                              <span className="text-[9px] text-emerald-400 uppercase block">Surface Cooling</span>
-                              <strong className="text-emerald-300 text-sm">
-                                -{solution.tempDropSurfaceRange[0]}°C to -{solution.tempDropSurfaceRange[1]}°C
-                              </strong>
+                          {/* Engineering Feasibility & AI Decision (AI Allowed to say NO / CONSTRAINED) */}
+                          {cause.engineeringConstraints && (
+                            <div
+                              className={`p-3 rounded-xl border text-xs space-y-2 ${
+                                cause.engineeringConstraints.aiDecision === 'NOT_FEASIBLE'
+                                  ? 'bg-rose-950/40 border-rose-800/80 text-rose-200'
+                                  : cause.engineeringConstraints.aiDecision === 'FEASIBLE_WITH_CONSTRAINTS'
+                                  ? 'bg-amber-950/30 border-amber-800/60 text-amber-200'
+                                  : 'bg-emerald-950/20 border-emerald-800/40 text-emerald-200'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between flex-wrap gap-1">
+                                <span className="font-bold flex items-center gap-1.5 text-xs">
+                                  <ShieldAlert className="w-3.5 h-3.5" />
+                                  <span>Site Engineering Feasibility &amp; AI Decision:</span>
+                                </span>
+                                {getDecisionBadge(
+                                  cause.engineeringConstraints.aiDecision,
+                                  cause.engineeringConstraints.feasibility
+                                )}
+                              </div>
+
+                              {cause.engineeringConstraints.unfeasibleReason && (
+                                <div className="bg-rose-900/30 p-2 rounded-lg border border-rose-800/50 text-[11px] text-rose-200">
+                                  <strong>Why AI Restricts / Denies This Action:</strong>{' '}
+                                  {cause.engineeringConstraints.unfeasibleReason}
+                                </div>
+                              )}
+
+                              {cause.engineeringConstraints.constraints &&
+                                cause.engineeringConstraints.constraints.length > 0 && (
+                                  <div className="space-y-1 pt-0.5">
+                                    <span className="text-[10px] font-mono uppercase text-slate-400 block font-semibold">
+                                      Engineering Constraints to Enforce:
+                                    </span>
+                                    <ul className="space-y-1 text-[11px]">
+                                      {cause.engineeringConstraints.constraints.map((c, cIdx) => (
+                                        <li key={cIdx} className="flex items-start gap-1.5 leading-snug">
+                                          <span className="text-amber-400 shrink-0">⚠️</span>
+                                          <span>{c}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
                             </div>
-                            <div className="bg-teal-950/30 border border-teal-800/40 p-2 rounded-lg">
-                              <span className="text-[9px] text-teal-400 uppercase block">Ambient Cooling</span>
-                              <strong className="text-teal-300 text-sm">
-                                -{solution.tempDropAmbientRange[0]}°C to -{solution.tempDropAmbientRange[1]}°C
-                              </strong>
+                          )}
+
+                          {/* Decoupled Cooling Impact Delta Grid (Never equate surface to air) */}
+                          <div className="space-y-1">
+                            <div className="grid grid-cols-2 gap-2 text-center font-mono">
+                              <div className="bg-emerald-950/30 border border-emerald-800/40 p-2.5 rounded-lg">
+                                <span className="text-[9px] text-emerald-400 uppercase block font-semibold">
+                                  Surface Skin Cooling (ΔTs)
+                                </span>
+                                <strong className="text-emerald-300 text-sm">
+                                  -{solution.tempDropSurfaceRange[0]}°C to -{solution.tempDropSurfaceRange[1]}°C
+                                </strong>
+                              </div>
+                              <div className="bg-teal-950/30 border border-teal-800/40 p-2.5 rounded-lg">
+                                <span className="text-[9px] text-teal-400 uppercase block font-semibold">
+                                  Ambient Air Cooling (ΔTa)
+                                </span>
+                                <strong className="text-teal-300 text-sm">
+                                  -{solution.tempDropAmbientRange[0]}°C to -{solution.tempDropAmbientRange[1]}°C
+                                </strong>
+                              </div>
+                            </div>
+                            <div className="text-[10px] font-mono text-center text-slate-500">
+                              * Decoupled turbulent boundary layer model (surface reduction does not equal air reduction)
                             </div>
                           </div>
 
                           {/* Feasibility & Co-Benefits */}
                           <div className="space-y-1.5">
                             <div className="flex items-center justify-between text-[11px] text-slate-400">
-                              <span>Implementation Feasibility:</span>
+                              <span>Implementation Horizon:</span>
                               <span className="font-mono text-emerald-400 font-bold">{solution.feasibility}</span>
                             </div>
 
                             {solution.coBenefits && solution.coBenefits.length > 0 && (
                               <div className="flex flex-wrap items-center gap-1.5 pt-1">
                                 <span className="text-[10px] text-slate-500 font-mono">Co-Benefits:</span>
-                                {solution.coBenefits.slice(0, 3).map((benefit, bIdx) => (
+                                {solution.coBenefits.slice(0, 4).map((benefit, bIdx) => (
                                   <span
                                     key={bIdx}
                                     className="px-2 py-0.5 rounded-md bg-slate-800 text-[10px] text-slate-300 border border-slate-700"
