@@ -151,35 +151,30 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="h-16 bg-slate-900 border-b border-slate-800 text-slate-100 flex items-center justify-between px-4 z-50 relative select-none">
+    <header className="h-16 bg-slate-900/98 backdrop-blur-md border-b border-slate-800 text-slate-100 flex items-center justify-between px-3 sm:px-4 lg:px-6 z-50 relative select-none gap-3 sm:gap-4">
       {/* Brand & Platform Identity */}
-      <div className="flex items-center space-x-3 shrink-0">
-        <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 via-slate-800 to-orange-500/20 border border-emerald-500/30 shadow-lg shadow-emerald-500/10">
+      <div className="flex items-center space-x-2.5 shrink-0">
+        <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500/20 via-slate-800 to-orange-500/20 border border-emerald-500/30 shadow-md shadow-emerald-500/10">
           <Globe2 className="w-5 h-5 text-emerald-400" />
-          <span className="absolute -top-1 -right-1 flex h-3 w-3">
+          <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-orange-500"></span>
           </span>
         </div>
 
-        <div>
-          <div className="flex items-center space-x-2">
-            <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-emerald-400 via-teal-300 to-orange-400 bg-clip-text text-transparent">
-              EcoPulseAI
-            </span>
-            <span className="px-1.5 py-0.5 text-[10px] uppercase font-mono font-bold tracking-wider bg-slate-800 text-emerald-400 rounded border border-slate-700">
-              GIS 2.0
-            </span>
-          </div>
-          <p className="text-[11px] text-slate-400 leading-none">
-            Global Heat Monitoring & Reduction Intelligence
-          </p>
+        <div className="flex items-center space-x-2">
+          <span className="font-extrabold text-base sm:text-lg tracking-tight bg-gradient-to-r from-emerald-400 via-teal-300 to-orange-400 bg-clip-text text-transparent">
+            EcoPulseAI
+          </span>
+          <span className="px-1.5 py-0.5 text-[9px] uppercase font-mono font-bold tracking-wider bg-slate-800 text-emerald-400 rounded border border-slate-700">
+            GIS 2.0
+          </span>
         </div>
       </div>
 
-      {/* Global Search Bar (with Cities, Addresses, and Coordinate parsing) */}
-      <div className="relative w-80 md:w-96" ref={searchContainerRef}>
-        <div className="flex items-center bg-slate-950 border border-slate-700 hover:border-slate-500 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 rounded-xl px-3 py-2 transition-all shadow-md">
+      {/* Global Search Bar (Guaranteed Width & Never Collapses) */}
+      <div className="relative flex-1 min-w-[200px] sm:min-w-[260px] max-w-sm lg:max-w-md shrink-0" ref={searchContainerRef}>
+        <div className="flex items-center bg-slate-950 border border-slate-700/80 hover:border-slate-500 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 rounded-xl px-3 py-1.5 sm:py-2 transition-all shadow-md">
           {isSearching ? (
             <Loader2 className="w-4 h-4 text-emerald-400 mr-2 shrink-0 animate-spin" />
           ) : (
@@ -187,8 +182,8 @@ export const Header: React.FC<HeaderProps> = ({
           )}
           <input
             type="text"
-            className="bg-transparent text-sm w-full text-slate-100 placeholder-slate-400 focus:outline-none font-medium"
-            placeholder="Search village, city, address, or coords..."
+            className="bg-transparent text-xs sm:text-sm w-full text-slate-100 placeholder-slate-400 focus:outline-none font-medium min-w-0"
+            placeholder="Search city, village, address, or coords..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => {
@@ -202,7 +197,7 @@ export const Header: React.FC<HeaderProps> = ({
                 setSearchResults([]);
                 setIsSearchOpen(false);
               }}
-              className="text-slate-400 hover:text-white p-1 mr-1 text-sm font-bold"
+              className="text-slate-400 hover:text-white p-1 mr-1 text-xs font-bold"
               title="Clear search"
             >
               ✕
@@ -211,22 +206,22 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={handleUseCurrentLocation}
             title="Locate via GPS"
-            className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-emerald-400 transition"
+            className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-emerald-400 transition shrink-0"
           >
             <Crosshair className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* 100% Solid Opaque Search Results Dropdown (No Transparency / Bleed-Through) */}
+        {/* 100% Solid Opaque Search Results Dropdown */}
         {isSearchOpen && (
-          <div className="absolute left-0 top-full mt-2 w-[340px] sm:w-[480px] md:w-[540px] bg-slate-950 border-2 border-slate-700 rounded-2xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] overflow-hidden z-[9999] max-h-[480px] overflow-y-auto ring-1 ring-white/10 select-text">
+          <div className="absolute left-0 top-full mt-2 w-[320px] sm:w-[440px] md:w-[500px] bg-slate-950 border-2 border-slate-700 rounded-2xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] overflow-hidden z-[9999] max-h-[440px] overflow-y-auto ring-1 ring-white/10 select-text">
             {/* Header bar */}
-            <div className="px-4 py-2.5 border-b border-slate-800 text-xs font-mono font-bold text-slate-200 flex items-center justify-between bg-slate-900">
-              <span className="flex items-center space-x-2 text-emerald-400 uppercase tracking-wider text-[11px]">
-                <Globe2 className="w-4 h-4" />
+            <div className="px-4 py-2 border-b border-slate-800 text-xs font-mono font-bold text-slate-200 flex items-center justify-between bg-slate-900">
+              <span className="flex items-center space-x-2 text-emerald-400 uppercase tracking-wider text-[10px]">
+                <Globe2 className="w-3.5 h-3.5" />
                 <span>Global Locations & Hotspots</span>
               </span>
-              <span className="text-[11px] text-slate-400 font-semibold">
+              <span className="text-[10px] text-slate-400 font-semibold">
                 {isSearching
                   ? "Searching worldwide..."
                   : `${searchResults.length} places found`}
@@ -255,27 +250,27 @@ export const Header: React.FC<HeaderProps> = ({
                     <button
                       key={item.id}
                       onClick={() => handleSelectSearchResult(item)}
-                      className="w-full text-left px-4 py-3 bg-slate-900 hover:bg-slate-800/90 transition-colors flex items-center justify-between group"
+                      className="w-full text-left px-4 py-2.5 bg-slate-900 hover:bg-slate-850 transition-colors flex items-center justify-between group"
                     >
                       <div className="flex items-start space-x-3 overflow-hidden mr-3">
-                        <div className="p-2 rounded-xl bg-slate-800 text-emerald-400 group-hover:bg-emerald-500/20 group-hover:text-emerald-300 transition-colors shrink-0 mt-0.5 border border-slate-700">
+                        <div className="p-1.5 rounded-lg bg-slate-800 text-emerald-400 group-hover:bg-emerald-500/20 group-hover:text-emerald-300 transition-colors shrink-0 mt-0.5 border border-slate-700">
                           {isVillage ? (
-                            <TreePine className="w-4 h-4 text-emerald-400" />
+                            <TreePine className="w-3.5 h-3.5 text-emerald-400" />
                           ) : isStreet ? (
-                            <Navigation className="w-4 h-4 text-orange-400" />
+                            <Navigation className="w-3.5 h-3.5 text-orange-400" />
                           ) : isCoord ? (
-                            <Compass className="w-4 h-4 text-cyan-400" />
+                            <Compass className="w-3.5 h-3.5 text-cyan-400" />
                           ) : (
-                            <Building2 className="w-4 h-4 text-blue-400" />
+                            <Building2 className="w-3.5 h-3.5 text-blue-400" />
                           )}
                         </div>
-                        <div className="overflow-hidden space-y-1">
+                        <div className="overflow-hidden space-y-0.5">
                           <div className="flex items-center space-x-2">
-                            <span className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors truncate">
+                            <span className="text-xs sm:text-sm font-bold text-white group-hover:text-emerald-300 transition-colors truncate">
                               {item.name}
                             </span>
                             <span
-                              className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border shrink-0 ${
+                              className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border shrink-0 ${
                                 isVillage
                                   ? "bg-emerald-950 text-emerald-300 border-emerald-700"
                                   : isStreet
@@ -288,14 +283,14 @@ export const Header: React.FC<HeaderProps> = ({
                               {item.type}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-300 leading-snug line-clamp-2">
+                          <p className="text-[11px] text-slate-400 leading-snug line-clamp-1">
                             {item.displayName}
                           </p>
                         </div>
                       </div>
 
                       <div className="shrink-0 text-right pl-2">
-                        <span className="text-[11px] font-mono font-semibold text-emerald-400 block bg-slate-950 px-2 py-1 rounded-md border border-slate-800">
+                        <span className="text-[10px] font-mono font-semibold text-emerald-400 block bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">
                           {item.lat.toFixed(4)}°, {item.lng.toFixed(4)}°
                         </span>
                       </div>
@@ -308,93 +303,98 @@ export const Header: React.FC<HeaderProps> = ({
         )}
       </div>
 
-      {/* Main Navigation Mode Tabs - Redesigned UI/UX Max Pro Segmented Control */}
-      <nav className="hidden md:flex items-center space-x-1.5 bg-slate-950/90 backdrop-blur-xl p-1.5 rounded-2xl border border-slate-800/90 shadow-[inset_0_1px_4px_rgba(0,0,0,0.7)] ring-1 ring-white/5">
+      {/* Main Navigation: 3 Core Modes (Clean, Readable & Spacious) */}
+      <nav className="hidden lg:flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 shadow-inner shrink-0">
         <button
           onClick={() => onTabChange("map")}
-          className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-2 transition-all duration-200 ${
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all ${
             currentTab === "map"
-              ? "bg-gradient-to-r from-emerald-500/25 via-teal-500/20 to-emerald-500/25 text-emerald-300 border border-emerald-500/50 shadow-[0_0_16px_rgba(16,185,129,0.25)] font-bold"
-              : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+              ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/25"
+              : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
           }`}
         >
-          <Globe2
-            className={`w-3.5 h-3.5 ${currentTab === "map" ? "text-emerald-400 animate-pulse" : "text-slate-400"}`}
-          />
+          <Globe2 className="w-3.5 h-3.5" />
           <span>Global Map</span>
-          <span className="hidden xl:inline w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
         </button>
 
         <button
           onClick={() => onTabChange("dashboard")}
-          className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-2 transition-all duration-200 ${
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all ${
             currentTab === "dashboard"
-              ? "bg-gradient-to-r from-teal-500/25 via-cyan-500/20 to-teal-500/25 text-teal-300 border border-teal-500/50 shadow-[0_0_16px_rgba(20,184,166,0.25)] font-bold"
-              : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+              ? "bg-teal-500 text-slate-950 font-bold shadow-md shadow-teal-500/25"
+              : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
           }`}
         >
-          <Activity
-            className={`w-3.5 h-3.5 ${currentTab === "dashboard" ? "text-teal-400" : "text-slate-400"}`}
-          />
-          <span>Location Intelligence</span>
-          <span className="hidden xl:inline text-[9px] font-mono px-1.5 py-0.2 rounded bg-teal-950 text-teal-400 border border-teal-800 font-bold">
-            AI
-          </span>
+          <Activity className="w-3.5 h-3.5" />
+          <span>Intelligence</span>
         </button>
 
         <button
           onClick={() => onTabChange("simulator")}
-          className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-2 transition-all duration-200 ${
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all ${
             currentTab === "simulator"
-              ? "bg-gradient-to-r from-orange-500/25 via-amber-500/20 to-orange-500/25 text-orange-300 border border-orange-500/50 shadow-[0_0_16px_rgba(249,115,22,0.25)] font-bold"
-              : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+              ? "bg-orange-500 text-slate-950 font-bold shadow-md shadow-orange-500/25"
+              : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
           }`}
         >
-          <SlidersHorizontal
-            className={`w-3.5 h-3.5 ${currentTab === "simulator" ? "text-orange-400" : "text-slate-400"}`}
-          />
+          <SlidersHorizontal className="w-3.5 h-3.5" />
           <span>Simulator</span>
-          <span className="hidden xl:inline text-[9px] font-mono px-1.5 py-0.2 rounded bg-orange-950 text-orange-400 border border-orange-800 font-bold">
-            Sim
-          </span>
         </button>
 
         <button
           onClick={() => onTabChange("timeline")}
-          className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-2 transition-all duration-200 ${
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all ${
             currentTab === "timeline"
-              ? "bg-gradient-to-r from-cyan-500/25 via-blue-500/20 to-cyan-500/25 text-cyan-300 border border-cyan-500/50 shadow-[0_0_16px_rgba(6,182,212,0.25)] font-bold"
-              : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+              ? "bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/25"
+              : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
           }`}
         >
-          <Clock
-            className={`w-3.5 h-3.5 ${currentTab === "timeline" ? "text-cyan-400" : "text-slate-400"}`}
-          />
-          <span>Future 2050</span>
-          <span className="hidden xl:inline text-[9px] font-mono px-1.5 py-0.2 rounded bg-cyan-950 text-cyan-400 border border-cyan-800 font-bold">
-            SSP
-          </span>
-        </button>
-
-        <button
-          onClick={() => onOpenReports()}
-          className="px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-all duration-200"
-          title="Export Heat Dossier & Mitigation Report"
-        >
-          <FileText className="w-3.5 h-3.5 text-slate-400" />
-          <span className="hidden xl:inline">Report</span>
-          <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-slate-800 text-slate-300 border border-slate-700">
-            PDF
-          </span>
+          <Clock className="w-3.5 h-3.5" />
+          <span>2050</span>
         </button>
       </nav>
 
-      {/* Right Controls & Settings */}
-      <div className="flex items-center space-x-2 sm:space-x-2.5 shrink-0">
-        {/* Backend Telemetry Status Badge */}
+      {/* Right Controls: Streamlined & Clutter-Free */}
+      <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+        {/* PDF Report Export Button */}
+        <button
+          onClick={() => onOpenReports()}
+          className="hidden sm:flex px-2.5 py-1.5 rounded-xl border border-slate-700/80 bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 hover:text-white items-center space-x-1.5 transition shadow-sm"
+          title="Export Heat Dossier & Mitigation Report"
+        >
+          <FileText className="w-3.5 h-3.5 text-slate-400" />
+          <span className="hidden md:inline">Report</span>
+          <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-slate-900 text-slate-300 border border-slate-700">
+            PDF
+          </span>
+        </button>
+
+        {/* Scientific Methodology */}
+        <button
+          onClick={onOpenMethodology}
+          className="p-2 rounded-xl border border-slate-700/80 bg-slate-900/90 hover:bg-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition shadow-sm flex items-center space-x-1"
+          title="Scientific Principles & Methodology Documentation"
+        >
+          <Info className="w-3.5 h-3.5 text-teal-400" />
+          <span className="hidden xl:inline text-xs">Methodology</span>
+        </button>
+
+        {/* API Settings */}
+        {onOpenApiSettings && (
+          <button
+            onClick={onOpenApiSettings}
+            className="p-2 rounded-xl border border-slate-700/80 bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white transition shadow-sm flex items-center space-x-1"
+            title="Configure custom Google Maps or CARTO API keys"
+          >
+            <Key className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="hidden xl:inline text-xs">API</span>
+          </button>
+        )}
+
+        {/* Live Backend Telemetry Pill */}
         <div
-          className="hidden xl:flex items-center space-x-2 px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono shadow-inner"
-          title={isBackendConnected ? `Connected to port 5001 (${aiEngine || 'Active Engine'})` : 'Backend disconnected on port 5001'}
+          className="flex items-center space-x-1.5 px-2 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono shadow-inner"
+          title={isBackendConnected ? `Connected to Node.js backend port 5001 (${aiEngine || 'Active Engine'})` : 'Backend server disconnected'}
         >
           <span className="relative flex h-2 w-2">
             {isBackendConnected ? (
@@ -409,35 +409,15 @@ export const Header: React.FC<HeaderProps> = ({
               </>
             )}
           </span>
-          <span className={isBackendConnected ? "text-emerald-400 font-bold" : "text-amber-400 font-bold"}>
-            {isBackendConnected ? "Backend: 5001" : "AI Offline"}
+          <span className={isBackendConnected ? "text-emerald-400 font-bold hidden sm:inline" : "text-amber-400 font-bold hidden sm:inline"}>
+            {isBackendConnected ? "5001" : "Offline"}
           </span>
         </div>
-
-        {onOpenApiSettings && (
-          <button
-            onClick={onOpenApiSettings}
-            className="hidden sm:flex px-3 py-2 rounded-xl border border-slate-700/80 bg-slate-900/90 hover:bg-slate-850 hover:border-slate-600 text-xs font-semibold text-slate-300 hover:text-white items-center space-x-1.5 transition-all shadow-sm"
-            title="Configure custom Google Maps or CARTO API keys"
-          >
-            <Key className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="hidden lg:inline">API Keys</span>
-          </button>
-        )}
-
-        <button
-          onClick={onOpenMethodology}
-          className="hidden sm:flex px-3 py-2 rounded-xl border border-slate-700/80 bg-slate-900/90 hover:bg-slate-850 hover:border-slate-600 text-xs font-semibold text-slate-300 hover:text-white items-center space-x-1.5 transition-all shadow-sm"
-          title="Scientific Principles & Methodology Documentation"
-        >
-          <Info className="w-3.5 h-3.5 text-teal-400" />
-          <span className="hidden md:inline">Methodology</span>
-        </button>
 
         {/* Mobile Navigation Menu Toggle */}
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="md:hidden p-2 rounded-xl border border-slate-700 bg-slate-900 text-slate-300 hover:text-white transition"
+          className="lg:hidden p-2 rounded-xl border border-slate-700 bg-slate-900 text-slate-300 hover:text-white transition"
           aria-label="Toggle navigation menu"
         >
           {isMobileMenuOpen ? (
@@ -446,12 +426,6 @@ export const Header: React.FC<HeaderProps> = ({
             <Menu className="w-4 h-4" />
           )}
         </button>
-
-        <div className="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-300 shadow-inner">
-          <MapPin className="w-3 h-3 text-orange-400 shrink-0" />
-          <span className="text-slate-400 font-sans hidden 2xl:inline">Active Target:</span>
-          <span className="font-bold text-white truncate max-w-[130px]">{selectedCityName}</span>
-        </div>
       </div>
 
       {/* Mobile Drawer Navigation Menu */}
