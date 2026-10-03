@@ -1,4 +1,3 @@
-import { GLOBAL_CITIES } from '../data/mockData';
 import { LANDMARK_DICTIONARY } from './locationService';
 
 export interface GeocodingResult {
@@ -49,26 +48,7 @@ export async function searchGlobalPlaces(
   const results: GeocodingResult[] = [];
   const qLower = trimmed.toLowerCase();
 
-  // 2. Instant local search from preloaded cities and landmarks
-  for (const city of GLOBAL_CITIES) {
-    if (
-      city.name.toLowerCase().includes(qLower) ||
-      city.country.toLowerCase().includes(qLower) ||
-      (city.state && city.state.toLowerCase().includes(qLower))
-    ) {
-      results.push({
-        id: city.id,
-        name: city.name,
-        displayName: `${city.name}, ${city.state ? city.state + ', ' : ''}${city.country}`,
-        type: 'City',
-        lat: city.lat,
-        lng: city.lng,
-        country: city.country,
-        state: city.state,
-        isLive: false,
-      });
-    }
-  }
+  // 2. Instant local search from known landmarks dictionary
 
   for (const [key, val] of Object.entries(LANDMARK_DICTIONARY)) {
     if (key.includes(qLower) || val.name.toLowerCase().includes(qLower)) {

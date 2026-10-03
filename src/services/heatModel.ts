@@ -1,4 +1,8 @@
-import { HeatLevel, ScenarioSimulationParams, ScenarioSimulationResult } from '../types';
+import {
+  HeatLevel,
+  ScenarioSimulationParams,
+  ScenarioSimulationResult,
+} from "../types";
 
 /**
  * Calculate NOAA Heat Index using the Rothfusz regression equation
@@ -44,11 +48,11 @@ export function calculateHeatIndex(tempC: number, humidity: number): number {
  * Classify a heat score or index into standardized environmental categories
  */
 export function getHeatCategory(score: number): HeatLevel {
-  if (score < 40) return 'Low';
-  if (score < 60) return 'Moderate';
-  if (score < 75) return 'High';
-  if (score < 88) return 'Very High';
-  return 'Extreme';
+  if (score < 40) return "Low";
+  if (score < 60) return "Moderate";
+  if (score < 75) return "High";
+  if (score < 88) return "Very High";
+  return "Extreme";
 }
 
 export function getHeatCategoryColor(category: HeatLevel): {
@@ -58,16 +62,41 @@ export function getHeatCategoryColor(category: HeatLevel): {
   hex: string;
 } {
   switch (category) {
-    case 'Low':
-      return { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/40', hex: '#10b981' };
-    case 'Moderate':
-      return { bg: 'bg-amber-500/20', text: 'text-amber-400', border: 'border-amber-500/40', hex: '#f59e0b' };
-    case 'High':
-      return { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500/40', hex: '#f97316' };
-    case 'Very High':
-      return { bg: 'bg-rose-500/20', text: 'text-rose-400', border: 'border-rose-500/40', hex: '#ef4444' };
-    case 'Extreme':
-      return { bg: 'bg-purple-900/30', text: 'text-purple-300', border: 'border-purple-500/40', hex: '#9333ea' };
+    case "Low":
+      return {
+        bg: "bg-emerald-500/20",
+        text: "text-emerald-400",
+        border: "border-emerald-500/40",
+        hex: "#10b981",
+      };
+    case "Moderate":
+      return {
+        bg: "bg-amber-500/20",
+        text: "text-amber-400",
+        border: "border-amber-500/40",
+        hex: "#f59e0b",
+      };
+    case "High":
+      return {
+        bg: "bg-orange-500/20",
+        text: "text-orange-400",
+        border: "border-orange-500/40",
+        hex: "#f97316",
+      };
+    case "Very High":
+      return {
+        bg: "bg-rose-500/20",
+        text: "text-rose-400",
+        border: "border-rose-500/40",
+        hex: "#ef4444",
+      };
+    case "Extreme":
+      return {
+        bg: "bg-red-900/30",
+        text: "text-red-300",
+        border: "border-red-500/40",
+        hex: "#ea3c33",
+      };
   }
 }
 
@@ -108,15 +137,26 @@ export function calculateEcoPulseHeatScore(params: {
   const surfaceFactor = Math.min(25, Math.max(0, (surfaceTemp - 25) * 0.9));
 
   // Vegetation deficit (0-15 points) - less trees = higher heat score
-  const vegetationDeficitFactor = Math.min(15, Math.max(0, (100 - treeCoveragePercent) * 0.15));
+  const vegetationDeficitFactor = Math.min(
+    15,
+    Math.max(0, (100 - treeCoveragePercent) * 0.15),
+  );
 
   // Built environment impervious surface (road + building) (0-15 points)
-  const imperviousFactor = Math.min(15, (roadDensityPercent * 0.08 + buildingDensityPercent * 0.07));
+  const imperviousFactor = Math.min(
+    15,
+    roadDensityPercent * 0.08 + buildingDensityPercent * 0.07,
+  );
 
   // Anthropogenic emission factor (traffic + HVAC estimate) (0-10 points)
   const anthropogenicFactor = Math.min(10, trafficLevelPercent * 0.1);
 
-  const rawScore = tempFactor + surfaceFactor + vegetationDeficitFactor + imperviousFactor + anthropogenicFactor;
+  const rawScore =
+    tempFactor +
+    surfaceFactor +
+    vegetationDeficitFactor +
+    imperviousFactor +
+    anthropogenicFactor;
   const clampedScore = Math.min(100, Math.max(10, Math.round(rawScore)));
 
   // Distinguish natural climate background from human-made urban amplification
@@ -147,7 +187,7 @@ export function simulateHeatReduction(
   baseHeatScore: number,
   baseSurfaceTemp: number,
   baseAirTemp: number,
-  params: ScenarioSimulationParams
+  params: ScenarioSimulationParams,
 ): ScenarioSimulationResult {
   const {
     treesToPlant,
@@ -185,19 +225,39 @@ export function simulateHeatReduction(
   const corridorSurfaceDrop = corridorFactor * 1.5;
   const corridorAirDrop = corridorFactor * 0.4;
 
-  const totalSurfaceDrop = Math.min(12, Math.round((treeSurfaceDrop + roofSurfaceDrop + pavementSurfaceDrop + trafficSurfaceDrop + corridorSurfaceDrop) * 10) / 10);
-  const totalAirDrop = Math.min(4.5, Math.round((treeAirDrop + roofAirDrop + pavementAirDrop + trafficAirDrop + corridorAirDrop) * 10) / 10);
+  const totalSurfaceDrop = Math.min(
+    12,
+    Math.round(
+      (treeSurfaceDrop +
+        roofSurfaceDrop +
+        pavementSurfaceDrop +
+        trafficSurfaceDrop +
+        corridorSurfaceDrop) *
+        10,
+    ) / 10,
+  );
+  const totalAirDrop = Math.min(
+    4.5,
+    Math.round(
+      (treeAirDrop +
+        roofAirDrop +
+        pavementAirDrop +
+        trafficAirDrop +
+        corridorAirDrop) *
+        10,
+    ) / 10,
+  );
 
   // Heat score mitigation points
   const scoreDrop = Math.min(
     32,
     Math.round(
-      (treeFactor * 4.2) +
-      (roofFactor * 9.5) +
-      (pavementFactor * 8.0) +
-      (trafficFactor * 6.5) +
-      (corridorFactor * 4.0)
-    )
+      treeFactor * 4.2 +
+        roofFactor * 9.5 +
+        pavementFactor * 8.0 +
+        trafficFactor * 6.5 +
+        corridorFactor * 4.0,
+    ),
   );
 
   const simulatedHeatScore = Math.max(15, baseHeatScore - scoreDrop);
@@ -207,7 +267,9 @@ export function simulateHeatReduction(
   const co2Absorbed = Math.round(treesToPlant * 0.022);
 
   // Building cooling energy reduction (approx 80-150 MWh per % of reflective roofs in urban core)
-  const coolingEnergySaved = Math.round(coolRoofsPercent * 45 + treeFactor * 120);
+  const coolingEnergySaved = Math.round(
+    coolRoofsPercent * 45 + treeFactor * 120,
+  );
 
   // Heat stress days prevented
   const heatStressDays = Math.round(scoreDrop * 0.95);
@@ -223,6 +285,7 @@ export function simulateHeatReduction(
     coolingEnergySavedMWhPerYear: coolingEnergySaved,
     heatStressReductionDaysPerYear: heatStressDays,
     co2AbsorbedTonsPerYear: co2Absorbed,
-    modelConfidence: 'Validated against Oke (1982) & Akbari et al. (2001) Microclimate Physics',
+    modelConfidence:
+      "Validated against Oke (1982) & Akbari et al. (2001) Microclimate Physics",
   };
 }

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 import {
   Globe2,
   Search,
@@ -19,14 +19,30 @@ import {
   Compass,
   Loader2,
   Navigation,
-} from 'lucide-react';
-import { searchGlobalPlaces, GeocodingResult } from '../../services/geocodingService';
+  Server,
+  Wifi,
+  WifiOff,
+  Menu,
+  X as CloseIcon,
+} from "lucide-react";
+import {
+  searchGlobalPlaces,
+  GeocodingResult,
+} from "../../services/geocodingService";
+import { useConnectionStatus } from "../../services/connectionManager";
 
 interface HeaderProps {
-  currentTab: 'map' | 'dashboard' | 'simulator' | 'timeline' | 'reports';
-  onTabChange: (tab: 'map' | 'dashboard' | 'simulator' | 'timeline' | 'reports') => void;
+  currentTab: "map" | "dashboard" | "simulator" | "timeline" | "reports";
+  onTabChange: (
+    tab: "map" | "dashboard" | "simulator" | "timeline" | "reports",
+  ) => void;
   onSelectCity: (cityId: string) => void;
-  onSelectCoords: (lat: number, lng: number, placeName?: string, fullAddress?: string) => void;
+  onSelectCoords: (
+    lat: number,
+    lng: number,
+    placeName?: string,
+    fullAddress?: string,
+  ) => void;
   onOpenMethodology: () => void;
   onOpenReports: () => void;
   onOpenApiSettings?: () => void;
@@ -43,12 +59,15 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenApiSettings,
   selectedCityName,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<GeocodingResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  const { isOnline, isBackendConnected, aiEngine } = useConnectionStatus();
 
   // Debounced live geocoding across villages, towns, cities worldwide
   useEffect(() => {
@@ -74,8 +93,8 @@ export const Header: React.FC<HeaderProps> = ({
         const results = await searchGlobalPlaces(trimmed, controller.signal);
         setSearchResults(results);
       } catch (err: any) {
-        if (err.name !== 'AbortError') {
-          console.error('Search geocoding error:', err);
+        if (err.name !== "AbortError") {
+          console.error("Search geocoding error:", err);
         }
       } finally {
         setIsSearching(false);
@@ -91,17 +110,20 @@ export const Header: React.FC<HeaderProps> = ({
   // Click outside to close search
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
         setIsSearchOpen(false);
       }
     }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleSelectSearchResult = (item: GeocodingResult) => {
     onSelectCoords(item.lat, item.lng, item.name, item.displayName);
-    setSearchQuery('');
+    setSearchQuery("");
     setIsSearchOpen(false);
   };
 
@@ -118,13 +140,13 @@ export const Header: React.FC<HeaderProps> = ({
         (err) => {
           setIsLocating(false);
           alert(
-            'Unable to access current location.\n\nPlease:\n• Enable browser location permission\nOR\n• Search your location manually.'
+            "Unable to access current location.\n\nPlease:\n• Enable browser location permission\nOR\n• Search your location manually.",
           );
         },
-        { timeout: 8000 }
+        { timeout: 8000 },
       );
     } else {
-      alert('Geolocation is not supported by your browser.');
+      alert("Geolocation is not supported by your browser.");
     }
   };
 
@@ -176,7 +198,7 @@ export const Header: React.FC<HeaderProps> = ({
           {searchQuery && (
             <button
               onClick={() => {
-                setSearchQuery('');
+                setSearchQuery("");
                 setSearchResults([]);
                 setIsSearchOpen(false);
               }}
@@ -205,22 +227,29 @@ export const Header: React.FC<HeaderProps> = ({
                 <span>Global Locations & Hotspots</span>
               </span>
               <span className="text-[11px] text-slate-400 font-semibold">
-                {isSearching ? 'Searching worldwide...' : `${searchResults.length} places found`}
+                {isSearching
+                  ? "Searching worldwide..."
+                  : `${searchResults.length} places found`}
               </span>
             </div>
 
             {searchResults.length === 0 && !isSearching ? (
               <div className="p-6 text-center text-xs text-slate-300 bg-slate-950">
-                No location match found for &quot;<strong className="text-white">{searchQuery}</strong>&quot;.<br />
-                Try typing a city, village, landmark, or coordinates (e.g.{' '}
-                <span className="text-emerald-400 font-mono font-bold">23.0225, 72.5714</span>).
+                No location match found for &quot;
+                <strong className="text-white">{searchQuery}</strong>&quot;.
+                <br />
+                Try typing a city, village, landmark, or coordinates (e.g.{" "}
+                <span className="text-emerald-400 font-mono font-bold">
+                  23.0225, 72.5714
+                </span>
+                ).
               </div>
             ) : (
               <div className="divide-y divide-slate-800/80 bg-slate-950">
                 {searchResults.map((item) => {
-                  const isVillage = item.type === 'Village';
-                  const isStreet = item.type === 'Street';
-                  const isCoord = item.type === 'Coordinate';
+                  const isVillage = item.type === "Village";
+                  const isStreet = item.type === "Street";
+                  const isCoord = item.type === "Coordinate";
 
                   return (
                     <button
@@ -248,12 +277,12 @@ export const Header: React.FC<HeaderProps> = ({
                             <span
                               className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border shrink-0 ${
                                 isVillage
-                                  ? 'bg-emerald-950 text-emerald-300 border-emerald-700'
+                                  ? "bg-emerald-950 text-emerald-300 border-emerald-700"
                                   : isStreet
-                                  ? 'bg-orange-950 text-orange-300 border-orange-700'
-                                  : isCoord
-                                  ? 'bg-cyan-950 text-cyan-300 border-cyan-700'
-                                  : 'bg-blue-950 text-blue-300 border-blue-700'
+                                    ? "bg-orange-950 text-orange-300 border-orange-700"
+                                    : isCoord
+                                      ? "bg-cyan-950 text-cyan-300 border-cyan-700"
+                                      : "bg-blue-950 text-blue-300 border-blue-700"
                               }`}
                             >
                               {item.type}
@@ -279,92 +308,206 @@ export const Header: React.FC<HeaderProps> = ({
         )}
       </div>
 
-      {/* Main Navigation Mode Tabs */}
-      <nav className="hidden lg:flex items-center space-x-1 bg-slate-950/70 p-1 rounded-xl border border-slate-800">
+      {/* Main Navigation Mode Tabs - Redesigned UI/UX Max Pro Segmented Control */}
+      <nav className="hidden md:flex items-center space-x-1.5 bg-slate-950/90 backdrop-blur-xl p-1.5 rounded-2xl border border-slate-800/90 shadow-[inset_0_1px_4px_rgba(0,0,0,0.7)] ring-1 ring-white/5">
         <button
-          onClick={() => onTabChange('map')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1.5 transition ${
-            currentTab === 'map'
-              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+          onClick={() => onTabChange("map")}
+          className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-2 transition-all duration-200 ${
+            currentTab === "map"
+              ? "bg-gradient-to-r from-emerald-500/25 via-teal-500/20 to-emerald-500/25 text-emerald-300 border border-emerald-500/50 shadow-[0_0_16px_rgba(16,185,129,0.25)] font-bold"
+              : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
           }`}
         >
-          <Layers className="w-3.5 h-3.5" />
+          <Globe2
+            className={`w-3.5 h-3.5 ${currentTab === "map" ? "text-emerald-400 animate-pulse" : "text-slate-400"}`}
+          />
           <span>Global Map</span>
+          <span className="hidden xl:inline w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
         </button>
 
         <button
-          onClick={() => onTabChange('dashboard')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1.5 transition ${
-            currentTab === 'dashboard'
-              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+          onClick={() => onTabChange("dashboard")}
+          className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-2 transition-all duration-200 ${
+            currentTab === "dashboard"
+              ? "bg-gradient-to-r from-teal-500/25 via-cyan-500/20 to-teal-500/25 text-teal-300 border border-teal-500/50 shadow-[0_0_16px_rgba(20,184,166,0.25)] font-bold"
+              : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
           }`}
         >
-          <Activity className="w-3.5 h-3.5" />
+          <Activity
+            className={`w-3.5 h-3.5 ${currentTab === "dashboard" ? "text-teal-400" : "text-slate-400"}`}
+          />
           <span>Location Intelligence</span>
+          <span className="hidden xl:inline text-[9px] font-mono px-1.5 py-0.2 rounded bg-teal-950 text-teal-400 border border-teal-800 font-bold">
+            AI
+          </span>
         </button>
 
         <button
-          onClick={() => onTabChange('simulator')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1.5 transition ${
-            currentTab === 'simulator'
-              ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+          onClick={() => onTabChange("simulator")}
+          className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-2 transition-all duration-200 ${
+            currentTab === "simulator"
+              ? "bg-gradient-to-r from-orange-500/25 via-amber-500/20 to-orange-500/25 text-orange-300 border border-orange-500/50 shadow-[0_0_16px_rgba(249,115,22,0.25)] font-bold"
+              : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
           }`}
         >
-          <SlidersHorizontal className="w-3.5 h-3.5" />
+          <SlidersHorizontal
+            className={`w-3.5 h-3.5 ${currentTab === "simulator" ? "text-orange-400" : "text-slate-400"}`}
+          />
           <span>Scenario Simulator</span>
+          <span className="hidden xl:inline text-[9px] font-mono px-1.5 py-0.2 rounded bg-orange-950 text-orange-400 border border-orange-800 font-bold">
+            Sim
+          </span>
         </button>
 
-        <button
-          onClick={() => onTabChange('timeline')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1.5 transition ${
-            currentTab === 'timeline'
-              ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-          }`}
-        >
-          <Clock className="w-3.5 h-3.5" />
-          <span>Future Projections</span>
-        </button>
-
-        <button
+        {/* <button
           onClick={() => onOpenReports()}
-          className="px-3 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition"
+          className="px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-all duration-200"
         >
-          <FileText className="w-3.5 h-3.5" />
+          <FileText className="w-3.5 h-3.5 text-slate-400" />
           <span>Reports</span>
-        </button>
+          <span className="hidden xl:inline text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 border border-slate-700">
+            PDF
+          </span>
+        </button> */}
       </nav>
 
       {/* Right Controls & Settings */}
-      <div className="flex items-center space-x-2 shrink-0">
+      <div className="flex items-center space-x-2 sm:space-x-2.5 shrink-0">
         {onOpenApiSettings && (
           <button
             onClick={onOpenApiSettings}
-            className="px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800/70 hover:bg-slate-700 text-xs text-slate-300 hover:text-white flex items-center space-x-1.5 transition"
-            title="API Keys & Tile Providers (No key required by default)"
+            className="hidden sm:flex px-3 py-2 rounded-xl border border-slate-700/80 bg-slate-900/90 hover:bg-slate-850 hover:border-slate-600 text-xs font-semibold text-slate-300 hover:text-white items-center space-x-1.5 transition-all shadow-sm"
+            title="Configure custom Google Maps or CARTO API keys"
           >
             <Key className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="hidden md:inline">API Keys</span>
+            <span className="hidden lg:inline">API Keys</span>
           </button>
         )}
 
         <button
           onClick={onOpenMethodology}
-          className="px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800/70 hover:bg-slate-700 text-xs text-slate-300 hover:text-white flex items-center space-x-1.5 transition"
-          title="Scientific Principles & Methodology"
+          className="hidden sm:flex px-3 py-2 rounded-xl border border-slate-700/80 bg-slate-900/90 hover:bg-slate-850 hover:border-slate-600 text-xs font-semibold text-slate-300 hover:text-white items-center space-x-1.5 transition-all shadow-sm"
+          title="Scientific Principles & Methodology Documentation"
         >
-          <Info className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="hidden sm:inline">Science & Methodology</span>
+          <Info className="w-3.5 h-3.5 text-teal-400" />
+          <span className="hidden md:inline">Methodology</span>
         </button>
 
-        <div className="hidden xl:flex items-center space-x-1 px-2.5 py-1 rounded bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-400">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Target: {selectedCityName}</span>
+        {/* Mobile Navigation Menu Toggle */}
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="md:hidden p-2 rounded-xl border border-slate-700 bg-slate-900 text-slate-300 hover:text-white transition"
+          aria-label="Toggle navigation menu"
+        >
+          {isMobileMenuOpen ? (
+            <CloseIcon className="w-4 h-4" />
+          ) : (
+            <Menu className="w-4 h-4" />
+          )}
+        </button>
+
+        <div className="hidden 2xl:flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-300 shadow-inner">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          <span className="text-slate-400 font-sans">Active Target:</span>
+          <span className="font-bold text-white">{selectedCityName}</span>
         </div>
       </div>
+
+      {/* Mobile Drawer Navigation Menu */}
+      {isMobileMenuOpen && (
+        <div className="absolute top-full left-0 right-0 md:hidden bg-slate-950/95 border-b border-slate-800 backdrop-blur-2xl p-4 shadow-2xl z-50 flex flex-col gap-2 animate-in slide-in-from-top-2 duration-200">
+          <div className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-1">
+            Navigation Modes
+          </div>
+          <button
+            onClick={() => {
+              onTabChange("map");
+              setIsMobileMenuOpen(false);
+            }}
+            className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition ${
+              currentTab === "map"
+                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                : "text-slate-300 hover:bg-slate-900"
+            }`}
+          >
+            <Globe2 className="w-4 h-4 text-emerald-400" />
+            <span>Global Heat Map</span>
+          </button>
+
+          <button
+            onClick={() => {
+              onTabChange("dashboard");
+              setIsMobileMenuOpen(false);
+            }}
+            className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition ${
+              currentTab === "dashboard"
+                ? "bg-teal-500/20 text-teal-300 border border-teal-500/40"
+                : "text-slate-300 hover:bg-slate-900"
+            }`}
+          >
+            <Activity className="w-4 h-4 text-teal-400" />
+            <span>Location Intelligence & AI Causes</span>
+          </button>
+
+          <button
+            onClick={() => {
+              onTabChange("simulator");
+              setIsMobileMenuOpen(false);
+            }}
+            className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition ${
+              currentTab === "simulator"
+                ? "bg-orange-500/20 text-orange-300 border border-orange-500/40"
+                : "text-slate-300 hover:bg-slate-900"
+            }`}
+          >
+            <SlidersHorizontal className="w-4 h-4 text-orange-400" />
+            <span>Intervention Simulator</span>
+          </button>
+
+          <button
+            onClick={() => {
+              onTabChange("timeline");
+              setIsMobileMenuOpen(false);
+            }}
+            className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition ${
+              currentTab === "timeline"
+                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
+                : "text-slate-300 hover:bg-slate-900"
+            }`}
+          >
+            <Clock className="w-4 h-4 text-cyan-400" />
+            <span>Future Projections (2050)</span>
+          </button>
+
+          <button
+            onClick={() => {
+              onOpenReports();
+              setIsMobileMenuOpen(false);
+            }}
+            className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-900 transition"
+          >
+            <FileText className="w-4 h-4 text-slate-400" />
+            <span>Generate PDF Report</span>
+          </button>
+
+          <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
+            <button
+              onClick={() => {
+                onOpenMethodology();
+                setIsMobileMenuOpen(false);
+              }}
+              className="text-xs text-teal-400 hover:underline flex items-center gap-1.5"
+            >
+              <Info className="w-3.5 h-3.5" />
+              <span>Scientific Methodology</span>
+            </button>
+            <span className="text-[11px] font-mono text-slate-500">v2.0.0</span>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

@@ -14,16 +14,20 @@ app.use(cors());
 app.use(express.json());
 
 // Service Health & Architecture Telemetry (Section 36 & 37)
-app.get('/health', (_req, res) => {
+const healthHandler = (_req: express.Request, res: express.Response) => {
   res.json({
     status: 'ok',
     service: 'EcoPulseAI Environmental Intelligence Backend Engine',
     version: '2.0.0',
     mongoConnected: isMongoConnected(),
     storageMode: isMongoConnected() ? 'MongoDB 2dsphere Cluster' : 'Embedded In-Memory Geospatial Store (Zero-Config Fallback)',
+    aiEngine: process.env.GEMINI_API_KEY ? 'Google Gemini 2.5 Flash' : 'Thermodynamic Surface Energy Balance Model (Zero-Key Mode)',
     timestamp: new Date().toISOString(),
   });
-});
+};
+
+app.get('/health', healthHandler);
+app.get('/api/health', healthHandler);
 
 // Mount API routes
 app.use('/api/jobs', jobsRouter);

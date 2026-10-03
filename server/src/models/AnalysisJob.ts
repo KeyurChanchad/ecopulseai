@@ -49,9 +49,9 @@ const AnalysisJobSchema = new Schema<IAnalysisJob>({
   startedAt: { type: Date, default: Date.now },
   completedAt: { type: Date },
   steps: { type: Schema.Types.Mixed, default: {} },
-  stepList: { type: [Schema.Types.Mixed], default: [] },
+  stepList: { type: [Schema.Types.Mixed] as any, default: [] },
   featureVector: { type: Schema.Types.Mixed },
-  discoveredCauses: { type: [Schema.Types.Mixed], default: [] },
+  discoveredCauses: { type: [Schema.Types.Mixed] as any, default: [] },
   simulationOutcome: { type: Schema.Types.Mixed },
   error: { type: String },
 });

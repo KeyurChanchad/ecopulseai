@@ -15,10 +15,12 @@ import {
   Satellite,
   Mountain,
   Moon,
+  Globe2,
+  Compass,
+  RotateCcw,
 } from 'lucide-react';
 import { CityHotspot, MapLayerConfig, DataCenterLocation, ScenarioZone, AnalysisRadius } from '../../types';
 import { getHeatCategoryColor } from '../../services/heatModel';
-import { MOCK_DATA_CENTERS } from '../../data/mockData';
 
 interface HeatMapProps {
   cities: CityHotspot[];
@@ -27,10 +29,41 @@ interface HeatMapProps {
   activeLayers: MapLayerConfig[];
   scenarioZones?: ScenarioZone[];
   analysisRadius?: AnalysisRadius;
+  isGlobalOverview?: boolean;
+  onResetToGlobal?: () => void;
   onSelectCity: (cityId: string) => void;
   onMapClick: (lat: number, lng: number) => void;
   onToggleLayer: (layerId: string) => void;
   onOpenApiSettings?: () => void;
+  infrastructureFacilities?: DataCenterLocation[];
+}
+
+function getCountryEmoji(country: string): string {
+  switch (country.toLowerCase()) {
+    case 'kuwait': return '🇰🇼';
+    case 'pakistan': return '🇵🇰';
+    case 'united states': return '🇺🇸';
+    case 'qatar': return '🇶🇦';
+    case 'saudi arabia': return '🇸🇦';
+    case 'united arab emirates': return '🇦🇪';
+    case 'india': return '🇮🇳';
+    case 'egypt': return '🇪🇬';
+    case 'spain': return '🇪🇸';
+    case 'greece': return '🇬🇷';
+    case 'italy': return '🇮🇹';
+    case 'south korea': return '🇰🇷';
+    case 'japan': return '🇯🇵';
+    case 'china': return '🇨🇳';
+    case 'thailand': return '🇹🇭';
+    case 'singapore': return '🇸🇬';
+    case 'indonesia': return '🇮🇩';
+    case 'australia': return '🇦🇺';
+    case 'brazil': return '🇧🇷';
+    case 'mexico': return '🇲🇽';
+    case 'united kingdom': return '🇬🇧';
+    case 'france': return '🇫🇷';
+    default: return '📍';
+  }
 }
 
 export const HeatMap: React.FC<HeatMapProps> = ({
@@ -40,10 +73,13 @@ export const HeatMap: React.FC<HeatMapProps> = ({
   activeLayers,
   scenarioZones = [],
   analysisRadius = '5km',
+  isGlobalOverview = false,
+  onResetToGlobal,
   onSelectCity,
   onMapClick,
   onToggleLayer,
   onOpenApiSettings,
+  infrastructureFacilities = [],
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -53,6 +89,7 @@ export const HeatMap: React.FC<HeatMapProps> = ({
   const dataCenterLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const heatZonesLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const selectedPinMarkerRef = useRef<L.Marker | null>(null);
+  const isInitialMountRef = useRef<boolean>(true);
 
   const [basemap, setBasemap] = useState<'satellite' | 'street' | 'terrain' | 'dark'>('satellite');
   const [showLayerDropdown, setShowLayerDropdown] = useState(false);
@@ -84,12 +121,18 @@ export const HeatMap: React.FC<HeatMapProps> = ({
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
+    const initialCenter: [number, number] = isGlobalOverview 
+      ? [20, 10] 
+      : [selectedCoordinates.lat, selectedCoordinates.lng];
+    const initialZoom = isGlobalOverview ? 2.3 : 12;
+
     // Up to zoom 20 for full village and street level zoomability
     const map = L.map(mapContainerRef.current, {
-      center: [selectedCoordinates.lat, selectedCoordinates.lng],
-      zoom: 12,
+      center: initialCenter,
+      zoom: initialZoom,
       minZoom: 2,
       maxZoom: 20,
+      worldCopyJump: true,
       zoomControl: false,
       attributionControl: true,
     });
@@ -175,9 +218,31 @@ export const HeatMap: React.FC<HeatMapProps> = ({
     }
   }, [basemap]);
 
-  // Center on selected location when changed (smooth flyTo down to village level)
+  // Center on selected location when changed (smooth flyTo down to village level or world zoom out)
   useEffect(() => {
     if (!mapInstanceRef.current) return;
+
+    // On initial mount with global overview, stay zoomed out!
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      if (isGlobalOverview) {
+        return;
+      }
+    }
+
+    if (isGlobalOverview) {
+      mapInstanceRef.current.flyTo([20, 10], 2.3, {
+        duration: 1.8,
+        easeLinearity: 0.25,
+      });
+
+      if (selectedPinMarkerRef.current) {
+        mapInstanceRef.current.removeLayer(selectedPinMarkerRef.current);
+        selectedPinMarkerRef.current = null;
+      }
+      return;
+    }
+
     const currentZoom = mapInstanceRef.current.getZoom();
     const targetZoom = Math.max(currentZoom, 13);
 
@@ -195,22 +260,22 @@ export const HeatMap: React.FC<HeatMapProps> = ({
       className: 'custom-pin-icon',
       html: `
         <div class="relative flex items-center justify-center">
-          <div class="w-7 h-7 rounded-full bg-emerald-500/30 border-2 border-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/50 animate-bounce">
-            <div class="w-2.5 h-2.5 rounded-full bg-emerald-400"></div>
+          <div class="w-8 h-8 rounded-full bg-emerald-500/30 border-2 border-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/50 animate-bounce">
+            <div class="w-3 h-3 rounded-full bg-emerald-400"></div>
           </div>
-          <div class="absolute -bottom-1 w-2 h-2 rotate-45 bg-emerald-400"></div>
+          <div class="absolute -bottom-1 w-2.5 h-2.5 rotate-45 bg-emerald-400"></div>
         </div>
       `,
-      iconSize: [28, 28],
-      iconAnchor: [14, 28],
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
     });
 
     selectedPinMarkerRef.current = L.marker([selectedCoordinates.lat, selectedCoordinates.lng], {
       icon: pinIcon,
     }).addTo(mapInstanceRef.current);
-  }, [selectedCoordinates]);
+  }, [selectedCoordinates, isGlobalOverview]);
 
-  // Render City Heat Bubbles
+  // Render City Heat Bubbles with UI/UX Max Pro aesthetics
   useEffect(() => {
     if (!markersLayerGroupRef.current) return;
     markersLayerGroupRef.current.clearLayers();
@@ -218,86 +283,112 @@ export const HeatMap: React.FC<HeatMapProps> = ({
     cities.forEach((city) => {
       const colors = getHeatCategoryColor(city.category);
       const isSelected = city.id === selectedCityId;
-      const radius = Math.max(12, Math.min(28, (city.heatScore / 100) * 26));
+      const isExtreme = city.category === 'Extreme';
+      const isVeryHigh = city.category === 'Very High';
+      const countryEmoji = getCountryEmoji(city.country);
+      const radius = Math.max(16, Math.min(26, (city.heatScore / 100) * 24));
 
-      // Custom animated SVG DivIcon
+      // Custom animated UI/UX Max Pro DivIcon
       const bubbleIcon = L.divIcon({
-        className: 'city-heat-bubble-container',
+        className: 'city-heat-pop-bubble',
         html: `
-          <div class="relative flex items-center justify-center cursor-pointer group" style="width: ${radius * 2}px; height: ${radius * 2}px;">
-            <!-- Outer Pulsating Wave -->
-            <div class="absolute inset-0 rounded-full ${city.category === 'Extreme' || city.category === 'Very High' ? 'animate-ping' : 'animate-pulse'}" 
-                 style="background-color: ${colors.hex}; opacity: 0.35;"></div>
+          <div class="relative flex items-center justify-center cursor-pointer group" style="width: ${radius * 2.8}px; height: ${radius * 2.8}px;">
+            <!-- Outer Sonar Radar Wave -->
+            <div class="absolute inset-0 rounded-full ${isExtreme ? 'animate-sonar' : isVeryHigh ? 'animate-ping' : 'animate-pulse'}" 
+                 style="background: radial-gradient(circle, ${colors.hex}55 0%, ${colors.hex}00 70%);"></div>
             
-            <!-- Core Thermal Indicator -->
-            <div class="relative rounded-full flex flex-col items-center justify-center shadow-xl border-2 transition-transform duration-300 group-hover:scale-125"
-                 style="width: ${radius * 1.6}px; height: ${radius * 1.6}px; background-color: ${colors.hex}ee; border-color: ${isSelected ? '#ffffff' : colors.hex}; box-shadow: 0 0 15px ${colors.hex}99;">
-              <span class="text-[10px] font-mono font-bold text-white leading-none">${Math.round(city.airTemp)}°</span>
+            <!-- Ambient Radiance Halo -->
+            <div class="absolute inset-2 rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300 blur-sm"
+                 style="background: ${colors.hex};"></div>
+
+            <!-- Core Thermal Medallion -->
+            <div class="relative rounded-full flex flex-col items-center justify-center shadow-xl border-2 transition-all duration-300 group-hover:scale-125"
+                 style="width: ${radius * 1.8}px; height: ${radius * 1.8}px; background: linear-gradient(135deg, ${colors.hex}ee 0%, #020617 130%); border-color: ${isSelected ? '#ffffff' : colors.hex}; box-shadow: 0 4px 20px ${colors.hex}66;">
+              <div class="flex items-center space-x-0.5 leading-none">
+                ${isExtreme ? '<span class="text-[9px] -mr-0.5">🔥</span>' : ''}
+                <span class="text-[12px] font-mono font-black text-white tracking-tighter drop-shadow-md">${Math.round(city.airTemp)}°</span>
+              </div>
+              <span class="text-[7.5px] font-mono font-bold uppercase tracking-wider text-white/90 leading-tight">${city.category.slice(0, 3)}</span>
             </div>
 
-            <!-- City Label Floating -->
-            <div class="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900/90 border border-slate-700 px-2 py-0.5 rounded text-[10px] font-medium text-slate-200 pointer-events-none opacity-85 group-hover:opacity-100 shadow-md">
-              ${city.name}
+            <!-- Frosted Glass City Badge -->
+            <div class="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-950/95 backdrop-blur-md border border-slate-700/80 px-2 py-0.5 rounded-full text-[10px] font-bold text-slate-100 pointer-events-none opacity-90 group-hover:opacity-100 group-hover:border-emerald-400/80 transition-all duration-300 shadow-xl flex items-center space-x-1">
+              <span>${countryEmoji}</span>
+              <span>${city.name}</span>
             </div>
           </div>
         `,
-        iconSize: [radius * 2, radius * 2],
-        iconAnchor: [radius, radius],
+        iconSize: [radius * 2.8, radius * 2.8],
+        iconAnchor: [radius * 1.4, radius * 1.4],
       });
 
       const marker = L.marker([city.lat, city.lng], { icon: bubbleIcon });
 
-      // Click to select
+      // Click on marker directly selects the city
       marker.on('click', (e) => {
         L.DomEvent.stopPropagation(e);
         onSelectCity(city.id);
       });
 
-      // Hover Popup with rich environmental summary
+      // Hover / Click Popup with UI/UX Max Pro dark glass layout
       marker.bindPopup(
         `
-        <div class="p-3 bg-slate-900 text-slate-100 min-w-[220px]">
-          <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
+        <div class="p-4 bg-slate-950 text-slate-100 min-w-[270px] max-w-[310px] border border-slate-800 rounded-2xl shadow-2xl">
+          <div class="flex items-start justify-between border-b border-slate-800 pb-2.5 mb-2.5">
             <div>
-              <div class="font-bold text-sm text-slate-100">${city.name}</div>
-              <div class="text-[10px] text-slate-400">${city.country} • ${city.climateZone}</div>
+              <div class="flex items-center space-x-1.5">
+                <span class="font-black text-base text-white tracking-tight">${city.name}</span>
+                <span>${countryEmoji}</span>
+                ${isExtreme ? '<span class="text-xs">🔥</span>' : ''}
+              </div>
+              <div class="text-[11px] text-slate-400 font-medium">${city.country} • ${city.population} pop.</div>
             </div>
-            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold" style="background-color: ${colors.hex}22; color: ${colors.hex}; border: 1px solid ${colors.hex}44;">
+            <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-black uppercase tracking-wider border shadow-sm"
+                  style="background-color: ${colors.hex}22; color: ${colors.hex}; border-color: ${colors.hex}66;">
               ${city.category}
             </span>
           </div>
 
-          <div class="grid grid-cols-2 gap-2 text-xs mb-2">
-            <div class="bg-slate-800/60 p-1.5 rounded">
-              <span class="text-[10px] text-slate-400 block">Air Temp</span>
-              <span class="font-mono font-bold text-orange-400">${city.airTemp}°C</span>
+          <div class="grid grid-cols-3 gap-1.5 text-center mb-2.5">
+            <div class="bg-slate-900/90 border border-slate-800 p-1.5 rounded-xl">
+              <span class="text-[9px] text-slate-400 uppercase font-mono block">Air Temp</span>
+              <span class="font-mono font-bold text-sm text-orange-400">${city.airTemp}°C</span>
             </div>
-            <div class="bg-slate-800/60 p-1.5 rounded">
-              <span class="text-[10px] text-slate-400 block">Heat Index</span>
-              <span class="font-mono font-bold text-rose-400">${city.heatIndex}°C</span>
+            <div class="bg-slate-900/90 border border-slate-800 p-1.5 rounded-xl">
+              <span class="text-[9px] text-slate-400 uppercase font-mono block">Feels Like</span>
+              <span class="font-mono font-bold text-sm text-rose-400">${city.heatIndex}°C</span>
             </div>
-            <div class="bg-slate-800/60 p-1.5 rounded">
-              <span class="text-[10px] text-slate-400 block">Surface (LST)</span>
-              <span class="font-mono font-bold text-amber-400">${city.surfaceTemp}°C</span>
-            </div>
-            <div class="bg-slate-800/60 p-1.5 rounded">
-              <span class="text-[10px] text-slate-400 block">Heat Score</span>
-              <span class="font-mono font-bold text-emerald-400">${city.heatScore}/100</span>
+            <div class="bg-slate-900/90 border border-slate-800 p-1.5 rounded-xl">
+              <span class="text-[9px] text-slate-400 uppercase font-mono block">Surface LST</span>
+              <span class="font-mono font-bold text-sm text-amber-400">${city.surfaceTemp}°C</span>
             </div>
           </div>
 
-          <div class="text-[10px] text-slate-300 mb-3 bg-slate-950/70 p-1.5 rounded border border-slate-800">
-            <strong class="text-slate-400 block">Top Contributor:</strong>
+          <div class="text-[11px] text-slate-300 mb-3 bg-slate-900/60 p-2 rounded-xl border border-slate-800/80 leading-snug">
+            <span class="text-slate-400 text-[10px] font-semibold uppercase block mb-0.5">Primary Heat Driver</span>
             ${city.primaryContributor}
           </div>
 
-          <button class="w-full py-1 text-center text-xs font-semibold rounded bg-emerald-600 hover:bg-emerald-500 text-white transition">
-            Open Location Intelligence →
+          <button id="inspect-city-${city.id}" class="w-full py-2 px-3 text-center text-xs font-bold rounded-xl bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 text-slate-950 hover:brightness-110 shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center space-x-1.5 cursor-pointer">
+            <span>Inspect City Microclimate</span>
+            <span>→</span>
           </button>
         </div>
       `,
-        { offset: [0, -radius] }
+        { offset: [0, -radius * 1.4] }
       );
+
+      // Bind button click inside popup when open
+      marker.on('popupopen', () => {
+        const btn = document.getElementById(`inspect-city-${city.id}`);
+        if (btn) {
+          btn.onclick = (ev) => {
+            ev.stopPropagation();
+            onSelectCity(city.id);
+            marker.closePopup();
+          };
+        }
+      });
 
       marker.addTo(markersLayerGroupRef.current!);
     });
@@ -311,7 +402,7 @@ export const HeatMap: React.FC<HeatMapProps> = ({
     const isDataCenterActive = activeLayers.find((l) => l.id === 'dataCenters')?.active;
     if (!isDataCenterActive) return;
 
-    MOCK_DATA_CENTERS.forEach((dc) => {
+    infrastructureFacilities.forEach((dc) => {
       const dcIcon = L.divIcon({
         className: 'datacenter-marker',
         html: `
@@ -582,11 +673,32 @@ export const HeatMap: React.FC<HeatMapProps> = ({
         </div>
       </div>
 
-      {/* Floating Instructions Pill (Top Center) */}
+      {/* Top-Right World Overview Reset HUD */}
+      <div className="absolute top-16 right-3 z-20 flex flex-col space-y-2">
+        <button
+          onClick={() => onResetToGlobal?.()}
+          title="Full Zoom Out to World Heat Overview (All 32 Global Hotspots)"
+          className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-xl border ${
+            isGlobalOverview
+              ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-emerald-500/30'
+              : 'bg-slate-900/95 backdrop-blur-md text-slate-200 hover:text-white border-slate-700/80 hover:bg-slate-800'
+          }`}
+        >
+          <Globe2 className="w-4 h-4" />
+          <span className="hidden sm:inline">World Overview</span>
+        </button>
+      </div>
+
+      {/* Floating Thermal Surveillance Pill (Top Center) */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-        <div className="bg-slate-900/80 backdrop-blur border border-slate-800/90 px-3 py-1 rounded-full text-slate-300 text-[11px] font-medium shadow-lg flex items-center space-x-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-          <span>Live Sentinel-2 / Landsat Thermal Stream Active</span>
+        <div className="bg-slate-950/90 backdrop-blur-md border border-slate-700/80 px-4 py-1.5 rounded-full text-slate-200 text-xs font-medium shadow-2xl flex items-center space-x-2.5">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-orange-500"></span>
+          </span>
+          <span className="font-semibold text-white">Earth Thermal Surveillance Active</span>
+          <span className="text-slate-400 text-[11px] hidden md:inline">•</span>
+          <span className="text-emerald-400 font-mono text-[11px] font-bold hidden md:inline">32 Megacities Monitored</span>
         </div>
       </div>
     </div>

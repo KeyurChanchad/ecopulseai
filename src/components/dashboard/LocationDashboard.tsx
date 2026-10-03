@@ -5,6 +5,7 @@ import { AIDiagnosisCard } from './AIDiagnosisCard';
 import { RecommendationsCard } from './RecommendationsCard';
 import { FuturePredictionCard } from './FuturePredictionCard';
 import { EnvironmentalDomainsCard } from './EnvironmentalDomainsCard';
+import { HeatCausesAndSolutionsAccordion } from './HeatCausesAndSolutionsAccordion';
 import { Recommendation, AnalysisRadius } from '../../types';
 import {
   MapPin,
@@ -46,7 +47,9 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
   const { location, weather, heatScore, contributors, recommendations, diagnosis, projections, domains } = profile;
   const heatColor = getHeatCategoryColor(heatScore.category);
 
-  const [activeTab, setActiveTab] = useState<'all' | 'domains' | 'diagnosis' | 'contributors' | 'recommendations' | 'forecast'>('all');
+  const [activeTab, setActiveTab] = useState<
+    'all' | 'accordion' | 'domains' | 'diagnosis' | 'contributors' | 'recommendations' | 'forecast'
+  >('all');
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 select-text">
@@ -258,6 +261,7 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
         {(
           [
             { id: 'all', label: 'All Modules' },
+            { id: 'accordion', label: '🔥 Causes & Solutions (Accordion)' },
             { id: 'domains', label: 'Environmental Domains (LST, NDVI, Roads)' },
             { id: 'diagnosis', label: 'AI Diagnosis ("Why is it hot?")' },
             { id: 'contributors', label: 'Heat Contributors' },
@@ -267,7 +271,7 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
         ).map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => setActiveTab(tab.id as any)}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
               activeTab === tab.id
                 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
@@ -278,6 +282,19 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
           </button>
         ))}
       </div>
+
+      {/* Primary Highlight: Causes & Solutions Accordion */}
+      {(activeTab === 'all' || activeTab === 'accordion') && (
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+          <HeatCausesAndSolutionsAccordion
+            contributors={contributors}
+            recommendations={recommendations}
+            geometricMetrics={profile.geometricMetrics}
+            onOpenSimulatorWithAction={onOpenSimulatorWithAction}
+            defaultExpandedIndex={0}
+          />
+        </div>
+      )}
 
       {/* 0. Environmental Domains Card (Sections 8-16) */}
       {(activeTab === 'all' || activeTab === 'domains') && domains && (

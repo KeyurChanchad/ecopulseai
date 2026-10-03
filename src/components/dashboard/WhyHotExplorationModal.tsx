@@ -1,5 +1,5 @@
-import React from 'react';
-import { AIDiagnosis, HeatScoreData, WeatherObservation, LocationData, HeatContributor } from '../../types';
+import { AIDiagnosis, HeatScoreData, WeatherObservation, LocationData, HeatContributor, Recommendation, GeometricSearchMetrics } from '../../types';
+import { HeatCausesAndSolutionsAccordion } from './HeatCausesAndSolutionsAccordion';
 import {
   Brain,
   X,
@@ -26,6 +26,9 @@ interface WhyHotExplorationModalProps {
   heatScore: HeatScoreData;
   diagnosis: AIDiagnosis;
   contributors: HeatContributor[];
+  recommendations?: Recommendation[];
+  geometricMetrics?: GeometricSearchMetrics;
+  onOpenSimulatorWithAction?: (rec: Recommendation) => void;
 }
 
 export const WhyHotExplorationModal: React.FC<WhyHotExplorationModalProps> = ({
@@ -36,12 +39,15 @@ export const WhyHotExplorationModal: React.FC<WhyHotExplorationModalProps> = ({
   heatScore,
   diagnosis,
   contributors,
+  recommendations = [],
+  geometricMetrics,
+  onOpenSimulatorWithAction,
 }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden select-text">
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-700/80 rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden select-text ring-1 ring-white/10">
         {/* Header */}
         <div className="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between shrink-0">
           <div className="flex items-center space-x-3">
@@ -113,6 +119,17 @@ export const WhyHotExplorationModal: React.FC<WhyHotExplorationModalProps> = ({
             </p>
           </div>
 
+          {/* Causes and Solutions Accordion */}
+          <div className="bg-slate-950 p-4.5 rounded-2xl border border-slate-800 shadow-lg">
+            <HeatCausesAndSolutionsAccordion
+              contributors={contributors}
+              recommendations={recommendations}
+              geometricMetrics={geometricMetrics}
+              onOpenSimulatorWithAction={onOpenSimulatorWithAction}
+              defaultExpandedIndex={0}
+            />
+          </div>
+
           {/* Section 17 & Rule 8: Natural Climate vs Anthropogenic Urban Heat */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800 space-y-1.5">
@@ -153,39 +170,39 @@ export const WhyHotExplorationModal: React.FC<WhyHotExplorationModalProps> = ({
               {contributors.map((c) => (
                 <div
                   key={c.id}
-                  className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 flex items-center justify-between text-xs"
+                  className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 flex items-center justify-between text-xs gap-3"
                 >
-                  <div className="space-y-0.5 max-w-md">
-                    <div className="flex items-center space-x-2">
+                  <div className="space-y-0.5 max-w-lg min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {c.categoryEmoji && <span className="text-sm select-none">{c.categoryEmoji}</span>}
                       <strong className="text-slate-200">{c.label}</strong>
-                      {/* Freshness Badge */}
+                      
+                      {/* Evidence Badge */}
+                      <span className="text-[9px] font-mono px-1.5 py-0.2 rounded font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                        Evidence: {c.evidenceType || (c.freshness === 'LIVE' ? 'LIVE' : 'Estimated')}
+                      </span>
+
+                      {/* Confidence Level Badge */}
                       <span
                         className={`text-[9px] font-mono px-1.5 py-0.2 rounded font-bold ${
-                          c.freshness === 'LIVE'
-                            ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                            : c.freshness === 'RECENT'
-                            ? 'bg-amber-950 text-amber-400 border border-amber-800'
-                            : c.freshness === 'HISTORICAL'
-                            ? 'bg-orange-950 text-orange-400 border border-orange-800'
+                          c.confidenceLevel === 'High'
+                            ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                            : c.confidenceLevel === 'Medium'
+                            ? 'bg-amber-950 text-amber-300 border border-amber-800'
                             : 'bg-slate-800 text-slate-400'
                         }`}
                       >
-                        {c.freshness === 'LIVE' ? '🟢 LIVE' : c.freshness === 'RECENT' ? '🟡 RECENT' : c.freshness === 'HISTORICAL' ? '🟠 HISTORICAL' : '⚪ ESTIMATED'}
-                      </span>
-
-                      {/* Source Classification */}
-                      <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                        {c.sourceType}
+                        {c.confidenceLevel} Confidence
                       </span>
                     </div>
                     <div className="text-[11px] text-slate-400 font-mono truncate">
-                      {c.measurementValue} • {c.timestampDescription}
+                      {c.measurementValue} {c.whatChecked ? `• Checked: ${c.whatChecked}` : ''}
                     </div>
                   </div>
 
                   <div className="text-right shrink-0">
                     <span className="text-xs font-mono font-bold text-orange-400 block">{c.impact}</span>
-                    <span className="text-[10px] font-mono text-slate-400">Conf: {c.confidence}%</span>
+                    <span className="text-[10px] font-mono text-emerald-400 font-bold">{c.confidence}%</span>
                   </div>
                 </div>
               ))}

@@ -99,3 +99,52 @@
 .heat-bubble-pulse {
   animation: heatPulse 2s infinite ease-in-out;
 }
+
+@keyframes sonarWave {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.6);
+    opacity: 0.35;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.animate-sonar {
+  animation: sonarWave 2.4s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+
+@keyframes radarSweep {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-radar {
+  animation: radarSweep 4s linear infinite;
+}
+
+/* Custom leaflet tooltip & popup adjustments */
+.leaflet-popup-content-wrapper {
+  background: #020617 !important;
+  color: #f8fafc !important;
+  border: 1px solid #334155 !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85), 0 0 30px rgba(239, 68, 68, 0.15) !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.leaflet-popup-tip {
+  background: #020617 !important;
+  border: 1px solid #334155 !important;
+}
+

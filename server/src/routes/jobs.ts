@@ -28,7 +28,7 @@ jobsRouter.post('/create', async (req: Request, res: Response): Promise<void> =>
 // GET /api/jobs/:id
 jobsRouter.get('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
-    const jobId = req.params.id;
+    const jobId = String(req.params.id);
     const job = await fetchJobById(jobId);
     if (!job) {
       res.status(404).json({ error: `Analysis job ${jobId} not found` });

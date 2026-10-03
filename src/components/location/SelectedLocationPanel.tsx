@@ -42,7 +42,7 @@ export const SelectedLocationPanel: React.FC<SelectedLocationPanelProps> = ({
   const radii: AnalysisRadius[] = ['500m', '1km', '5km', '10km', '25km'];
 
   return (
-    <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700 rounded-2xl p-5 shadow-2xl w-full max-w-md select-text transition-all animate-in fade-in zoom-in-95 duration-200">
+    <div className="bg-slate-950/98 backdrop-blur-xl border border-slate-700/80 rounded-2xl p-3.5 sm:p-5 shadow-2xl w-full max-w-md select-text transition-all animate-in fade-in zoom-in-95 duration-200 ring-1 ring-white/10 max-h-[85vh] overflow-y-auto">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
         <div className="flex items-center space-x-2.5">

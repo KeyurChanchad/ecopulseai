@@ -83,6 +83,66 @@ export interface HeatContributor {
   timestampDescription: string;
   evidence: string;
   mitigationOpportunity: string;
+  evidenceType?: 'LIVE' | 'Satellite' | 'GIS' | 'Traffic data' | 'GIS + Web' | 'Estimated' | 'Satellite + LIVE' | string;
+  whatChecked?: string;
+  possibleReason?: string;
+  categoryEmoji?: string;
+  geometricContribution?: {
+    scaleContext: string;
+    affectedAreaM2?: number;
+    affectedLinearKm?: number;
+    energyImpactMW?: number;
+  };
+  pairedSolution?: {
+    title: string;
+    action: string;
+    expectedEffect: string;
+    tempDropSurfaceRange: [number, number];
+    tempDropAmbientRange: [number, number];
+    feasibility?: 'Immediate' | 'Short-Term' | 'Strategic Long-Term';
+    costCategory?: 'Low' | 'Medium' | 'High' | 'Capital Intensive';
+    coBenefits?: string[];
+  };
+}
+
+export interface GeometricSearchMetrics {
+  radiusMeters: number;
+  totalAreaM2: number;
+  totalAreaKm2: number;
+  spatialScale: string;
+  boundingBox: {
+    minLat: number;
+    maxLat: number;
+    minLng: number;
+    maxLng: number;
+  };
+  footprints: {
+    buildingM2: number;
+    roadNetworkM2: number;
+    roadNetworkLinearKm: number;
+    parkingLotsM2: number;
+    darkRoofsM2: number;
+    treeCanopyM2: number;
+    canopyDeficitM2: number;
+    waterBodiesM2: number;
+    bareLandM2: number;
+    totalImperviousM2: number;
+    imperviousFractionPct: number;
+  };
+  canyonMorphology: {
+    averageBuildingHeightMeters: number;
+    averageStreetWidthMeters: number;
+    aspectRatioHW: number;
+    skyViewFactorSVF: number;
+    aerodynamicRoughnessZ0: number;
+  };
+  energyBudget: {
+    totalSolarPowerMW: number;
+    absorbedSolarPowerMW: number;
+    thermalStorageFluxMW: number;
+    latentHeatDeficitMW: number;
+    anthropogenicHeatFluxMW: number;
+  };
 }
 
 export interface Recommendation {
@@ -457,7 +517,12 @@ export type DiscoveredCauseCategory =
   | 'ENERGY'
   | 'TRANSPORTATION'
   | 'LAND COVER'
-  | 'URBAN FORM';
+  | 'URBAN FORM'
+  | 'INFRASTRUCTURE'
+  | 'EMISSIONS'
+  | 'CLIMATE'
+  | 'CANOPY'
+  | 'SURFACE';
 
 export type CausalityStatus =
   | 'OBSERVED'
@@ -508,5 +573,6 @@ export interface AnalysisJob {
   discoveredCauses?: DiscoveredHeatCause[];
   evidenceGraph?: EvidenceKnowledgeGraph;
   simulationOutcome?: InterventionSimulationResult;
+  geometricMetrics?: GeometricSearchMetrics;
   error?: string;
 }

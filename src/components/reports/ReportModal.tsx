@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FullLocationProfile } from '../../services/locationService';
-import { GLOBAL_CITIES } from '../../data/mockData';
+import { CityHotspot } from '../../types';
 import {
   FileText,
   Printer,
@@ -21,12 +21,14 @@ interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   profile: FullLocationProfile;
+  hotspots?: CityHotspot[];
 }
 
 export const ReportModal: React.FC<ReportModalProps> = ({
   isOpen,
   onClose,
   profile,
+  hotspots = [],
 }) => {
   const [reportType, setReportType] = useState<'location' | 'city' | 'global'>('location');
   const [copied, setCopied] = useState(false);
@@ -316,7 +318,7 @@ ${recommendations.map((r, i) => `### Priority ${i + 1}: ${r.title}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
-                    {GLOBAL_CITIES.map((city) => (
+                    {hotspots.map((city) => (
                       <tr key={city.id} className="hover:bg-slate-800/40">
                         <td className="py-2.5 px-3 font-semibold text-slate-200">
                           {city.name}, {city.country}
