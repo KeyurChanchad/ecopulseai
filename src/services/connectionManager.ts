@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 export interface ConnectionState {
   isOnline: boolean;
@@ -11,7 +11,7 @@ export interface ConnectionState {
 }
 
 let currentState: ConnectionState = {
-  isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
+  isOnline: typeof navigator !== "undefined" ? navigator.onLine : true,
   isBackendConnected: false,
   checking: false,
 };
@@ -41,9 +41,9 @@ export async function pingBackend(): Promise<boolean> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 2500);
 
-    const resp = await fetch('/health', {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
+    const resp = await fetch("/health", {
+      method: "GET",
+      headers: { Accept: "application/json" },
       signal: controller.signal,
     });
 
@@ -52,8 +52,8 @@ export async function pingBackend(): Promise<boolean> {
     if (resp.ok) {
       const data = await resp.json();
       currentState.isBackendConnected = true;
-      currentState.backendVersion = data.version || '2.0.0';
-      currentState.aiEngine = data.aiEngine || 'Active';
+      currentState.backendVersion = data.version || "2.0.0";
+      currentState.aiEngine = data.aiEngine || "Active";
       currentState.error = undefined;
     } else {
       currentState.isBackendConnected = false;
@@ -61,7 +61,7 @@ export async function pingBackend(): Promise<boolean> {
     }
   } catch (err: any) {
     currentState.isBackendConnected = false;
-    currentState.error = err.name === 'AbortError' ? 'Timeout' : 'Unreachable';
+    currentState.error = err.name === "AbortError" ? "Timeout" : "Unreachable";
   } finally {
     currentState.checking = false;
     currentState.lastChecked = new Date();
@@ -72,25 +72,28 @@ export async function pingBackend(): Promise<boolean> {
 }
 
 // Global initialization
-if (typeof window !== 'undefined') {
-  window.addEventListener('online', () => {
+if (typeof window !== "undefined") {
+  window.addEventListener("online", () => {
     currentState.isOnline = true;
     notify();
     pingBackend();
   });
 
-  window.addEventListener('offline', () => {
+  window.addEventListener("offline", () => {
     currentState.isOnline = false;
     currentState.isBackendConnected = false;
     notify();
   });
 
-  // Initial check & periodic ping every 10s
+  // Initial check & periodic ping every 5 minutes (300,000 ms)
+  const HEALTH_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
   pingBackend();
-  setInterval(pingBackend, 10000);
+  setInterval(pingBackend, HEALTH_CHECK_INTERVAL_MS);
 }
 
-export function useConnectionStatus(): ConnectionState & { recheck: () => Promise<boolean> } {
+export function useConnectionStatus(): ConnectionState & {
+  recheck: () => Promise<boolean>;
+} {
   const [state, setState] = useState<ConnectionState>({ ...currentState });
 
   useEffect(() => {
