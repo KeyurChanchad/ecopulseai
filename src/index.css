@@ -148,3 +148,12 @@
   border: 1px solid #334155 !important;
 }
 
+
+/* Utility class to hide scrollbar but keep functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

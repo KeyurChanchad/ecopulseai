@@ -355,7 +355,7 @@ export const App: React.FC = () => {
 
               {/* Floating Top Left Panel: Global Command Overview OR Selected Location Intelligence */}
               {isGlobalOverview ? (
-                <div className="absolute top-2 sm:top-4 left-2 sm:left-4 z-20 w-[calc(100%-1rem)] sm:w-80 md:w-96 max-w-sm">
+                <div className="absolute top-2 sm:top-4 left-2 sm:left-4 z-20 w-[calc(100%-1rem)] sm:w-80 md:w-96 max-w-sm max-h-[60vh] sm:max-h-none overflow-y-auto sm:overflow-visible no-scrollbar">
                   <div className="bg-slate-950/95 backdrop-blur-xl border border-slate-700/80 rounded-2xl shadow-2xl p-4 text-slate-100 ring-1 ring-white/10">
                     <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-800">
                       <div className="flex items-center space-x-2.5">
@@ -431,7 +431,7 @@ export const App: React.FC = () => {
                   </div>
                 </div>
               ) : isTargetPanelOpen ? (
-                <div className="absolute top-2 sm:top-4 left-2 sm:left-4 z-20 w-[calc(100%-1rem)] sm:w-80 md:w-96 max-w-sm space-y-2">
+                <div className="absolute top-2 sm:top-4 left-2 sm:left-4 z-20 w-[calc(100%-1rem)] sm:w-80 md:w-96 max-w-sm max-h-[60vh] sm:max-h-none overflow-y-auto sm:overflow-visible no-scrollbar space-y-2">
                   <button
                     onClick={handleResetToGlobal}
                     className="w-full py-1.5 px-3 rounded-xl bg-slate-950/95 hover:bg-slate-900 border border-emerald-500/40 text-emerald-400 text-xs font-bold flex items-center justify-center space-x-1.5 transition shadow-xl"
@@ -485,10 +485,10 @@ export const App: React.FC = () => {
               {/* Floating Layer Drawer Toggle (Right Side) */}
               <button
                 onClick={() => setIsLayerPanelOpen(!isLayerPanelOpen)}
-                className="absolute top-4 right-4 z-20 bg-slate-900/90 backdrop-blur border border-slate-700 px-3 py-2 rounded-xl shadow-2xl flex items-center space-x-2 text-xs font-semibold text-slate-200 hover:bg-slate-800 transition"
+                className="absolute bottom-36 sm:bottom-auto sm:top-4 right-4 z-20 bg-slate-900/90 backdrop-blur border border-slate-700 px-3 py-2 rounded-xl shadow-2xl flex items-center space-x-2 text-xs font-semibold text-slate-200 hover:bg-slate-800 transition"
               >
                 <Layers className="w-4 h-4 text-emerald-400" />
-                <span>GIS Layer Manager</span>
+                <span className="hidden sm:inline">GIS Layer Manager</span>
               </button>
 
               {/* Floating Active Target Card (Top Right) - Only shown when inspecting a city */}

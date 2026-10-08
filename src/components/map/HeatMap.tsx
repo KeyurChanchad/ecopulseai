@@ -674,7 +674,7 @@ export const HeatMap: React.FC<HeatMapProps> = ({
       </div>
 
       {/* Top-Right World Overview Reset HUD */}
-      <div className="absolute top-16 right-3 z-20 flex flex-col space-y-2">
+      <div className="absolute top-16 right-3 z-20 hidden sm:flex flex-col space-y-2">
         <button
           onClick={() => onResetToGlobal?.()}
           title="Full Zoom Out to World Heat Overview (All 32 Global Hotspots)"
@@ -690,7 +690,7 @@ export const HeatMap: React.FC<HeatMapProps> = ({
       </div>
 
       {/* Floating Thermal Surveillance Pill (Top Center) */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none hidden md:block">
         <div className="bg-slate-950/90 backdrop-blur-md border border-slate-700/80 px-4 py-1.5 rounded-full text-slate-200 text-xs font-medium shadow-2xl flex items-center space-x-2.5">
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>

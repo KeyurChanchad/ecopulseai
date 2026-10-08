@@ -470,6 +470,7 @@ export interface EnvironmentalFeatureVector {
   populationDensity: number;
   albedoAverage: number;
   coolingDeficit: number;
+  uhiDelta?: number;
 }
 
 export type EvidenceSourceLevel =
@@ -646,4 +647,5 @@ export interface AnalysisJob {
   dataCenterIntelligence?: DataCenterIntelligenceReport;
   aiDiagnosis?: AIDiagnosis;
   error?: string;
+  weather?: Partial<WeatherObservation>;
 }

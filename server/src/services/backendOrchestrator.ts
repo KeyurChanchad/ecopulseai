@@ -233,6 +233,7 @@ export async function createAndRunBackendJob(input: CreateJobInput) {
         trafficCongestionLevel,
         uhiDelta,
       };
+      jobData.weather = weatherData;
 
       // Step 7: Interventions Formulation
       jobData.steps.interventions = 'running';
