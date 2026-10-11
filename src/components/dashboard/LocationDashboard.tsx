@@ -630,12 +630,12 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
         </div>
       </div>
 
-      {/* 5. Future 2050 Warming Trajectory */}
+      {/* 5. Long-Term Climate Forecast & Trajectory */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
         <div className="flex items-center space-x-2">
           <Clock className="w-4 h-4 text-cyan-400" />
           <h3 className="text-sm sm:text-base font-extrabold text-white">
-            2050 Climate Forecast: Inaction vs EcoPulse Mitigation
+            Long-Term Climate Forecast: Inaction vs EcoPulse Mitigation
           </h3>
         </div>
 
@@ -645,7 +645,7 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
               🔴 No Action (Business As Usual)
             </span>
             <div className="text-xl font-black font-mono text-rose-400 my-1">
-              +3.4°C Rise by 2050
+              +3.4°C Long-Term Rise
             </div>
             <p className="text-[11px] text-slate-400 leading-tight">
               Unmitigated urban growth pushes heat index past dangerous survivability thresholds on 45+ days per year.
@@ -657,7 +657,7 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
               🟡 Moderate Action
             </span>
             <div className="text-xl font-black font-mono text-amber-400 my-1">
-              +1.5°C Rise by 2050
+              +1.5°C Long-Term Rise
             </div>
             <p className="text-[11px] text-slate-400 leading-tight">
               Standard energy efficiency offsets part of regional baseline warming but leaves urban heat islands intact.

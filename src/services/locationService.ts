@@ -516,13 +516,14 @@ export function createDynamicPlaceholderProfile(
     },
     climateProjections: [
       { scenario: 'Strict Climate Action', scenarioCode: 'SSP1-2.6', horizonYear: 2030, warmingDeltaC: 0.6, heatwaveDaysDelta: 12, coolingDegreeDaysDelta: 14, description: 'Rapid mitigation path' },
-      { scenario: 'Middle of the Road', scenarioCode: 'SSP2-4.5', horizonYear: 2040, warmingDeltaC: 1.5, heatwaveDaysDelta: 28, coolingDegreeDaysDelta: 32, description: 'Current policy trajectory' },
-      { scenario: 'High Emissions', scenarioCode: 'SSP5-8.5', horizonYear: 2050, warmingDeltaC: 3.2, heatwaveDaysDelta: 54, coolingDegreeDaysDelta: 68, description: 'Fossil-fuel intensive baseline' },
+      { scenario: 'Middle of the Road', scenarioCode: 'SSP2-4.5', horizonYear: 2035, warmingDeltaC: 1.5, heatwaveDaysDelta: 28, coolingDegreeDaysDelta: 32, description: 'Current policy trajectory' },
+      { scenario: 'High Emissions', scenarioCode: 'SSP5-8.5', horizonYear: 2040, warmingDeltaC: 3.2, heatwaveDaysDelta: 54, coolingDegreeDaysDelta: 68, description: 'Fossil-fuel intensive baseline' },
     ],
     timeline: [
-      { period: '2026', label: 'Present', riskScore: 70, fillPercent: 70, metricLabel: 'Baseline' },
-      { period: '2035', label: '+9 Years', riskScore: 78, fillPercent: 78, metricLabel: '+1.2°C' },
-      { period: '2050', label: '+24 Years', riskScore: 89, fillPercent: 89, metricLabel: '+2.8°C' },
+      { period: 'Today', label: 'Present Baseline', riskScore: 70, fillPercent: 70, metricLabel: 'Baseline' },
+      { period: '3 Months', label: 'Quarterly Outlook', riskScore: 75, fillPercent: 75, metricLabel: '+0.7°C' },
+      { period: '6 Months', label: 'Half-Year Horizon', riskScore: 82, fillPercent: 82, metricLabel: '+1.4°C' },
+      { period: '1 Year', label: 'Annual Projection', riskScore: 88, fillPercent: 88, metricLabel: '+2.1°C' },
     ],
   };
 

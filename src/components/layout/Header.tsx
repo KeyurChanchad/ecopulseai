@@ -437,9 +437,10 @@ export const Header: React.FC<HeaderProps> = ({
               ? "bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/25"
               : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
           }`}
+          title="Climate Projections & Timeline"
         >
           <Clock className="w-3.5 h-3.5" />
-          <span>2050</span>
+          <span>Timeline</span>
         </button>
       </nav>
 
@@ -583,7 +584,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Clock className="w-4 h-4 text-cyan-400" />
-            <span>Future Projections (2050)</span>
+            <span>Future Projections</span>
           </button>
 
           <div className="pt-2 border-t border-slate-800 flex flex-col gap-1.5">

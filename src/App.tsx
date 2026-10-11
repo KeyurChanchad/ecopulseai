@@ -1012,7 +1012,7 @@ export const App: React.FC = () => {
           }`}
         >
           <Clock className="w-4 h-4" />
-          <span className="text-[10px] mt-0.5 font-medium">2050</span>
+          <span className="text-[10px] mt-0.5 font-medium">Timeline</span>
         </button>
       </nav>
     </div>
