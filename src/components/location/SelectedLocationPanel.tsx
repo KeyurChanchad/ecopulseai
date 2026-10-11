@@ -413,38 +413,26 @@ export const SelectedLocationPanel: React.FC<SelectedLocationPanelProps> = ({
       </div>
 
       {/* 6. Focused Action Buttons */}
-      <div className="space-y-1.5 pt-1">
-        {onOpenAiDossier && (
+      <div className="grid grid-cols-2 gap-2 pt-1">
+        {onOpenDashboard && (
           <button
-            onClick={onOpenAiDossier}
-            className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs flex items-center justify-center space-x-1.5 transition shadow-lg shadow-emerald-950/50 border border-emerald-400/30"
+            onClick={onOpenDashboard}
+            className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs flex items-center justify-center space-x-1.5 transition shadow-lg shadow-emerald-950/50 border border-emerald-400/30"
           >
             <Sparkles className="w-3.5 h-3.5 animate-pulse text-emerald-200" />
-            <span>AI Weather & Heat Analysis</span>
+            <span>AI Heat Analysis</span>
           </button>
         )}
 
-        <div className="grid grid-cols-2 gap-2">
-          {onOpenSimulator && (
-            <button
-              onClick={onOpenSimulator}
-              className="py-2 px-3 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-xs flex items-center justify-center space-x-1.5 transition shadow-lg shadow-orange-950/40"
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>Test in Simulator</span>
-            </button>
-          )}
-
-          {onOpenDashboard && (
-            <button
-              onClick={onOpenDashboard}
-              className="py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 text-slate-200 hover:text-white font-bold text-xs flex items-center justify-center space-x-1.5 transition shadow"
-            >
-              <FileText className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Location Dashboard</span>
-            </button>
-          )}
-        </div>
+        {onOpenSimulator && (
+          <button
+            onClick={onOpenSimulator}
+            className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-xs flex items-center justify-center space-x-1.5 transition shadow-lg shadow-orange-950/40"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span>Test in Simulator</span>
+          </button>
+        )}
       </div>
     </div>
   );

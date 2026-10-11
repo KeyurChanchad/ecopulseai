@@ -985,12 +985,12 @@ export const App: React.FC = () => {
           onClick={() => setCurrentTab('dashboard')}
           className={`flex flex-col items-center py-1 px-3 rounded-xl transition ${
             currentTab === 'dashboard'
-              ? 'text-teal-400 font-bold bg-teal-500/15 border border-teal-500/30'
+              ? 'text-emerald-400 font-bold bg-emerald-500/15 border border-emerald-500/30'
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          <Activity className="w-4 h-4" />
-          <span className="text-[10px] mt-0.5 font-medium">Intelligence</span>
+          <Sparkles className="w-4 h-4" />
+          <span className="text-[10px] mt-0.5 font-medium">AI Heat</span>
         </button>
         <button
           onClick={() => setCurrentTab('simulator')}

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FullLocationProfile, getWindDirectionCardinal } from '../../services/locationService';
+import { AiWeatherHeatDossierView } from '../dossier/AiWeatherHeatDossierView';
 import { Recommendation, AnalysisRadius } from '../../types';
 import {
   MapPin,
@@ -44,9 +45,9 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
   onOpenSimulatorWithAction,
   onOpenReport,
   onOpenWhyHotModal,
-  onOpenAiDossier,
   onChangeRadius,
 }) => {
+  const [dashboardMode, setDashboardMode] = useState<'ai-dossier' | 'geospatial'>('ai-dossier');
   const { location, weather, heatScore } = profile;
   const heatColor = getHeatCategoryColor(heatScore.category);
 
@@ -148,16 +149,33 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
               </div>
             )}
 
-            {onOpenAiDossier && (
+            {/* Mode Switcher: AI Heat Analysis vs Geospatial Telemetry */}
+            <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-mono">
               <button
-                onClick={onOpenAiDossier}
-                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-500 text-xs font-bold text-white flex items-center space-x-1.5 transition shadow-lg shadow-emerald-950/50 border border-emerald-400/30"
-                title="Generate comprehensive AI Weather & Heat Analysis matching ChatGPT/Gemini structure"
+                type="button"
+                onClick={() => setDashboardMode('ai-dossier')}
+                className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 font-bold transition ${
+                  dashboardMode === 'ai-dossier'
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-950/50'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
               >
-                <Sparkles className="w-3.5 h-3.5 text-emerald-200 animate-pulse" />
-                <span>AI Weather & Heat Analysis</span>
+                <Sparkles className="w-3.5 h-3.5 text-emerald-200" />
+                <span>AI Heat Analysis</span>
               </button>
-            )}
+              <button
+                type="button"
+                onClick={() => setDashboardMode('geospatial')}
+                className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 font-semibold transition ${
+                  dashboardMode === 'geospatial'
+                    ? 'bg-slate-800 text-teal-300 shadow-md'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Activity className="w-3.5 h-3.5 text-teal-400" />
+                <span>Sensors & Drivers</span>
+              </button>
+            </div>
 
             <button
               onClick={onOpenReport}
@@ -170,9 +188,21 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
         </div>
       </div>
 
-      {/* 2. PART 1: HOW MUCH GLOBAL WARMING & HEAT IS HITTING (Atmospheric Reality) */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+      {dashboardMode === 'ai-dossier' ? (
+        <AiWeatherHeatDossierView
+          locationName={location.name}
+          country={location.country}
+          latitude={location.latitude}
+          longitude={location.longitude}
+          weather={weather}
+          onOpenSimulator={() => onOpenSimulatorWithAction(profile.recommendations[0])}
+          showCardWrapper={true}
+        />
+      ) : (
+        <>
+          {/* 2. PART 1: HOW MUCH GLOBAL WARMING & HEAT IS HITTING (Atmospheric Reality) */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="p-1.5 rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/30">
               <Flame className="w-4 h-4" />
@@ -677,6 +707,8 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
           </div>
         </div>
       </div>
+    </>
+  )}
     </div>
   );
 };

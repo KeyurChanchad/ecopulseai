@@ -410,12 +410,13 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={() => onTabChange("dashboard")}
           className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all ${
             currentTab === "dashboard"
-              ? "bg-teal-500 text-slate-950 font-bold shadow-md shadow-teal-500/25"
+              ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/25"
               : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
           }`}
+          title="AI Weather & Heat Analysis (ChatGPT / Gemini Structure)"
         >
-          <Activity className="w-3.5 h-3.5" />
-          <span>Intelligence</span>
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>AI Heat Analysis</span>
         </button>
 
         <button
@@ -446,20 +447,6 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right Controls: Streamlined & Clutter-Free */}
       <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
-        {/* AI Weather & Heat Analysis Button */}
-        {onOpenAiDossier && (
-          <button
-            onClick={onOpenAiDossier}
-            className="hidden sm:flex px-2.5 py-1.5 rounded-xl border border-emerald-500/40 bg-emerald-950/40 hover:bg-emerald-900/50 text-xs font-semibold text-emerald-300 hover:text-emerald-200 items-center space-x-1.5 transition shadow-sm"
-            title="Open AI Weather & Heat Analysis (ChatGPT / Gemini style 5-section report)"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-            <span className="hidden lg:inline">AI Heat Analysis</span>
-            <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-emerald-900/60 text-emerald-300 border border-emerald-500/40">
-              AI
-            </span>
-          </button>
-        )}
 
         {/* PDF Report Export Button */}
         <button
@@ -549,12 +536,12 @@ export const Header: React.FC<HeaderProps> = ({
             }}
             className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition border ${
               currentTab === "dashboard"
-                ? "bg-teal-500/20 text-teal-300 border-teal-500/50"
+                ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50"
                 : "bg-slate-900/90 text-slate-300 border-slate-800/80 hover:bg-slate-850"
             }`}
           >
-            <Activity className="w-4 h-4 text-teal-400" />
-            <span>Location Intelligence & AI Causes</span>
+            <Sparkles className="w-4 h-4 text-emerald-400" />
+            <span>AI Heat Analysis</span>
           </button>
 
           <button
@@ -588,18 +575,6 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           <div className="pt-2 border-t border-slate-800 flex flex-col gap-1.5">
-            {onOpenAiDossier && (
-              <button
-                onClick={() => {
-                  onOpenAiDossier();
-                  setIsMobileMenuOpen(false);
-                }}
-                className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-emerald-300 bg-emerald-950/40 border border-emerald-500/40 hover:bg-emerald-900/50 transition"
-              >
-                <Sparkles className="w-4 h-4 text-emerald-400" />
-                <span>AI Weather & Heat Analysis (ChatGPT/Gemini)</span>
-              </button>
-            )}
 
             <button
               onClick={() => {
