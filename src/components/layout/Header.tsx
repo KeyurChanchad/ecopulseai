@@ -24,6 +24,7 @@ import {
   Menu,
   X as CloseIcon,
   ArrowLeft,
+  Sparkles,
 } from "lucide-react";
 import {
   searchGlobalPlaces,
@@ -45,6 +46,7 @@ interface HeaderProps {
   ) => void;
   onOpenMethodology: () => void;
   onOpenReports: () => void;
+  onOpenAiDossier?: () => void;
   selectedCityName: string;
 }
 
@@ -55,6 +57,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectCoords,
   onOpenMethodology,
   onOpenReports,
+  onOpenAiDossier,
   selectedCityName,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -442,6 +445,21 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right Controls: Streamlined & Clutter-Free */}
       <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+        {/* AI Weather & Heat Analysis Button */}
+        {onOpenAiDossier && (
+          <button
+            onClick={onOpenAiDossier}
+            className="hidden sm:flex px-2.5 py-1.5 rounded-xl border border-emerald-500/40 bg-emerald-950/40 hover:bg-emerald-900/50 text-xs font-semibold text-emerald-300 hover:text-emerald-200 items-center space-x-1.5 transition shadow-sm"
+            title="Open AI Weather & Heat Analysis (ChatGPT / Gemini style 5-section report)"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+            <span className="hidden lg:inline">AI Heat Analysis</span>
+            <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-emerald-900/60 text-emerald-300 border border-emerald-500/40">
+              AI
+            </span>
+          </button>
+        )}
+
         {/* PDF Report Export Button */}
         <button
           onClick={() => onOpenReports()}
@@ -569,6 +587,19 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           <div className="pt-2 border-t border-slate-800 flex flex-col gap-1.5">
+            {onOpenAiDossier && (
+              <button
+                onClick={() => {
+                  onOpenAiDossier();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-emerald-300 bg-emerald-950/40 border border-emerald-500/40 hover:bg-emerald-900/50 transition"
+              >
+                <Sparkles className="w-4 h-4 text-emerald-400" />
+                <span>AI Weather & Heat Analysis (ChatGPT/Gemini)</span>
+              </button>
+            )}
+
             <button
               onClick={() => {
                 onOpenReports();

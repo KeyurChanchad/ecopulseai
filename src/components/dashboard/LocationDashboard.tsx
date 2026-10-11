@@ -34,6 +34,7 @@ interface LocationDashboardProps {
   onOpenReport: () => void;
   onOpenWhyHotModal?: () => void;
   onOpenEvidenceGraph?: () => void;
+  onOpenAiDossier?: () => void;
   activeJobId?: string;
   onChangeRadius?: (radius: AnalysisRadius) => void;
 }
@@ -43,6 +44,7 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
   onOpenSimulatorWithAction,
   onOpenReport,
   onOpenWhyHotModal,
+  onOpenAiDossier,
   onChangeRadius,
 }) => {
   const { location, weather, heatScore } = profile;
@@ -144,6 +146,17 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
                   </button>
                 ))}
               </div>
+            )}
+
+            {onOpenAiDossier && (
+              <button
+                onClick={onOpenAiDossier}
+                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-500 text-xs font-bold text-white flex items-center space-x-1.5 transition shadow-lg shadow-emerald-950/50 border border-emerald-400/30"
+                title="Generate comprehensive AI Weather & Heat Analysis matching ChatGPT/Gemini structure"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-emerald-200 animate-pulse" />
+                <span>AI Weather & Heat Analysis</span>
+              </button>
             )}
 
             <button

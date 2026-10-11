@@ -12,6 +12,7 @@ import { WhyHotExplorationModal } from './components/dashboard/WhyHotExploration
 import { AnalysisProgressModal } from './components/jobs/AnalysisProgressModal';
 import { EvidenceGraphModal } from './components/evidence/EvidenceGraphModal';
 import { ConnectivityAlertBanner } from './components/common/ConnectivityAlertBanner';
+import { AiWeatherHeatDossierModal } from './components/dossier/AiWeatherHeatDossierModal';
 import { INITIAL_MAP_LAYERS } from './config/mapLayers';
 import {
   fetchLiveHotspots,
@@ -174,6 +175,7 @@ export const App: React.FC = () => {
   // Modals
   const [isMethodologyOpen, setIsMethodologyOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [isAiDossierOpen, setIsAiDossierOpen] = useState(false);
   const [isWhyHotModalOpen, setIsWhyHotModalOpen] = useState(false);
   const [keyRefreshCounter, setKeyRefreshCounter] = useState(0);
 
@@ -379,6 +381,7 @@ export const App: React.FC = () => {
         onSelectCoords={handleSelectCoords}
         onOpenMethodology={() => setIsMethodologyOpen(true)}
         onOpenReports={() => setIsReportOpen(true)}
+        onOpenAiDossier={() => setIsAiDossierOpen(true)}
         selectedCityName={profile.location.city}
       />
 
@@ -565,6 +568,7 @@ export const App: React.FC = () => {
                     onChangeRadius={handleRadiusChange}
                     onOpenSimulator={() => setCurrentTab('simulator')}
                     onOpenDashboard={() => setCurrentTab('dashboard')}
+                    onOpenAiDossier={() => setIsAiDossierOpen(true)}
                     onClose={() => setIsTargetPanelOpen(false)}
                     isAnalyzing={isAnalyzing}
                   />
@@ -810,6 +814,7 @@ export const App: React.FC = () => {
               onOpenReport={() => setIsReportOpen(true)}
               onOpenWhyHotModal={() => setIsWhyHotModalOpen(true)}
               onOpenEvidenceGraph={() => setIsEvidenceGraphOpen(true)}
+              onOpenAiDossier={() => setIsAiDossierOpen(true)}
               activeJobId={currentJob?.jobId}
               onChangeRadius={handleRadiusChange}
             />
@@ -861,6 +866,17 @@ export const App: React.FC = () => {
         onClose={() => setIsReportOpen(false)}
         profile={profile}
         hotspots={hotspots}
+      />
+
+      {/* AI Weather & Heat Analysis Dossier Modal (ChatGPT/Gemini Structure) */}
+      <AiWeatherHeatDossierModal
+        isOpen={isAiDossierOpen}
+        onClose={() => setIsAiDossierOpen(false)}
+        locationName={profile.location.name}
+        country={profile.location.country}
+        latitude={profile.location.latitude}
+        longitude={profile.location.longitude}
+        weather={profile.weather}
       />
 
       {/* Scientific Methodology Modal */}
