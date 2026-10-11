@@ -29,3 +29,10 @@ dist-ssr
 .env.production
 .env.development
 .env.*.local
+
+# AI Images
+src/assets/img/
+src/assets/img/location-covers/
+
+# Large docs and screenshots
+docs/
