@@ -3,12 +3,10 @@ import {
   Globe2,
   Search,
   Crosshair,
-  FileText,
   SlidersHorizontal,
   Layers,
   Activity,
   Info,
-  Clock,
   Flame,
   Check,
   AlertTriangle,
@@ -30,7 +28,6 @@ import {
   searchGlobalPlaces,
   GeocodingResult,
 } from "../../services/geocodingService";
-import { useConnectionStatus } from "../../services/connectionManager";
 
 interface HeaderProps {
   currentTab: "map" | "dashboard" | "simulator" | "timeline" | "reports";
@@ -70,8 +67,6 @@ export const Header: React.FC<HeaderProps> = ({
   const mobileSearchOverlayRef = useRef<HTMLDivElement>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
-
-  const { isOnline, isBackendConnected, aiEngine } = useConnectionStatus();
 
   // Debounced live geocoding across villages, towns, cities worldwide
   useEffect(() => {
@@ -431,68 +426,19 @@ export const Header: React.FC<HeaderProps> = ({
           <span>Simulator</span>
         </button>
 
-        <button
-          onClick={() => onTabChange("timeline")}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all ${
-            currentTab === "timeline"
-              ? "bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/25"
-              : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
-          }`}
-          title="Climate Projections & Timeline"
-        >
-          <Clock className="w-3.5 h-3.5" />
-          <span>Timeline</span>
-        </button>
       </nav>
 
       {/* Right Controls: Streamlined & Clutter-Free */}
       <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
-
-        {/* PDF Report Export Button */}
-        <button
-          onClick={() => onOpenReports()}
-          className="hidden sm:flex px-2.5 py-1.5 rounded-xl border border-slate-700/80 bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 hover:text-white items-center space-x-1.5 transition shadow-sm"
-          title="Export Heat Dossier & Mitigation Report"
-        >
-          <FileText className="w-3.5 h-3.5 text-slate-400" />
-          <span className="hidden md:inline">Report</span>
-          <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-slate-900 text-slate-300 border border-slate-700">
-            PDF
-          </span>
-        </button>
-
         {/* Scientific Methodology */}
         <button
           onClick={onOpenMethodology}
-          className="hidden md:flex p-2 rounded-xl border border-slate-700/80 bg-slate-900/90 hover:bg-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition shadow-sm items-center space-x-1"
+          className="hidden sm:flex px-2.5 py-1.5 rounded-xl border border-slate-700/80 bg-slate-900/90 hover:bg-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition shadow-sm items-center space-x-1.5"
           title="Scientific Principles & Methodology Documentation"
         >
           <Info className="w-3.5 h-3.5 text-teal-400" />
-          <span className="hidden xl:inline text-xs">Methodology</span>
+          <span>Methodology</span>
         </button>
-
-        {/* Live Backend Telemetry Pill */}
-        <div
-          className="flex items-center space-x-1.5 px-2 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono shadow-inner shrink-0"
-          title={isBackendConnected ? `Connected to Node.js backend port 5001 (${aiEngine || 'Active Engine'})` : 'Backend server disconnected'}
-        >
-          <span className="relative flex h-2 w-2">
-            {isBackendConnected ? (
-              <>
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
-              </>
-            ) : (
-              <>
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
-              </>
-            )}
-          </span>
-          <span className={isBackendConnected ? "text-emerald-400 font-bold hidden sm:inline" : "text-amber-400 font-bold hidden sm:inline"}>
-            {isBackendConnected ? "5001" : "Offline"}
-          </span>
-        </div>
 
         {/* Mobile Navigation Menu Toggle */}
         <button
@@ -559,34 +505,7 @@ export const Header: React.FC<HeaderProps> = ({
             <span>Intervention Simulator</span>
           </button>
 
-          <button
-            onClick={() => {
-              onTabChange("timeline");
-              setIsMobileMenuOpen(false);
-            }}
-            className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition border ${
-              currentTab === "timeline"
-                ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/50"
-                : "bg-slate-900/90 text-slate-300 border-slate-800/80 hover:bg-slate-850"
-            }`}
-          >
-            <Clock className="w-4 h-4 text-cyan-400" />
-            <span>Future Projections</span>
-          </button>
-
           <div className="pt-2 border-t border-slate-800 flex flex-col gap-1.5">
-
-            <button
-              onClick={() => {
-                onOpenReports();
-                setIsMobileMenuOpen(false);
-              }}
-              className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-200 bg-slate-900/90 border border-slate-800/80 hover:bg-slate-850 transition"
-            >
-              <FileText className="w-4 h-4 text-slate-400" />
-              <span>Generate PDF Heat Dossier</span>
-            </button>
-
             <button
               onClick={() => {
                 onOpenMethodology();
@@ -597,11 +516,6 @@ export const Header: React.FC<HeaderProps> = ({
               <Info className="w-4 h-4 text-teal-400" />
               <span>Scientific Principles & Methodology</span>
             </button>
-          </div>
-
-          <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400 font-mono">
-            <span>Status: {isBackendConnected ? "Backend Connected (Port 5001)" : "Backend Disconnected"}</span>
-            <span className="text-slate-500">v2.0.0</span>
           </div>
         </div>
       )}
