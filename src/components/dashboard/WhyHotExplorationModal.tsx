@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import {
   AIDiagnosis,
   HeatScoreData,
@@ -11,6 +12,7 @@ import {
   StructuredRecommendation,
 } from '../../types';
 import { HeatCausesAndSolutionsAccordion } from './HeatCausesAndSolutionsAccordion';
+import { UrbanHeatCausesAndMitigationGuide } from './UrbanHeatCausesAndMitigationGuide';
 import {
   Brain,
   X,
@@ -27,6 +29,7 @@ import {
   BookOpen,
   Info,
   CheckCircle,
+  ArrowRight,
 } from 'lucide-react';
 import { getHubDataCenterIntelligence } from '../../services/dataCenterHubs';
 
@@ -62,6 +65,8 @@ export const WhyHotExplorationModal: React.FC<WhyHotExplorationModalProps> = ({
   onOpenSimulatorWithAction,
 }) => {
   if (!isOpen) return null;
+
+  const [activeModalSection, setActiveModalSection] = useState<'diagnostic' | 'masterGuide'>('diagnostic');
 
   // Data center hubs get an explicit data center section plus a ranked physical signal.
   const hubDataCenterIntelligence = getHubDataCenterIntelligence({
@@ -105,14 +110,74 @@ export const WhyHotExplorationModal: React.FC<WhyHotExplorationModalProps> = ({
           </button>
         </div>
 
+        {/* Navigation Mode Bar */}
+        <div className="bg-slate-950 px-4 py-2 border-b border-slate-800 flex flex-wrap items-center justify-between shrink-0 gap-2">
+          <div className="flex items-center space-x-1 sm:space-x-2 text-xs font-bold">
+            <button
+              onClick={() => setActiveModalSection('diagnostic')}
+              className={`px-3 py-1.5 rounded-xl transition flex items-center space-x-1.5 ${
+                activeModalSection === 'diagnostic'
+                  ? 'bg-slate-800 text-emerald-400 border border-slate-700 shadow-sm'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
+              }`}
+            >
+              <Brain className="w-3.5 h-3.5" />
+              <span>Target Area Diagnostics ({location.city})</span>
+            </button>
+            <button
+              onClick={() => setActiveModalSection('masterGuide')}
+              className={`px-3 py-1.5 rounded-xl transition flex items-center space-x-1.5 ${
+                activeModalSection === 'masterGuide'
+                  ? 'bg-emerald-500 text-slate-950 font-black shadow-md shadow-emerald-500/20'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Major Causes &amp; Reduction Guide (7 Causes with Images)</span>
+            </button>
+          </div>
+        </div>
+
         {/* Content Body */}
-        <div className="p-6 overflow-y-auto space-y-6 text-xs text-slate-300 leading-relaxed">
-          {/* Main AI Explanation Statement (Section 24 specification) */}
-          <div className="bg-slate-950 p-4.5 rounded-xl border border-slate-800 space-y-3">
-            <div className="flex items-center space-x-2 text-xs font-mono font-bold text-orange-400 uppercase tracking-wider">
-              <Sparkles className="w-4 h-4" />
-              <span>Multi-Source Synthesis</span>
+        {activeModalSection === 'masterGuide' ? (
+          <div className="p-6 overflow-y-auto space-y-6">
+            <UrbanHeatCausesAndMitigationGuide
+              onOpenSimulatorWithAction={onOpenSimulatorWithAction}
+              cityName={location.city}
+            />
+          </div>
+        ) : (
+          <div className="p-6 overflow-y-auto space-y-6 text-xs text-slate-300 leading-relaxed">
+            {/* Guide Quick Access Callout */}
+            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-emerald-950/60 via-slate-900 to-slate-900 border border-emerald-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
+                  <BookOpen className="w-4 h-4" />
+                </div>
+                <div>
+                  <strong className="text-xs font-bold text-white block">
+                    EPA &amp; IPCC Guide: Major Causes of City Heat &amp; How to Reduce Them
+                  </strong>
+                  <p className="text-[11px] text-slate-400">
+                    Explore roads, roofs, traffic, industry, trees, canyons, and data centers illustrated with real images, overlooked causes, and priority ladders.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveModalSection('masterGuide')}
+                className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center space-x-1 transition shrink-0 shadow-lg"
+              >
+                <span>Open Full Guide</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
             </div>
+
+            {/* Main AI Explanation Statement (Section 24 specification) */}
+            <div className="bg-slate-950 p-4.5 rounded-xl border border-slate-800 space-y-3">
+              <div className="flex items-center space-x-2 text-xs font-mono font-bold text-orange-400 uppercase tracking-wider">
+                <Sparkles className="w-4 h-4" />
+                <span>Multi-Source Synthesis</span>
+              </div>
 
             <p className="text-slate-200 text-sm leading-relaxed font-sans">
               The selected area in <strong>{location.city}</strong> has elevated heat conditions associated with a combination of regional climate, built-up surfaces, limited vegetation, and paved areas.
@@ -291,9 +356,10 @@ export const WhyHotExplorationModal: React.FC<WhyHotExplorationModalProps> = ({
             </p>
           </div>
         </div>
+      )}
 
-        {/* Footer */}
-        <div className="p-4 bg-slate-950 border-t border-slate-800 flex justify-end shrink-0">
+      {/* Footer */}
+      <div className="p-4 bg-slate-950 border-t border-slate-800 flex justify-end shrink-0">
           <button
             onClick={onClose}
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl transition shadow"

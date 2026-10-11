@@ -59,15 +59,43 @@
   border: 1px solid #334155 !important;
 }
 
+.leaflet-top.leaflet-right .leaflet-control-zoom {
+  margin-top: 114px !important;
+  margin-right: 16px !important;
+  border: 1px solid #334155 !important;
+  border-radius: 0.75rem !important;
+  overflow: hidden !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6) !important;
+}
+
 .leaflet-control-zoom a {
-  background-color: #1e293b !important;
+  background-color: rgba(15, 23, 42, 0.95) !important;
+  backdrop-filter: blur(8px) !important;
   color: #cbd5e1 !important;
   border-color: #334155 !important;
+  width: 32px !important;
+  height: 32px !important;
+  line-height: 32px !important;
 }
 
 .leaflet-control-zoom a:hover {
   background-color: #334155 !important;
-  color: #f8fafc !important;
+  color: #10b981 !important;
+}
+
+.custom-deck-scrollbar::-webkit-scrollbar {
+  height: 5px;
+}
+.custom-deck-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 4px;
+}
+.custom-deck-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(51, 65, 85, 0.8);
+  border-radius: 4px;
+}
+.custom-deck-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 185, 129, 0.8);
 }
 
 .leaflet-control-attribution {

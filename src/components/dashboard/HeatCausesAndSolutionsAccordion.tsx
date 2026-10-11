@@ -9,6 +9,33 @@ import {
   LocationData,
 } from '../../types';
 import { getHubDataCenterIntelligence } from '../../services/dataCenterHubs';
+import { MAJOR_URBAN_HEAT_CAUSES } from '../../data/urbanHeatCausesData';
+
+const getMatchedCauseImage = (cause: HeatContributor) => {
+  const text = `${cause.factor} ${cause.label} ${cause.possibleReason || ''}`.toLowerCase();
+  if (text.includes('road') || text.includes('paved') || text.includes('asphalt') || text.includes('impervious')) {
+    return MAJOR_URBAN_HEAT_CAUSES[0];
+  }
+  if (text.includes('roof') || text.includes('albedo') || text.includes('building') || text.includes('concrete')) {
+    return MAJOR_URBAN_HEAT_CAUSES[1];
+  }
+  if (text.includes('traffic') || text.includes('vehicle') || text.includes('population') || text.includes('transport')) {
+    return MAJOR_URBAN_HEAT_CAUSES[2];
+  }
+  if (text.includes('industry') || text.includes('factory') || text.includes('power plant') || text.includes('boiler')) {
+    return MAJOR_URBAN_HEAT_CAUSES[3];
+  }
+  if (text.includes('tree') || text.includes('vegetation') || text.includes('canopy') || text.includes('green') || text.includes('forest')) {
+    return MAJOR_URBAN_HEAT_CAUSES[4];
+  }
+  if (text.includes('canyon') || text.includes('airflow') || text.includes('wind') || text.includes('svf') || text.includes('geometry')) {
+    return MAJOR_URBAN_HEAT_CAUSES[5];
+  }
+  if (text.includes('data center') || text.includes('datacenter') || text.includes('server') || text.includes('it load')) {
+    return MAJOR_URBAN_HEAT_CAUSES[6];
+  }
+  return undefined;
+};
 import {
   ChevronDown,
   Flame,
@@ -568,6 +595,28 @@ export const HeatCausesAndSolutionsAccordion: React.FC<HeatCausesAndSolutionsAcc
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {/* LEFT PANEL: The Cause (Why it is hot) */}
                     <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 space-y-3">
+                      {(() => {
+                        const matchedGuideCause = getMatchedCauseImage(cause);
+                        return matchedGuideCause ? (
+                          <div className="relative rounded-xl overflow-hidden border border-slate-700/80 shadow-md group">
+                            <img
+                              src={matchedGuideCause.imageUrl}
+                              alt={matchedGuideCause.title}
+                              className="w-full h-32 object-cover transition-transform duration-300 group-hover:scale-105"
+                              loading="lazy"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = 'none';
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/25 to-transparent" />
+                            <div className="absolute bottom-1.5 left-2 right-2 flex items-center justify-between text-[10px] text-slate-300">
+                              <span className="font-bold text-white drop-shadow truncate">{matchedGuideCause.title}</span>
+                              <span className="font-mono text-emerald-400 drop-shadow shrink-0 ml-1">Cause #{matchedGuideCause.number}</span>
+                            </div>
+                          </div>
+                        ) : null;
+                      })()}
+
                       <div className="flex items-center justify-between pb-2 border-b border-slate-800">
                         <span className="font-bold text-orange-400 flex items-center space-x-1.5">
                           <Flame className="w-3.5 h-3.5" />

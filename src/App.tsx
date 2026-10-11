@@ -50,6 +50,7 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
   Clock,
 } from 'lucide-react';
 import { getHeatCategoryColor } from './services/heatModel';
@@ -102,6 +103,14 @@ export const App: React.FC = () => {
   const [selectedCoordinates, setSelectedCoordinates] = useState<{ lat: number; lng: number }>(INITIAL_COORDS);
   const [isCommandPanelCollapsed, setIsCommandPanelCollapsed] = useState(false);
   const [isHotspotsDeckCollapsed, setIsHotspotsDeckCollapsed] = useState(false);
+  const cityCarouselRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollCityCarousel = (dir: 'left' | 'right') => {
+    if (cityCarouselRef.current) {
+      const amount = dir === 'left' ? -350 : 350;
+      cityCarouselRef.current.scrollBy({ left: amount, behavior: 'smooth' });
+    }
+  };
 
   // Fetch real-time planetary observation hubs and initial location weather from Open-Meteo
   useEffect(() => {
@@ -247,6 +256,8 @@ export const App: React.FC = () => {
     let city = hotspots.find((c) => c.id === cityId);
     if (!city) {
       const fallbackHubs = [
+        { id: 'london', name: 'London', country: 'United Kingdom', lat: 51.5074, lng: -0.1278 },
+        { id: 'delhi', name: 'Delhi', country: 'India', lat: 28.6139, lng: 77.2090 },
         { id: 'kuwaitcity', name: 'Kuwait City', country: 'Kuwait', lat: 29.3759, lng: 47.9774 },
         { id: 'jacobabad', name: 'Jacobabad', country: 'Pakistan', lat: 28.2810, lng: 68.4388 },
         { id: 'phoenix', name: 'Phoenix', country: 'United States', lat: 33.4484, lng: -112.0740 },
@@ -528,20 +539,28 @@ export const App: React.FC = () => {
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleSelectCity('dubai')}
-                          className="flex-1 py-1.5 px-2 text-center font-bold text-[11px] rounded-xl bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-md shadow-emerald-500/20 transition flex items-center justify-center space-x-1"
-                        >
-                          <span>Dubai 🇦🇪 (43.8°)</span>
-                          <ChevronRight className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => handleSelectCity('delhi')}
-                          className="flex-1 py-1.5 px-2 text-center font-bold text-[11px] rounded-xl bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-700 transition flex items-center justify-center space-x-1"
-                        >
-                          <span>Delhi 🇮🇳 (41.2°)</span>
-                          <ChevronRight className="w-3 h-3" />
-                        </button>
+                        {(() => {
+                          const londonLive = hotspots.find((h) => h.id === 'london');
+                          const delhiLive = hotspots.find((h) => h.id === 'delhi');
+                          return (
+                            <>
+                              <button
+                                onClick={() => handleSelectCity('london')}
+                                className="flex-1 py-1.5 px-2 text-center font-bold text-[11px] rounded-xl bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-700 hover:border-slate-500 transition flex items-center justify-center space-x-1"
+                              >
+                                <span>London 🇬🇧 ({londonLive ? `${londonLive.airTemp}°` : '18.4°'})</span>
+                                <ChevronRight className="w-3 h-3 text-slate-400" />
+                              </button>
+                              <button
+                                onClick={() => handleSelectCity('delhi')}
+                                className="flex-1 py-1.5 px-2 text-center font-bold text-[11px] rounded-xl bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-md shadow-emerald-500/20 transition flex items-center justify-center space-x-1"
+                              >
+                                <span>Delhi 🇮🇳 ({delhiLive ? `${delhiLive.airTemp}°` : '38.5°'})</span>
+                                <ChevronRight className="w-3 h-3" />
+                              </button>
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   )}
@@ -713,11 +732,10 @@ export const App: React.FC = () => {
                       <button
                         key={tab.id}
                         onClick={() => setPopularCityFilter(tab.id as any)}
-                        className={`px-2.5 py-1 rounded-lg transition whitespace-nowrap ${
-                          popularCityFilter === tab.id
+                        className={`px-2.5 py-1 rounded-lg transition whitespace-nowrap ${popularCityFilter === tab.id
                             ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/20'
                             : 'bg-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                        }`}
+                          }`}
                       >
                         {tab.label}
                       </button>
@@ -726,11 +744,10 @@ export const App: React.FC = () => {
                     <button
                       onClick={handleResetToGlobal}
                       title="Reset map view to the whole globe"
-                      className={`ml-1 px-2.5 py-1 rounded-lg flex items-center space-x-1 transition border shrink-0 ${
-                        isGlobalOverview
+                      className={`ml-1 px-2.5 py-1 rounded-lg flex items-center space-x-1 transition border shrink-0 ${isGlobalOverview
                           ? 'bg-teal-500/20 text-teal-300 border-teal-500/40 font-bold'
                           : 'bg-slate-900 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800'
-                      }`}
+                        }`}
                     >
                       <Globe2 className="w-3 h-3" />
                       <span className="hidden sm:inline">World View</span>
@@ -746,59 +763,84 @@ export const App: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Horizontal City Cards Carousel */}
-                <div className="flex items-center space-x-2 sm:space-x-2.5 overflow-x-auto pb-1 pt-0.5 no-scrollbar">
-                  {filteredPopularCities.length === 0 ? (
-                    <div className="flex items-center space-x-2.5 py-2 px-3 text-xs font-mono text-emerald-400 bg-slate-900/60 rounded-xl border border-slate-800">
-                      <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
-                      <span>Connecting to live Open-Meteo atmospheric surveillance network...</span>
-                    </div>
-                  ) : (
-                    filteredPopularCities.map((city, idx) => {
-                    const isSelected = !isGlobalOverview && city.id === profile.location.id;
-                    const colors = getHeatCategoryColor(city.category);
-                    const flag = getCountryEmoji(city.country);
+                {/* Horizontal City Cards Carousel with Smooth Scrolling Controls */}
+                <div className="relative group/carousel flex items-center">
+                  <button
+                    onClick={() => scrollCityCarousel('left')}
+                    title="Scroll hotspots left"
+                    className="hidden sm:flex items-center justify-center absolute -left-2 z-10 w-7 h-7 rounded-full bg-slate-900/95 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white shadow-xl transition opacity-80 hover:opacity-100"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
 
-                    return (
-                      <button
-                        key={city.id}
-                        onClick={() => handleSelectCity(city.id)}
-                        className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-medium flex items-center space-x-2 sm:space-x-2.5 shrink-0 transition-all border group ${
-                          isSelected
-                            ? 'bg-slate-900 border-emerald-400 shadow-lg shadow-emerald-500/20 scale-102 ring-1 ring-emerald-400'
-                            : 'bg-slate-900/90 border-slate-800 hover:border-slate-600 hover:bg-slate-850 hover:scale-102'
-                        }`}
-                      >
-                        <span className="text-[10px] font-mono font-bold text-slate-400">
-                          #{idx + 1}
-                        </span>
-                        <span className="text-base">{flag}</span>
-                        <div className="text-left">
-                          <div className="flex items-center space-x-1.5">
-                            <span className="text-slate-100 font-bold group-hover:text-emerald-300 transition-colors">
-                              {city.name}
+                  <div
+                    ref={cityCarouselRef}
+                    onWheel={(e) => {
+                      if (e.deltaY !== 0) {
+                        e.currentTarget.scrollLeft += e.deltaY;
+                      }
+                    }}
+                    className="flex items-center space-x-2 sm:space-x-2.5 overflow-x-auto pb-1.5 pt-0.5 custom-deck-scrollbar select-none w-full scroll-smooth px-1"
+                  >
+                    {filteredPopularCities.length === 0 ? (
+                      <div className="flex items-center space-x-2.5 py-2 px-3 text-xs font-mono text-emerald-400 bg-slate-900/60 rounded-xl border border-slate-800">
+                        <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+                        <span>Connecting to live Open-Meteo atmospheric surveillance network...</span>
+                      </div>
+                    ) : (
+                      filteredPopularCities.map((city, idx) => {
+                        const isSelected = !isGlobalOverview && city.id === profile.location.id;
+                        const colors = getHeatCategoryColor(city.category);
+                        const flag = getCountryEmoji(city.country);
+
+                        return (
+                          <button
+                            key={city.id}
+                            onClick={() => handleSelectCity(city.id)}
+                            className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-medium flex items-center space-x-2 sm:space-x-2.5 shrink-0 transition-all border group ${isSelected
+                                ? 'bg-slate-900 border-emerald-400 shadow-lg shadow-emerald-500/20 scale-102 ring-1 ring-emerald-400'
+                                : 'bg-slate-900/90 border-slate-800 hover:border-slate-600 hover:bg-slate-850 hover:scale-102'
+                              }`}
+                          >
+                            <span className="text-[10px] font-mono font-bold text-slate-400">
+                              #{idx + 1}
                             </span>
-                            <span
-                              className="w-1.5 h-1.5 rounded-full"
-                              style={{ backgroundColor: colors.hex }}
-                            ></span>
-                          </div>
-                          <div className="text-[10px] text-slate-400 font-mono flex items-center space-x-1">
-                            <span>{city.country}</span>
-                          </div>
-                        </div>
+                            <span className="text-base">{flag}</span>
+                            <div className="text-left">
+                              <div className="flex items-center space-x-1.5">
+                                <span className="text-slate-100 font-bold group-hover:text-emerald-300 transition-colors">
+                                  {city.name}
+                                </span>
+                                <span
+                                  className="w-1.5 h-1.5 rounded-full"
+                                  style={{ backgroundColor: colors.hex }}
+                                ></span>
+                              </div>
+                              <div className="text-[10px] text-slate-400 font-mono flex items-center space-x-1">
+                                <span>{city.country}</span>
+                              </div>
+                            </div>
 
-                        <div className="text-right pl-1 border-l border-slate-800">
-                          <span className="font-mono font-black text-orange-400 text-xs block">
-                            {city.airTemp}°C
-                          </span>
-                          <span className="text-[9px] font-mono text-rose-400 block">
-                            {city.heatIndex}° FL
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  }))}
+                            <div className="text-right pl-1 border-l border-slate-800">
+                              <span className="font-mono font-black text-orange-400 text-xs block">
+                                {city.airTemp}°C
+                              </span>
+                              <span className="text-[9px] font-mono text-rose-400 block">
+                                {city.heatIndex}° FL
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      }))}
+                  </div>
+
+                  <button
+                    onClick={() => scrollCityCarousel('right')}
+                    title="Scroll hotspots right"
+                    className="hidden sm:flex items-center justify-center absolute -right-2 z-10 w-7 h-7 rounded-full bg-slate-900/95 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white shadow-xl transition opacity-80 hover:opacity-100"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             )}
@@ -972,44 +1014,40 @@ export const App: React.FC = () => {
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800/90 py-1.5 px-3 flex items-center justify-around shadow-[0_-10px_25px_rgba(0,0,0,0.8)]">
         <button
           onClick={() => setCurrentTab('map')}
-          className={`flex flex-col items-center py-1 px-3 rounded-xl transition ${
-            currentTab === 'map'
+          className={`flex flex-col items-center py-1 px-3 rounded-xl transition ${currentTab === 'map'
               ? 'text-emerald-400 font-bold bg-emerald-500/15 border border-emerald-500/30'
               : 'text-slate-400 hover:text-slate-200'
-          }`}
+            }`}
         >
           <Globe2 className="w-4 h-4" />
           <span className="text-[10px] mt-0.5 font-medium">Map</span>
         </button>
         <button
           onClick={() => setCurrentTab('dashboard')}
-          className={`flex flex-col items-center py-1 px-3 rounded-xl transition ${
-            currentTab === 'dashboard'
+          className={`flex flex-col items-center py-1 px-3 rounded-xl transition ${currentTab === 'dashboard'
               ? 'text-emerald-400 font-bold bg-emerald-500/15 border border-emerald-500/30'
               : 'text-slate-400 hover:text-slate-200'
-          }`}
+            }`}
         >
           <Sparkles className="w-4 h-4" />
           <span className="text-[10px] mt-0.5 font-medium">AI Heat</span>
         </button>
         <button
           onClick={() => setCurrentTab('simulator')}
-          className={`flex flex-col items-center py-1 px-3 rounded-xl transition ${
-            currentTab === 'simulator'
+          className={`flex flex-col items-center py-1 px-3 rounded-xl transition ${currentTab === 'simulator'
               ? 'text-orange-400 font-bold bg-orange-500/15 border border-orange-500/30'
               : 'text-slate-400 hover:text-slate-200'
-          }`}
+            }`}
         >
           <SlidersHorizontal className="w-4 h-4" />
           <span className="text-[10px] mt-0.5 font-medium">Simulator</span>
         </button>
         <button
           onClick={() => setCurrentTab('timeline')}
-          className={`flex flex-col items-center py-1 px-3 rounded-xl transition ${
-            currentTab === 'timeline'
+          className={`flex flex-col items-center py-1 px-3 rounded-xl transition ${currentTab === 'timeline'
               ? 'text-cyan-400 font-bold bg-cyan-500/15 border border-cyan-500/30'
               : 'text-slate-400 hover:text-slate-200'
-          }`}
+            }`}
         >
           <Clock className="w-4 h-4" />
           <span className="text-[10px] mt-0.5 font-medium">Timeline</span>

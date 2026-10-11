@@ -202,8 +202,11 @@ export const SelectedLocationPanel: React.FC<SelectedLocationPanelProps> = ({
         </div>
 
         <div className="grid grid-cols-4 gap-1.5 text-center">
-          {/* Air Temp with High & Low */}
-          <div className="bg-slate-900/90 p-2 rounded-xl border border-slate-800 flex flex-col justify-between">
+          {/* Air Temp */}
+          <div
+            className="bg-slate-900/90 p-2 rounded-xl border border-slate-800 flex flex-col justify-between"
+            title={`Air Temperature: ${airTemp}°C (High: ${tempHigh}°C, Low: ${tempLow}°C)`}
+          >
             <span className="text-[10px] font-mono text-slate-400 flex items-center justify-center space-x-1">
               <Thermometer className="w-3 h-3 text-orange-400" />
               <span>Temp</span>
@@ -211,12 +214,7 @@ export const SelectedLocationPanel: React.FC<SelectedLocationPanelProps> = ({
             <div className="text-base sm:text-lg font-black font-mono text-orange-400 my-0.5">
               {airTemp}°C
             </div>
-            <div className="flex items-center justify-center space-x-1 text-[9px] font-mono font-bold">
-              <span className="text-rose-400" title="Today's High">H:{tempHigh}°</span>
-              <span className="text-slate-600">/</span>
-              <span className="text-cyan-400" title="Today's Low">L:{tempLow}°</span>
-            </div>
-            <span className="text-[8px] text-slate-400 font-mono mt-0.5">
+            <span className="text-[9px] text-slate-400 font-mono">
               {Math.round((airTemp * 9) / 5 + 32)}°F
             </span>
           </div>

@@ -21,13 +21,16 @@ import {
   ArrowRight,
   Layers,
   ChevronRight,
-  Clock,
   AlertTriangle,
   Server,
   ExternalLink,
+  BookOpen,
+  ChevronDown,
+  Clock,
 } from 'lucide-react';
 import { getHeatCategoryColor } from '../../services/heatModel';
 import { getHubDataCenterIntelligence } from '../../services/dataCenterHubs';
+import { UrbanHeatCausesAndMitigationGuide } from './UrbanHeatCausesAndMitigationGuide';
 
 interface LocationDashboardProps {
   profile: FullLocationProfile;
@@ -48,6 +51,7 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
   onChangeRadius,
 }) => {
   const [dashboardMode, setDashboardMode] = useState<'ai-dossier' | 'geospatial'>('ai-dossier');
+  const [isCausesGuideExpanded, setIsCausesGuideExpanded] = useState(false);
   const { location, weather, heatScore } = profile;
   const heatColor = getHeatCategoryColor(heatScore.category);
 
@@ -431,21 +435,53 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
         </div>
       </div>
 
-      {/* 3. PART 2: WHY IS THIS PLACE OVERHEATING? (Top 3 Direct Drivers) */}
-      <div className="space-y-3">
-        <div className="flex items-center space-x-2">
-          <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30">
-            <AlertTriangle className="w-4 h-4" />
+      {/* 3. PART 2: WHY IS THIS PLACE OVERHEATING? (Top Direct Drivers & 7-Cause Guide) */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center space-x-2">
+            <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30">
+              <AlertTriangle className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-extrabold text-white">
+                Why Is This Place Overheating?
+              </h2>
+              <p className="text-xs text-slate-400">
+                Primary physical mechanisms driving extreme temperatures across {location.city}.
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-base sm:text-lg font-extrabold text-white">
-              Why Is This Place Overheating?
-            </h2>
-            <p className="text-xs text-slate-400">
-              The 3 primary physical mechanisms driving extreme temperatures here.
-            </p>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsCausesGuideExpanded(!isCausesGuideExpanded)}
+              className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center space-x-1.5 transition shadow-lg"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>{isCausesGuideExpanded ? 'Hide Visual Causes Guide' : 'Explore All 7 Causes (Images & Solutions)'}</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isCausesGuideExpanded ? 'rotate-180' : ''}`} />
+            </button>
+            {onOpenWhyHotModal && (
+              <button
+                onClick={onOpenWhyHotModal}
+                className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 font-bold text-xs flex items-center space-x-1 transition"
+              >
+                <span>AI Modal</span>
+                <ArrowRight className="w-3 h-3 text-emerald-400" />
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Expandable Comprehensive 7-Cause Guide with Images & EPA Guidance */}
+        {isCausesGuideExpanded && (
+          <div className="p-4 sm:p-5 bg-slate-950 rounded-3xl border border-slate-800 shadow-2xl animate-in fade-in duration-300">
+            <UrbanHeatCausesAndMitigationGuide
+              onOpenSimulatorWithAction={onOpenSimulatorWithAction}
+              cityName={location.city}
+            />
+          </div>
+        )}
 
         <div className={`grid grid-cols-1 gap-3 ${hubDataCenterIntelligence ? 'md:grid-cols-2 xl:grid-cols-4' : 'md:grid-cols-3'}`}>
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-1.5">

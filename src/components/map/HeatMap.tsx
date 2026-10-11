@@ -661,7 +661,7 @@ export const HeatMap: React.FC<HeatMapProps> = ({
       </div>
 
       {/* Top-Right World Overview Reset HUD */}
-      <div className="absolute top-16 right-3 z-20 hidden sm:flex flex-col space-y-2">
+      <div className="absolute top-16 right-4 z-20 hidden sm:flex flex-col space-y-2">
         <button
           onClick={() => onResetToGlobal?.()}
           title="Full Zoom Out to World Heat Overview (All 32 Global Hotspots)"
