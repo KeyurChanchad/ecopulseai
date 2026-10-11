@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { initDatabase, isMongoConnected } from "./db/mongoClient.js";
 import { jobsRouter } from "./routes/jobs.js";
 import { geoRouter } from "./routes/geo.js";
+import { weatherRouter } from "./routes/weather.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -45,6 +46,7 @@ app.get("/api/health", healthHandler);
 // Mount API routes
 app.use("/api/jobs", jobsRouter);
 app.use("/api/geo", geoRouter);
+app.use("/api/weather", weatherRouter);
 
 // Handle client-side SPA routing
 app.get("*", (req, res) => {
@@ -62,7 +64,8 @@ async function startServer() {
       `   Job Creation: POST http://localhost:${port}/api/jobs/create`,
     );
     console.log(
-      `   GIS 2dsphere: GET  http://localhost:${port}/api/geo/near?lng=72.57&lat=23.02`,
+      `   GIS 2dsphere: GET  http://localhost:${port}/api/geo/near?lng=72.57&lat=23.02
+     Weather Test: GET  http://localhost:${port}/api/weather?lat=23.02&lng=72.57`,
     );
     console.log(`======================================================\n`);
   });

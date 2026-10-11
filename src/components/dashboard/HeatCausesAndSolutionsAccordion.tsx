@@ -6,7 +6,9 @@ import {
   IndustryIntelligenceReport,
   DataCenterIntelligenceReport,
   StructuredRecommendation,
+  LocationData,
 } from '../../types';
+import { getHubDataCenterIntelligence } from '../../services/dataCenterHubs';
 import {
   ChevronDown,
   Flame,
@@ -45,6 +47,7 @@ interface HeatCausesAndSolutionsAccordionProps {
   industryIntelligence?: IndustryIntelligenceReport;
   dataCenterIntelligence?: DataCenterIntelligenceReport;
   structuredRecommendations?: StructuredRecommendation[];
+  location?: LocationData;
   onOpenSimulatorWithAction?: (rec: Recommendation) => void;
   defaultExpandedIndex?: number;
 }
@@ -56,10 +59,30 @@ export const HeatCausesAndSolutionsAccordion: React.FC<HeatCausesAndSolutionsAcc
   industryIntelligence,
   dataCenterIntelligence,
   structuredRecommendations,
+  location,
   onOpenSimulatorWithAction,
   defaultExpandedIndex = 0,
 }) => {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(defaultExpandedIndex);
+
+  // The Data Center Intelligence module is exclusive to approved data center hubs.
+  // Places outside the registry never receive a data center section, even when the
+  // backend reported elevated grid power density.
+  const hubDataCenterIntelligence = location
+    ? getHubDataCenterIntelligence({
+        locationName: location.name,
+        city: location.city,
+        country: location.country,
+        address: location.address,
+        latitude: location.latitude,
+        longitude: location.longitude,
+      })
+    : undefined;
+  const effectiveDataCenterIntelligence = hubDataCenterIntelligence
+    ? hubDataCenterIntelligence
+    : dataCenterIntelligence?.detected
+      ? dataCenterIntelligence
+      : undefined;
 
   const toggleAccordion = (index: number) => {
     setExpandedIndex(expandedIndex === index ? null : index);
@@ -388,8 +411,8 @@ export const HeatCausesAndSolutionsAccordion: React.FC<HeatCausesAndSolutionsAcc
         </div>
       )}
 
-      {/* Specialized Data Center Intelligence Module (Section 6 & 12) */}
-      {dataCenterIntelligence && dataCenterIntelligence.detected && (
+      {/* Specialized Data Center Intelligence Module (Section 6 & 12) — approved data center hubs only */}
+      {effectiveDataCenterIntelligence && (
         <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-cyan-950/30 border border-cyan-500/40 rounded-2xl p-4 space-y-3 shadow-lg">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-cyan-500/20 pb-2">
             <div className="flex items-center space-x-2">
@@ -398,19 +421,19 @@ export const HeatCausesAndSolutionsAccordion: React.FC<HeatCausesAndSolutionsAcc
               </div>
               <div>
                 <h4 className="text-xs sm:text-sm font-bold text-cyan-200">
-                  Data Center Intelligence: {dataCenterIntelligence.facilityName}
+                  Data Center Intelligence: {effectiveDataCenterIntelligence.facilityName}
                 </h4>
                 <p className="text-[11px] text-cyan-400/80 font-mono">
-                  Computing IT Load: ~{dataCenterIntelligence.estimatedITLoadMW} MW • {dataCenterIntelligence.coolingArchitecture}
+                  Computing IT Load: ~{effectiveDataCenterIntelligence.estimatedITLoadMW} MW • {effectiveDataCenterIntelligence.coolingArchitecture}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-700 font-bold">
-                PUE: {dataCenterIntelligence.efficiencyMetrics.pueEstimate}
+                PUE: {effectiveDataCenterIntelligence.efficiencyMetrics.pueEstimate}
               </span>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-teal-950/80 text-teal-300 border border-teal-700 font-bold">
-                WUE: {dataCenterIntelligence.efficiencyMetrics.wueEstimate} L/kWh
+                WUE: {effectiveDataCenterIntelligence.efficiencyMetrics.wueEstimate} L/kWh
               </span>
             </div>
           </div>
@@ -421,7 +444,7 @@ export const HeatCausesAndSolutionsAccordion: React.FC<HeatCausesAndSolutionsAcc
                 Liquid Cooling &amp; Optimization
               </span>
               <ul className="space-y-1 text-slate-300 font-sans">
-                {dataCenterIntelligence.coolingOptimizationOptions.map((opt, oIdx) => (
+                {effectiveDataCenterIntelligence.coolingOptimizationOptions.map((opt, oIdx) => (
                   <li key={oIdx} className="flex items-start gap-1.5">
                     <span className="text-cyan-400">▹</span>
                     <span>{opt}</span>
@@ -435,10 +458,10 @@ export const HeatCausesAndSolutionsAccordion: React.FC<HeatCausesAndSolutionsAcc
                 District Waste-Heat Reuse &amp; Storage
               </span>
               <p className="text-slate-200 leading-relaxed font-sans">
-                {dataCenterIntelligence.wasteHeatReuseFeasibility}
+                {effectiveDataCenterIntelligence.wasteHeatReuseFeasibility}
               </p>
               <p className="text-[11px] text-slate-400 font-mono pt-1">
-                Thermal PCM Buffering: {dataCenterIntelligence.materialsEvaluationNote}
+                Thermal PCM Buffering: {effectiveDataCenterIntelligence.materialsEvaluationNote}
               </p>
             </div>
           </div>

@@ -81,7 +81,7 @@ export const FuturePredictionCard: React.FC<FuturePredictionCardProps> = ({
           <span className="text-[11px] font-mono text-slate-400">Model: EcoPulse Climatology V2</span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           {projections.timeline.map((point) => (
             <div key={point.period} className="bg-slate-900/60 p-3 rounded-lg border border-slate-800">
               <div className="flex items-center justify-between text-xs mb-1.5">

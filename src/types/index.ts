@@ -37,24 +37,39 @@ export interface LocationData {
 }
 
 export interface WeatherObservation {
-  airTemperature: number; // Celsius
-  feelsLike: number;      // Heat Index Celsius
-  surfaceTemperature: number; // Land Surface Temperature (LST) Celsius
-  humidity: number;       // %
-  windSpeed: number;      // km/h
-  windDirection: string;
-  solarRadiation: number; // W/m²
-  uvIndex: number;
-  cloudCover: number;     // %
-  precipitationMm?: number;
-  condition?: string;
-  pressureHpa: number;
-  aqi: number;            // 0-500
-  aqiStatus: string;
-  uhiDelta: number;       // Urban Heat Island delta (+°C above rural background)
-  timestamp: string;
-  lstObservationDate?: string;
-  lstSensor?: string;
+  airTemperature: number;     // Celsius — from Open-Meteo 2m air temp
+  feelsLike: number;          // Celsius — apparent temperature (heat index / wind chill)
+  surfaceTemperature: number; // Celsius — MODELLED estimate (NOT satellite LST)
+  humidity: number;           // % relative humidity
+  windSpeed: number;          // km/h at 10m height
+  windDirection: string;      // 16-point compass cardinal
+  solarRadiation: number;     // W/m² shortwave downward radiation
+  uvIndex: number;            // UV index (0-12+)
+  cloudCover: number;         // %
+  precipitationMm?: number;   // mm/h precipitation
+  condition?: string;         // WMO weather code description
+  pressureHpa: number;        // hPa mean sea level pressure
+  windGusts?: number;         // km/h wind gusts (optional, from Open-Meteo)
+  dewPoint?: number;          // Celsius dew point temperature
+  aqi: number;                // 0-500 US AQI (0 if DATA_UNAVAILABLE)
+  aqiStatus: string;          // US EPA AQI category or 'DATA_UNAVAILABLE'
+  uhiDelta: number;           // Urban Heat Island delta estimate (+°C above rural background) [MODELLED]
+  timestamp: string;          // ISO8601 observation time from provider
+  warmingAnomaly?: number;    // Global warming anomaly vs pre-industrial baseline (IPCC AR6 avg: ~1.2°C)
+  baselineTemp?: number;      // Estimated pre-industrial baseline temperature
+  isRealTime?: boolean;       // True if observation is from last 90 minutes
+  stationName?: string;       // Data provider and data type label
+  lstObservationDate?: string; // Surface temp provenance note
+  lstSensor?: string;          // Surface temp source note (always MODELLED for now)
+  // Data provenance
+  weatherDataType?: string;   // 'LIVE_OBSERVATION' | 'RECENT_OBSERVATION' | 'MODELLED' | 'DATA_UNAVAILABLE'
+  aqiSource?: string;         // Air quality data source
+  aqiDataType?: string;       // AQ data type
+  // Low and High Temperatures
+  tempHigh?: number;          // Celsius — today's maximum temperature
+  tempLow?: number;           // Celsius — today's minimum temperature
+  accuWeatherUrl?: string;    // Direct AccuWeather reference URL if available
+  weatherProvider?: string;   // Provider name (Open-Meteo, AccuWeather, etc.)
 }
 
 export interface HeatScoreData {

@@ -42,7 +42,7 @@ export const LayerControlPanel: React.FC<LayerControlPanelProps> = ({
   ] as const;
 
   return (
-    <div className="fixed top-16 right-0 bottom-0 w-80 sm:w-96 bg-slate-900/95 backdrop-blur-md border-l border-slate-800 shadow-2xl z-30 flex flex-col overflow-hidden">
+    <div className="fixed top-16 right-0 bottom-0 w-full sm:w-96 max-w-sm bg-slate-900/95 backdrop-blur-md border-l border-slate-800 shadow-2xl z-40 flex flex-col overflow-hidden animate-in slide-in-from-right duration-200">
       {/* Panel Header */}
       <div className="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between shrink-0">
         <div className="flex items-center space-x-2">

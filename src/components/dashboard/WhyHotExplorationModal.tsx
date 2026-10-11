@@ -28,6 +28,7 @@ import {
   Info,
   CheckCircle,
 } from 'lucide-react';
+import { getHubDataCenterIntelligence } from '../../services/dataCenterHubs';
 
 interface WhyHotExplorationModalProps {
   isOpen: boolean;
@@ -61,6 +62,16 @@ export const WhyHotExplorationModal: React.FC<WhyHotExplorationModalProps> = ({
   onOpenSimulatorWithAction,
 }) => {
   if (!isOpen) return null;
+
+  // Data center hubs get an explicit data center section plus a ranked physical signal.
+  const hubDataCenterIntelligence = getHubDataCenterIntelligence({
+    locationName: location.name,
+    city: location.city,
+    country: location.country,
+    address: location.address,
+    latitude: location.latitude,
+    longitude: location.longitude,
+  });
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
@@ -128,6 +139,12 @@ export const WhyHotExplorationModal: React.FC<WhyHotExplorationModalProps> = ({
                   <span className="font-mono text-orange-400 font-bold">4.</span>
                   <span><strong>High Paved Surface & Road Coverage:</strong> Low-albedo bitumen asphalt corridors absorb up to 90% of solar radiation.</span>
                 </li>
+                {hubDataCenterIntelligence && (
+                  <li className="flex items-start space-x-2">
+                    <span className="font-mono text-cyan-400 font-bold">5.</span>
+                    <span><strong>Data Center &amp; Hyperscale Compute Heat Rejection:</strong> <span className="font-mono text-cyan-300">{hubDataCenterIntelligence.facilityName}</span> dissipates ~<strong className="text-cyan-300 font-mono">{hubDataCenterIntelligence.estimatedITLoadMW} MW</strong> of continuous sensible IT waste heat (PUE: {hubDataCenterIntelligence.efficiencyMetrics.pueEstimate}, ~{hubDataCenterIntelligence.efficiencyMetrics.sensibleHeatFluxWm2} W/m² flux) through evaporative chillers and dry coolers into the local boundary layer.</span>
+                  </li>
+                )}
               </ol>
             </div>
 
@@ -146,6 +163,7 @@ export const WhyHotExplorationModal: React.FC<WhyHotExplorationModalProps> = ({
               dataCenterIntelligence={dataCenterIntelligence}
               structuredRecommendations={structuredRecommendations}
               onOpenSimulatorWithAction={onOpenSimulatorWithAction}
+              location={location}
               defaultExpandedIndex={0}
             />
           </div>

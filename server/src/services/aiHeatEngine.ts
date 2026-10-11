@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { buildHubDataCenterIntelligence, findDataCenterHub } from './dataCenterHubs.js';
 
 export interface GeometricContext {
   radiusMeters: number;
@@ -114,6 +115,7 @@ export interface DiscoveredCause {
   evidenceSummary: string;
   supportingEvidenceIds: string[];
   quantifiedContribution: string;
+  impactPercent?: number;
   geometricContribution?: {
     scaleContext: string;
     affectedAreaM2?: number;
@@ -386,6 +388,9 @@ export function generateIndustryIntelligence(
 /**
  * Specialized Data Center Intelligence Module:
  * Evaluates facility IT load, cooling architecture, economization, waste-heat reuse, and material physics.
+ *
+ * Detection is restricted to the approved data center hub registry. Places outside
+ * the registry return `detected: false` and never surface a data center section.
  */
 export function generateDataCenterIntelligence(
   locationName: string,
@@ -393,15 +398,19 @@ export function generateDataCenterIntelligence(
   lat: number,
   lng: number
 ): DataCenterIntelligenceReport {
-  const isHighPowerDensity = gridMW > 18;
+  const hub = findDataCenterHub({ locationName, latitude: lat, longitude: lng });
+  if (hub) {
+    return buildHubDataCenterIntelligence(hub, lat, lng);
+  }
+
   const hash = Math.abs(Math.round(lat * 50 + lng * 50));
   const estimatedITLoadMW = Math.round((12 + (hash % 45)) * 10) / 10;
   const pue = Math.round((1.18 + (hash % 15) * 0.01) * 100) / 100;
   const wue = Math.round((0.35 + (hash % 20) * 0.02) * 100) / 100;
 
   return {
-    detected: isHighPowerDensity,
-    facilityName: isHighPowerDensity ? `${locationName} Enterprise Hyperscale Compute Node` : 'Standard Distributed Commercial Telecommunications',
+    detected: false,
+    facilityName: 'Standard Distributed Commercial Telecommunications',
     estimatedITLoadMW,
     coolingArchitecture: 'Hybrid Chilled-Water Loop with Dual-Circuit Air-Side Economization',
     efficiencyMetrics: {
@@ -1135,6 +1144,50 @@ function runThermodynamicCausalInference(context: EnvironmentalContext): HeatAna
   // Sort causes by confidence & relevance, select top 6 to 8
   allPossibleCauses.sort((a, b) => b.confidence - a.confidence);
   const selectedCauses = allPossibleCauses.slice(0, 8);
+
+  // Dynamically compute calibrated physical heat share (%) based on temperature impact & energy flux
+  if (selectedCauses.length > 0) {
+    const rawWeights = selectedCauses.map((c) => {
+      if (typeof c.quantifiedContribution === 'string') {
+        const match = c.quantifiedContribution.match(/([0-9]+(?:\.[0-9]+)?)\s*°C/i);
+        if (match) {
+          const val = parseFloat(match[1]);
+          if (!isNaN(val) && val > 0) return val;
+        }
+      }
+      const mw = c.geometricContribution?.energyImpactMW;
+      if (typeof mw === 'number' && !isNaN(mw) && mw > 0) {
+        return Math.sqrt(mw);
+      }
+      return Math.max(1, (c.confidence || 80) / 25);
+    });
+
+    const totalWeight = rawWeights.reduce((sum, w) => sum + w, 0);
+    const unrounded = rawWeights.map((w) => (w / (totalWeight || 1)) * 100);
+    const floors = unrounded.map((u) => Math.max(1, Math.floor(u)));
+    let currentSum = floors.reduce((a, b) => a + b, 0);
+    const remainders = unrounded.map((u, i) => ({ i, rem: u - floors[i] }));
+    remainders.sort((a, b) => b.rem - a.rem);
+
+    let rIdx = 0;
+    while (currentSum < 100 && rIdx < remainders.length) {
+      floors[remainders[rIdx].i] += 1;
+      currentSum += 1;
+      rIdx++;
+    }
+    rIdx = remainders.length - 1;
+    while (currentSum > 100 && rIdx >= 0) {
+      if (floors[remainders[rIdx].i] > 1) {
+        floors[remainders[rIdx].i] -= 1;
+        currentSum -= 1;
+      }
+      rIdx--;
+    }
+
+    selectedCauses.forEach((c, i) => {
+      c.impactPercent = floors[i];
+    });
+  }
 
   // Derive Structured Recommendations conforming strictly to Section 17 schema
   const structuredRecommendations: StructuredRecommendation[] = selectedCauses.slice(0, 4).map((c, idx) => ({

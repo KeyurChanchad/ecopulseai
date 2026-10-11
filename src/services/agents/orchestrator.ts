@@ -8,6 +8,7 @@ import {
   HeatContributor,
 } from '../../types';
 import { createDynamicPlaceholderProfile, FullLocationProfile } from '../locationService';
+import { getHubDataCenterIntelligence } from '../dataCenterHubs';
 
 export interface OrchestratorRunOptions {
   latitude: number;
@@ -28,6 +29,68 @@ function radiusToMeters(radius: AnalysisRadius): number {
     case '25km': return 25000;
     default: return 5000;
   }
+}
+
+/**
+ * Computes dynamic, non-static, proportional heat share percentages (%)
+ * derived from quantified temperature surcharge (°C) and thermal energy flux (MW).
+ * Ensures fair apportionment summing to exactly 100%.
+ */
+function computeDynamicHeatShares(causes: any[]): number[] {
+  if (!causes || causes.length === 0) return [];
+  if (causes.length === 1) return [100];
+
+  const rawWeights = causes.map((c) => {
+    // 1. If backend already computed a valid non-equal impactPercent, respect it
+    if (typeof c.impactPercent === 'number' && c.impactPercent > 0 && c.impactPercent !== Math.round(100 / causes.length)) {
+      return c.impactPercent;
+    }
+
+    // 2. Extract numeric thermal impact from quantifiedContribution (e.g. "+3.9°C", "+2.9°C")
+    if (typeof c.quantifiedContribution === 'string') {
+      const match = c.quantifiedContribution.match(/([0-9]+(?:\.[0-9]+)?)\s*°C/i);
+      if (match) {
+        const val = parseFloat(match[1]);
+        if (!isNaN(val) && val > 0) return val;
+      }
+    }
+
+    // 3. Fallback to energyImpactMW if present
+    const mw = c.geometricContribution?.energyImpactMW;
+    if (typeof mw === 'number' && !isNaN(mw) && mw > 0) {
+      return Math.sqrt(mw);
+    }
+
+    // 4. Default proportional weight based on calibrated confidence
+    return Math.max(1, (c.confidence || 80) / 25);
+  });
+
+  const total = rawWeights.reduce((sum, w) => sum + w, 0);
+  if (total <= 0) return causes.map(() => Math.round(100 / causes.length));
+
+  // Largest remainder apportionment to guarantee integers summing to exactly 100%
+  const unrounded = rawWeights.map((w) => (w / total) * 100);
+  const floors = unrounded.map((u) => Math.max(1, Math.floor(u)));
+  let currentSum = floors.reduce((a, b) => a + b, 0);
+  const remainders = unrounded.map((u, i) => ({ i, rem: u - floors[i] }));
+  remainders.sort((a, b) => b.rem - a.rem);
+
+  let idx = 0;
+  while (currentSum < 100 && idx < remainders.length) {
+    floors[remainders[idx].i] += 1;
+    currentSum += 1;
+    idx++;
+  }
+  idx = remainders.length - 1;
+  while (currentSum > 100 && idx >= 0) {
+    if (floors[remainders[idx].i] > 1) {
+      floors[remainders[idx].i] -= 1;
+      currentSum -= 1;
+    }
+    idx--;
+  }
+
+  return floors;
 }
 
 /**
@@ -108,10 +171,28 @@ export async function runLocationAnalysisOrchestrator(
   }
 
   // 4. Construct Location Profile from Real Backend Telemetry & AI Model Results
-  const baseProfile = createDynamicPlaceholderProfile(latitude, longitude, radius, undefined, locationName, city);
+  const baseProfile = createDynamicPlaceholderProfile(latitude, longitude, radius, undefined, locationName, city, currentJob.weather);
 
   // Map server's discovered causes to UI contributors format
   const serverCauses = currentJob.discoveredCauses || [];
+
+  // Data center intelligence is hub-driven: the backend job result wins only when
+  // it actually detected a facility, otherwise the hub registry supplies the report.
+  const hubDataCenterIntelligence = getHubDataCenterIntelligence({
+    locationName,
+    city,
+    country,
+    latitude,
+    longitude,
+  });
+  const jobDataCenterIntelligence = (currentJob as any).dataCenterIntelligence;
+  const resolvedDataCenterIntelligence = hubDataCenterIntelligence
+    ? hubDataCenterIntelligence
+    : jobDataCenterIntelligence?.detected
+      ? jobDataCenterIntelligence
+      : undefined;
+  const dynamicHeatShares = computeDynamicHeatShares(serverCauses);
+
   const mappedContributors: HeatContributor[] = serverCauses.map((cause: any, idx: number) => {
     let cat: HeatContributor['category'] = 'built_environment';
     if (['EMISSIONS', 'TRAFFIC', 'INDUSTRY', 'AC_EXHAUST', 'ENERGY_USE'].includes(cause.category)) {
@@ -137,7 +218,7 @@ export async function runLocationAnalysisOrchestrator(
       engineeringConstraints: cause.engineeringConstraints,
       pairedSolution: cause.pairedSolution,
       impact: (cause.confidence > 90 ? 'Very High' : cause.confidence > 80 ? 'High' : 'Medium') as any,
-      impactPercent: Math.round(100 / Math.max(1, serverCauses.length)),
+      impactPercent: dynamicHeatShares[idx] ?? Math.round(100 / Math.max(1, serverCauses.length)),
       isMeasured: cause.evidenceType === 'LIVE' || cause.evidenceType === 'Satellite' || cause.evidenceType === 'GIS',
       confidence: cause.confidence || 85,
       confidenceLevel: confLevel as any,
@@ -167,7 +248,7 @@ export async function runLocationAnalysisOrchestrator(
     geometricMetrics: (currentJob as any).geometricMetrics,
     structuredRecommendations: (currentJob as any).structuredRecommendations,
     industryIntelligence: (currentJob as any).industryIntelligence,
-    dataCenterIntelligence: (currentJob as any).dataCenterIntelligence,
+    dataCenterIntelligence: resolvedDataCenterIntelligence,
     weather: {
       ...baseProfile.weather,
       airTemperature: currentJob.weather?.airTemperature ?? currentJob.featureVector?.airTemperature ?? baseProfile.weather.airTemperature,

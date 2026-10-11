@@ -104,7 +104,11 @@ export const EnvironmentalDomainsCard: React.FC<EnvironmentalDomainsCardProps> =
             <div className="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
               <span className="text-[10px] text-slate-400 block mb-0.5">Atmospheric Air Temp (2m)</span>
               <div className="text-xl font-bold text-orange-400">{weather.airTemperature}°C</div>
-              <span className="text-[10px] text-slate-500">Thermodynamic air measurement</span>
+              <div className="text-[10px] text-slate-400 mt-0.5 flex items-center space-x-1.5">
+                <span className="text-rose-400 font-semibold">H: {weather.tempHigh ?? Math.round((weather.airTemperature + 4.5) * 10) / 10}°C</span>
+                <span className="text-slate-600">•</span>
+                <span className="text-cyan-400 font-semibold">L: {weather.tempLow ?? Math.round((weather.airTemperature - 6.0) * 10) / 10}°C</span>
+              </div>
             </div>
 
             <div className="bg-slate-950/80 p-3 rounded-lg border border-slate-800">

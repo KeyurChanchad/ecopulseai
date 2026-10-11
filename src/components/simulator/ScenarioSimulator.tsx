@@ -106,10 +106,10 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-12 select-text">
+    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 pb-12 select-text">
       {/* Simulator Header */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
           <div>
             <div className="flex items-center space-x-2 text-xs font-mono text-orange-400 mb-1">
               <SlidersHorizontal className="w-4 h-4" />
@@ -137,39 +137,72 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
         </div>
 
         {/* Quick Presets Strip */}
-        <div className="mt-5 pt-4 border-t border-slate-800/80 flex flex-wrap items-center gap-2">
-          <span className="text-xs text-slate-400 font-mono">Load Proven Masterplan Presets:</span>
+        <div className="mt-4 pt-3 sm:mt-5 sm:pt-4 border-t border-slate-800/80 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1 sm:mx-0 sm:px-0">
+          <span className="text-xs text-slate-400 font-mono shrink-0">Proven Presets:</span>
           <button
             onClick={() => applyPreset('greening')}
-            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition"
+            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition shrink-0 whitespace-nowrap"
           >
-            🌳 Aggressive Urban Forestry (+25k trees)
+            🌳 Urban Forestry (+25k)
           </button>
           <button
             onClick={() => applyPreset('coolSurfaces')}
-            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 transition"
+            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 transition shrink-0 whitespace-nowrap"
           >
-            🏢 High-Albedo Cool Roofs & Pavements (65%)
+            🏢 Cool Roofs & Pavements (65%)
           </button>
           <button
             onClick={() => applyPreset('mobility')}
-            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 transition"
+            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 transition shrink-0 whitespace-nowrap"
           >
-            🚗 Sustainable Transit & Anti-Idling
+            🚗 Transit & Anti-Idling
           </button>
           <button
             onClick={() => applyPreset('fullHAP')}
-            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 transition"
+            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 transition shrink-0 whitespace-nowrap"
           >
-            ⚡ Full Heat Action Plan 2030 (Max Intervention)
+            ⚡ Full Heat Action Plan 2030
           </button>
         </div>
       </div>
 
       {/* Simulator Core Layout: Sliders (Left) & Real-Time Impact Dashboard (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+        {/* Mobile Live Impact Summary Card (Visible on mobile/tablet < lg) */}
+        <div className="lg:hidden bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-emerald-500/40 rounded-2xl p-4 shadow-xl space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+            <span className="text-xs font-mono uppercase text-slate-300 font-bold flex items-center space-x-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Live Cooling Outcome</span>
+            </span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">
+              Live Model
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="bg-slate-950 p-2 rounded-xl border border-slate-800">
+              <span className="text-[10px] text-slate-400 block font-mono">Baseline</span>
+              <span className="text-sm sm:text-base font-bold font-mono text-slate-200">{result.baseHeatScore}/100</span>
+            </div>
+            <div className="bg-emerald-950/40 p-2 rounded-xl border border-emerald-500/50 shadow-sm">
+              <span className="text-[10px] text-emerald-400 block font-bold font-mono">After Policy</span>
+              <span className="text-sm sm:text-base font-bold font-mono text-emerald-400">{result.simulatedHeatScore}/100</span>
+            </div>
+            <div className="bg-slate-950 p-2 rounded-xl border border-slate-800">
+              <span className="text-[10px] text-slate-400 block font-mono">Skin Drop</span>
+              <span className="text-sm sm:text-base font-bold font-mono text-amber-400">-{result.surfaceTempReductionC}°C</span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between text-[11px] font-mono text-emerald-300 bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20">
+            <span>Improvement: <strong>-{result.heatScoreDelta} pts</strong></span>
+            <span>Air Temp: <strong>-{result.ambientTempReductionC}°C</strong></span>
+          </div>
+        </div>
+
         {/* Sliders Panel */}
-        <div className="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+        <div className="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-5 sm:space-y-6">
           <h3 className="text-base font-bold text-slate-100 flex items-center space-x-2 border-b border-slate-800 pb-3">
             <SlidersHorizontal className="w-5 h-5 text-orange-400" />
             <span>Intervention Variables & Policy Levers</span>
@@ -330,9 +363,9 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
         </div>
 
         {/* Real-Time Modeled Results Panel */}
-        <div className="lg:col-span-5 space-y-6">
+        <div className="lg:col-span-5 space-y-4 sm:space-y-6">
           {/* Main Before / After Scoreboard */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-5">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <span className="text-xs font-mono uppercase text-slate-400 tracking-wider">
                 Simulated Microclimate Impact

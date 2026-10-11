@@ -124,7 +124,7 @@ geoRouter.get('/hotspots', async (_req: Request, res: Response): Promise<void> =
     const lats = GLOBAL_OBSERVATION_HUBS.map((h) => h.lat).join(',');
     const lngs = GLOBAL_OBSERVATION_HUBS.map((h) => h.lng).join(',');
 
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}&current=temperature_2m,relative_humidity_2m,apparent_temperature,direct_normal_irradiance,shortwave_radiation`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}&current=temperature_2m,relative_humidity_2m,apparent_temperature,direct_normal_irradiance,shortwave_radiation&models=gfs_seamless`;
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -136,10 +136,10 @@ geoRouter.get('/hotspots', async (_req: Request, res: Response): Promise<void> =
 
     const results = GLOBAL_OBSERVATION_HUBS.map((hub, idx) => {
       const cur = dataList[idx]?.current || {};
-      const airTemp = cur.temperature_2m ?? 30.0;
-      const humidity = cur.relative_humidity_2m ?? 45;
+      const airTemp = cur.temperature_2m !== undefined ? Math.round(cur.temperature_2m * 10) / 10 : 30.0;
+      const humidity = cur.relative_humidity_2m !== undefined ? Math.round(cur.relative_humidity_2m) : 45;
       const solar = Math.round(cur.shortwave_radiation || cur.direct_normal_irradiance || 550);
-      const heatIndex = cur.apparent_temperature ?? computeHeatIndex(airTemp, humidity);
+      const heatIndex = cur.apparent_temperature !== undefined ? Math.round(cur.apparent_temperature * 10) / 10 : computeHeatIndex(airTemp, humidity);
       const surfaceTemp = Math.round((airTemp + Math.max(3, (solar / 1000) * 14)) * 10) / 10;
 
       const score = computeCalibratedHeatScore(airTemp, surfaceTemp, heatIndex, solar);

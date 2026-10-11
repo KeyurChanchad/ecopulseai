@@ -11,7 +11,6 @@ import {
   Flame,
   Info,
   Server,
-  Key,
   Satellite,
   Mountain,
   Moon,
@@ -34,7 +33,6 @@ interface HeatMapProps {
   onSelectCity: (cityId: string) => void;
   onMapClick: (lat: number, lng: number) => void;
   onToggleLayer: (layerId: string) => void;
-  onOpenApiSettings?: () => void;
   infrastructureFacilities?: DataCenterLocation[];
 }
 
@@ -78,7 +76,6 @@ export const HeatMap: React.FC<HeatMapProps> = ({
   onSelectCity,
   onMapClick,
   onToggleLayer,
-  onOpenApiSettings,
   infrastructureFacilities = [],
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -580,69 +577,59 @@ export const HeatMap: React.FC<HeatMapProps> = ({
       <div ref={mapContainerRef} className="w-full h-full z-0" />
 
       {/* Google Maps Style Basemap Mode Switcher (Bottom-Left) */}
-      <div className="absolute bottom-4 left-4 z-20 flex flex-col space-y-2">
-        <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700/80 p-1.5 rounded-2xl shadow-2xl flex items-center space-x-1.5">
+      <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 z-20 flex flex-col space-y-2">
+        <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700/80 p-1 sm:p-1.5 rounded-xl sm:rounded-2xl shadow-2xl flex items-center space-x-1 sm:space-x-1.5">
           <button
             onClick={() => setBasemap('satellite')}
             title="High-resolution aerial satellite imagery with street & village labels"
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+            className={`flex items-center space-x-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-bold transition ${
               basemap === 'satellite'
                 ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
                 : 'text-slate-300 hover:bg-slate-800'
             }`}
           >
             <Satellite className="w-3.5 h-3.5" />
-            <span>Satellite</span>
+            <span className={basemap === 'satellite' ? 'inline' : 'hidden sm:inline'}>Satellite</span>
           </button>
 
           <button
             onClick={() => setBasemap('street')}
             title="Default road, street, and village map with full OpenStreetMap detail"
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+            className={`flex items-center space-x-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-bold transition ${
               basemap === 'street'
                 ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
                 : 'text-slate-300 hover:bg-slate-800'
             }`}
           >
             <MapIcon className="w-3.5 h-3.5" />
-            <span>Default</span>
+            <span className={basemap === 'street' ? 'inline' : 'hidden sm:inline'}>Default</span>
           </button>
 
           <button
             onClick={() => setBasemap('terrain')}
             title="Topographic contours, elevation relief, and natural features"
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+            className={`flex items-center space-x-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-bold transition ${
               basemap === 'terrain'
                 ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
                 : 'text-slate-300 hover:bg-slate-800'
             }`}
           >
             <Mountain className="w-3.5 h-3.5" />
-            <span>Terrain</span>
+            <span className={basemap === 'terrain' ? 'inline' : 'hidden sm:inline'}>Terrain</span>
           </button>
 
           <button
             onClick={() => setBasemap('dark')}
             title="Dark GIS environmental analysis canvas"
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+            className={`flex items-center space-x-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-bold transition ${
               basemap === 'dark'
                 ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
                 : 'text-slate-300 hover:bg-slate-800'
             }`}
           >
             <Moon className="w-3.5 h-3.5" />
-            <span>Dark</span>
+            <span className={basemap === 'dark' ? 'inline' : 'hidden sm:inline'}>Dark</span>
           </button>
-
-          {onOpenApiSettings && (
-            <button
-              onClick={onOpenApiSettings}
-              className="p-1.5 rounded-xl text-slate-400 hover:text-emerald-400 hover:bg-slate-800 transition ml-1"
-              title="Configure Google Maps or CARTO custom tile keys"
-            >
-              <Key className="w-3.5 h-3.5" />
-            </button>
-          )}
         </div>
       </div>
 
