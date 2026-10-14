@@ -48,8 +48,34 @@ export async function searchGlobalPlaces(
   const results: GeocodingResult[] = [];
   const qLower = trimmed.toLowerCase();
 
-  // 2. Instant local search from known landmarks dictionary
+  // 2. Query backend geocoding service backed by Open-Meteo Geocoding API
+  try {
+    const backendRes = await fetch(`/api/geocoding/search?q=${encodeURIComponent(trimmed)}`, { signal });
+    if (backendRes.ok) {
+      const data = await backendRes.json();
+      if (Array.isArray(data.results) && data.results.length > 0) {
+        for (const item of data.results) {
+          results.push({
+            id: item.id,
+            name: item.name,
+            displayName: item.displayName,
+            type: item.type || 'City',
+            lat: item.latitude,
+            lng: item.longitude,
+            country: item.country,
+            state: item.region,
+            isLive: true,
+          });
+        }
+        return results;
+      }
+    }
+  } catch (err: any) {
+    if (err.name === 'AbortError') throw err;
+    // Fall through to client fallbacks
+  }
 
+  // 3. Instant local search from known landmarks dictionary
   for (const [key, val] of Object.entries(LANDMARK_DICTIONARY)) {
     if (key.includes(qLower) || val.name.toLowerCase().includes(qLower)) {
       results.push({
@@ -66,7 +92,7 @@ export async function searchGlobalPlaces(
     }
   }
 
-  // 3. Live Global Geocoding via OpenStreetMap Nominatim
+  // 4. Live Global Geocoding via OpenStreetMap Nominatim
   try {
     const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
       trimmed

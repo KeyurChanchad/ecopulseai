@@ -1,90 +1,239 @@
 /**
- * EcoPulseAI Weather Data Routes
- * Direct weather and air quality endpoint with Open-Meteo and AccuWeather verification.
+ * EcoPulseAI Centralized Weather API Routes
+ * Endpoints:
+ * - GET /api/weather              (Full normalized weather bundle: current, daily, hourly, airQuality, metadata)
+ * - GET /api/weather/current      (Real-time / latest current conditions & today's low/high)
+ * - GET /api/weather/hourly       (24-48h hourly forecast with precipitation & wind)
+ * - GET /api/weather/daily        (7-day daily forecast with low/high, sunrise, sunset, UV)
+ * - GET /api/weather/air-quality  (Air quality index, CAMS pollutants: PM2.5, PM10, NO2, O3, SO2, CO)
+ * - GET /api/weather/compare      (Side-by-side comparison between Open-Meteo and WeatherAPI.com)
  */
+
 import { Router, Request, Response } from 'express';
 import {
-  fetchLiveWeather,
-  fetchAirQuality,
-  fetchAccuWeatherSurat,
+  fetchOpenMeteoBundle,
+  fetchWeatherApiBundle,
+  compareWeatherProviders,
   aqiToStatus,
-  interpretWeatherCode,
 } from '../services/weatherService.js';
 
 export const weatherRouter = Router();
 
+function parseCoordinates(req: Request): { lat: number; lon: number } | null {
+  const latStr = (req.query.lat ?? req.query.latitude) as string;
+  const lonStr = (req.query.lon ?? req.query.lng ?? req.query.longitude) as string;
+
+  if (!latStr || !lonStr) return null;
+  const lat = parseFloat(latStr);
+  const lon = parseFloat(lonStr);
+
+  if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+    return null;
+  }
+  return { lat, lon };
+}
+
 /**
- * GET /api/weather?lat=21.17&lng=72.83
- * Returns real-time weather data with High/Low temperatures,
- * Open-Meteo telemetry, and AccuWeather cross-verification for Surat.
+ * GET /api/weather
+ * Returns full unified normalized bundle (current, daily, hourly, air quality, metadata)
+ * Supports query: ?lat=...&lon=... (or ?lng=...) and optional provider: ?provider=open-meteo | weatherapi
  */
 weatherRouter.get('/', async (req: Request, res: Response): Promise<void> => {
-  const lat = parseFloat(req.query.lat as string);
-  const lng = parseFloat(req.query.lng as string);
-
-  if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+  const coords = parseCoordinates(req);
+  if (!coords) {
     res.status(400).json({
       success: false,
-      error: 'Valid lat and lng query parameters required (lat: -90 to 90, lng: -180 to 180)',
+      error: 'Valid lat (-90 to 90) and lon/lng (-180 to 180) query parameters required.',
     });
     return;
   }
 
-  const isSurat = Math.abs(lat - 21.1702) < 0.35 && Math.abs(lng - 72.8311) < 0.35;
-  const wantAccuWeather = isSurat || req.query.source === 'accuweather';
+  const requestedProvider = (req.query.provider as string)?.toLowerCase();
 
-  const [weatherResult, aqResult, accuResult] = await Promise.allSettled([
-    fetchLiveWeather(lat, lng, 10000),
-    fetchAirQuality(lat, lng, 8000),
-    wantAccuWeather ? fetchAccuWeatherSurat(7000) : Promise.resolve({ result: null }),
-  ]);
+  // Primary: Open-Meteo unless WeatherAPI specifically requested
+  let fetchResult = requestedProvider === 'weatherapi'
+    ? await fetchWeatherApiBundle(coords.lat, coords.lon)
+    : await fetchOpenMeteoBundle(coords.lat, coords.lon);
 
-  const weather = weatherResult.status === 'fulfilled' ? weatherResult.value : { result: null, error: 'Weather fetch threw' };
-  const aq = aqResult.status === 'fulfilled' ? aqResult.value : { result: null, error: 'AQ fetch threw' };
-  const accu = accuResult.status === 'fulfilled' ? accuResult.value : { result: null, error: 'AccuWeather fetch threw' };
+  // If requested primary failed and secondary is available, try fallback
+  if (!fetchResult.result && requestedProvider !== 'weatherapi') {
+    const secondary = await fetchWeatherApiBundle(coords.lat, coords.lon);
+    if (secondary.result) {
+      fetchResult = secondary;
+    }
+  }
 
-  const aqiValue = aq.result?.aqi?.value ?? null;
-  const tempHigh = weather.result?.temperatureMax?.value ?? accu.result?.tempHigh ?? null;
-  const tempLow = weather.result?.temperatureMin?.value ?? accu.result?.tempLow ?? null;
+  if (!fetchResult.result) {
+    res.status(503).json({
+      success: false,
+      error: fetchResult.error || 'Failed to retrieve live weather data from providers.',
+      coordinates: coords,
+      retrievedAt: new Date().toISOString(),
+    });
+    return;
+  }
+
+  // Preserve backwards-compatible root keys alongside normalized schema
+  const bundle = fetchResult.result;
+  res.json({
+    success: true,
+    coordinates: coords,
+    retrievedAt: new Date().toISOString(),
+    // Backward-compatible properties
+    tempHigh: bundle.current.temperatureMax,
+    tempLow: bundle.current.temperatureMin,
+    // Full normalized schema
+    location: bundle.location,
+    current: bundle.current,
+    daily: bundle.daily,
+    hourly: bundle.hourly,
+    airQuality: bundle.airQuality,
+    metadata: bundle.metadata,
+  });
+});
+
+/**
+ * GET /api/weather/current
+ */
+weatherRouter.get('/current', async (req: Request, res: Response): Promise<void> => {
+  const coords = parseCoordinates(req);
+  if (!coords) {
+    res.status(400).json({
+      success: false,
+      error: 'Valid lat and lon/lng query parameters required.',
+    });
+    return;
+  }
+
+  const { result, error, isStale } = await fetchOpenMeteoBundle(coords.lat, coords.lon);
+  if (!result) {
+    res.status(503).json({ success: false, error: error || 'Failed to fetch current weather.' });
+    return;
+  }
 
   res.json({
     success: true,
-    coordinates: { lat, lng },
-    retrievedAt: new Date().toISOString(),
-    tempHigh,
-    tempLow,
-    accuWeather: accu.result
-      ? {
-          isAvailable: true,
-          currentTemp: accu.result.currentTemp,
-          tempHigh: accu.result.tempHigh,
-          tempLow: accu.result.tempLow,
-          realFeel: accu.result.realFeel,
-          phrase: accu.result.phrase,
-          humidity: accu.result.humidity,
-          wind: accu.result.wind,
-          uvIndex: accu.result.uvIndex,
-          sourceUrl: accu.result.sourceUrl,
-          provider: accu.result.provider,
-        }
-      : null,
-    weather: {
-      data: weather.result,
-      error: weather.error ?? null,
-      rawApiUrl: `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,shortwave_radiation,direct_normal_irradiance&daily=temperature_2m_max,temperature_2m_min&hourly=dew_point_2m&timezone=auto&models=gfs_seamless`,
-    },
-    airQuality: {
-      data: aq.result,
-      error: aq.error ?? null,
-      aqiStatus: aqiValue !== null ? aqiToStatus(aqiValue) : 'DATA_UNAVAILABLE',
-      rawApiUrl: `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lng}&current=us_aqi,european_aqi,pm2_5,pm10,carbon_monoxide,nitrogen_dioxide,ozone,uv_index&timezone=auto`,
-    },
-    dataProvenanceNote: {
-      weatherSource: 'Open-Meteo (NOAA GFS Seamless + ECMWF IFS model, updated hourly)',
-      accuWeatherSource: isSurat ? 'AccuWeather Live Surveillance (Surat 202441)' : 'Not queried for this coordinate',
-      airQualitySource: 'Open-Meteo Air Quality API (Copernicus CAMS Global/European model)',
-      surfaceTemperature: 'MODELLED ESTIMATE — derived from shortwave radiation + urban albedo model. NOT satellite LST.',
-      temperatureRange: 'Daily Max/Min retrieved from meteorological high-resolution models',
-    },
+    coordinates: coords,
+    location: result.location,
+    current: result.current,
+    isStale: isStale ?? false,
+    metadata: result.metadata,
   });
+});
+
+/**
+ * GET /api/weather/hourly
+ */
+weatherRouter.get('/hourly', async (req: Request, res: Response): Promise<void> => {
+  const coords = parseCoordinates(req);
+  if (!coords) {
+    res.status(400).json({
+      success: false,
+      error: 'Valid lat and lon/lng query parameters required.',
+    });
+    return;
+  }
+
+  const { result, error, isStale } = await fetchOpenMeteoBundle(coords.lat, coords.lon);
+  if (!result) {
+    res.status(503).json({ success: false, error: error || 'Failed to fetch hourly forecast.' });
+    return;
+  }
+
+  res.json({
+    success: true,
+    coordinates: coords,
+    location: result.location,
+    hourly: result.hourly,
+    count: result.hourly.length,
+    isStale: isStale ?? false,
+    metadata: result.metadata,
+  });
+});
+
+/**
+ * GET /api/weather/daily
+ */
+weatherRouter.get('/daily', async (req: Request, res: Response): Promise<void> => {
+  const coords = parseCoordinates(req);
+  if (!coords) {
+    res.status(400).json({
+      success: false,
+      error: 'Valid lat and lon/lng query parameters required.',
+    });
+    return;
+  }
+
+  const { result, error, isStale } = await fetchOpenMeteoBundle(coords.lat, coords.lon);
+  if (!result) {
+    res.status(503).json({ success: false, error: error || 'Failed to fetch daily forecast.' });
+    return;
+  }
+
+  res.json({
+    success: true,
+    coordinates: coords,
+    location: result.location,
+    daily: result.daily,
+    count: result.daily.length,
+    isStale: isStale ?? false,
+    metadata: result.metadata,
+  });
+});
+
+/**
+ * GET /api/weather/air-quality
+ */
+weatherRouter.get('/air-quality', async (req: Request, res: Response): Promise<void> => {
+  const coords = parseCoordinates(req);
+  if (!coords) {
+    res.status(400).json({
+      success: false,
+      error: 'Valid lat and lon/lng query parameters required.',
+    });
+    return;
+  }
+
+  const { result, error, isStale } = await fetchOpenMeteoBundle(coords.lat, coords.lon);
+  if (!result) {
+    res.status(503).json({ success: false, error: error || 'Failed to fetch air quality data.' });
+    return;
+  }
+
+  res.json({
+    success: true,
+    coordinates: coords,
+    location: result.location,
+    airQuality: result.airQuality,
+    isStale: isStale ?? false,
+    metadata: result.metadata,
+  });
+});
+
+/**
+ * GET /api/weather/compare
+ * Multi-provider cross-verification side-by-side comparison
+ */
+weatherRouter.get('/compare', async (req: Request, res: Response): Promise<void> => {
+  const coords = parseCoordinates(req);
+  if (!coords) {
+    res.status(400).json({
+      success: false,
+      error: 'Valid lat and lon/lng query parameters required.',
+    });
+    return;
+  }
+
+  try {
+    const comparison = await compareWeatherProviders(coords.lat, coords.lon);
+    res.json({
+      success: true,
+      ...comparison,
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      error: err.message || 'Comparison failed.',
+    });
+  }
 });

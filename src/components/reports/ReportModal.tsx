@@ -48,7 +48,7 @@ Target: ${location.address} (${location.latitude.toFixed(4)}°N, ${location.long
 
 ## 1. Executive Summary & Heat Scoring
 * EcoPulse Heat Score: ${heatScore.score}/100 (${heatScore.category})
-* Measured Air Temperature: ${weather.airTemperature}°C (Today's High: ${weather.tempHigh ?? Math.round((weather.airTemperature + 4.5)*10)/10}°C, Low: ${weather.tempLow ?? Math.round((weather.airTemperature - 6.0)*10)/10}°C)
+* Measured Air Temperature: ${weather.airTemperature}°C (Today's High: ${weather.tempHigh !== undefined ? `${weather.tempHigh}°C` : 'N/A'}, Low: ${weather.tempLow !== undefined ? `${weather.tempLow}°C` : 'N/A'})
 * Heat Index (Feels Like): ${weather.feelsLike}°C
 * Land Surface Temperature (LST): ${weather.surfaceTemperature}°C
 * Urban Heat Island (UHI) Delta: +${weather.uhiDelta}°C
@@ -179,7 +179,7 @@ ${recommendations.map((r, i) => `### Priority ${i + 1}: ${r.title}
                     <span className="text-slate-500 block">Air Temp / Feels Like</span>
                     <span className="text-orange-400 font-bold">{weather.airTemperature}°C / {weather.feelsLike}°C</span>
                     <span className="text-[10px] text-slate-400 block">
-                      H: <strong className="text-rose-400">{weather.tempHigh ?? Math.round((weather.airTemperature + 4.5)*10)/10}°C</strong> • L: <strong className="text-cyan-400">{weather.tempLow ?? Math.round((weather.airTemperature - 6.0)*10)/10}°C</strong>
+                      H: <strong className="text-rose-400">{weather.tempHigh !== undefined ? `${weather.tempHigh}°C` : 'N/A'}</strong> • L: <strong className="text-cyan-400">{weather.tempLow !== undefined ? `${weather.tempLow}°C` : 'N/A'}</strong>
                     </span>
                   </div>
                   <div>

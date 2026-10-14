@@ -8,7 +8,7 @@
  * 5. Monitoring checklist & bottom line takeaway
  */
 import { Router, Request, Response } from 'express';
-import { fetchLiveWeather, fetchAirQuality, fetchAccuWeatherSurat, aqiToStatus } from '../services/weatherService.js';
+import { fetchOpenMeteoBundle, aqiToStatus } from '../services/weatherService.js';
 import { GoogleGenAI } from '@google/genai';
 
 export const dossierRouter = Router();
@@ -124,41 +124,29 @@ dossierRouter.get('/', async (req: Request, res: Response): Promise<void> => {
   const country = (req.query.country as string) || (lat > 50 && lng < 1 ? 'United Kingdom' : 'India');
 
   try {
-    const isSurat = Math.abs(lat - 21.1702) < 0.35 && Math.abs(lng - 72.8311) < 0.35;
+    const bundleRes = await fetchOpenMeteoBundle(lat, lng, 8500);
+    const bundle = bundleRes.result;
 
-    const [weatherRes, aqRes, accuRes] = await Promise.allSettled([
-      fetchLiveWeather(lat, lng, 8000),
-      fetchAirQuality(lat, lng, 6000),
-      isSurat ? fetchAccuWeatherSurat(6000) : Promise.resolve({ result: null }),
-    ]);
+    const cur = bundle?.current;
+    const aq = bundle?.airQuality;
 
-    const weatherData = weatherRes.status === 'fulfilled' ? weatherRes.value.result : null;
-    const aqData = aqRes.status === 'fulfilled' ? aqRes.value.result : null;
-    const accuData = accuRes.status === 'fulfilled' ? accuRes.value.result : null;
-
-    // Numerical observations
-    const currentTempC = Math.round(
-      (accuData?.currentTemp ?? weatherData?.airTemperature?.value ?? (lat > 50 ? 10.0 : 35.0)) * 10
-    ) / 10;
+    const currentTempC = cur?.temperature ?? 24.0;
     const currentTempF = cToF(currentTempC);
 
-    const tempHighC = Math.round(
-      (accuData?.tempHigh ?? weatherData?.temperatureMax?.value ?? currentTempC + 4.5) * 10
-    ) / 10;
+    const tempHighC = cur?.temperatureMax ?? currentTempC;
     const tempHighF = cToF(tempHighC);
 
-    const tempLowC = Math.round(
-      (accuData?.tempLow ?? weatherData?.temperatureMin?.value ?? currentTempC - 5.5) * 10
-    ) / 10;
+    const tempLowC = cur?.temperatureMin ?? currentTempC;
     const tempLowF = cToF(tempLowC);
 
-    const humidity = Math.round(accuData?.humidity ?? weatherData?.humidity?.value ?? (lat > 50 ? 82 : 35));
-    const windSpeedKmH = Math.round(weatherData?.windSpeed?.value ?? 10);
-    const windDirection = weatherData?.windDirection?.unit ?? 'W';
-    const aqi = Math.round(aqData?.aqi?.value ?? (lat > 50 ? 18 : 108));
-    const aqiCategory = aqiToStatus(aqi);
+    const humidity = cur?.humidity ?? 50;
+    const windSpeedKmH = cur?.windSpeed ?? 12;
+    const windDirection = cur?.windDirectionCardinal ?? 'NW';
+    const aqi = aq?.aqi ?? 45;
+    const aqiCategory = aq?.aqiCategory ?? aqiToStatus(aqi);
+    const conditionPhrase = cur?.condition ?? 'Partly cloudy';
 
-    const isHot = currentTempC >= 28 || (weatherData?.feelsLike?.value ?? currentTempC) >= 30;
+    const isHot = currentTempC >= 28 || (cur?.feelsLike ?? currentTempC) >= 30;
 
     // Dates
     const today = new Date();
@@ -199,7 +187,7 @@ ${headlineSummary}
 ${locationName} · Current conditions
 
 # ${currentTempC}°C / ${currentTempF}°F
-${weatherData?.weatherCode?.unit ?? accuData?.phrase ?? (isHot ? 'Sunny to Partly Cloudy' : 'Mostly cloudy')}
+${conditionPhrase}
 ${isHot ? 'High thermal stress' : 'Feels cool, not hot'}
 
 Today's low–high
@@ -324,7 +312,7 @@ The primary variation across these milestones is seasonal climatological progres
       weatherDashboard: {
         currentTempC,
         currentTempF,
-        condition: weatherData?.weatherCode?.unit ?? accuData?.phrase ?? (isHot ? 'Sunny' : 'Mostly cloudy'),
+        condition: conditionPhrase,
         feelsLikeText: isHot ? 'High thermal stress' : 'Feels cool, not hot',
         tempLowC,
         tempLowF,

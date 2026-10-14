@@ -189,58 +189,16 @@ geoRouter.get('/hotspots', async (_req: Request, res: Response): Promise<void> =
         timestamp: new Date(cacheTimestamp).toISOString(),
         count: cachedHotspots.length,
         hotspots: cachedHotspots,
+        isStale: true,
       });
       return;
     }
 
-    // Dynamic Thermodynamic Macroclimatic Baseline (Zero-Network Fallback)
-    const results = GLOBAL_OBSERVATION_HUBS.map((hub) => {
-      const absLat = Math.abs(hub.lat);
-      const isEquatorial = absLat < 23.5;
-      const isSubtropical = absLat >= 23.5 && absLat < 38;
-      const isExtremeHub = ['deathvalley', 'dashtelut', 'ahvaz', 'insalah', 'basra', 'turbat', 'dallol', 'phalodi', 'kuwaitcity', 'jacobabad'].includes(hub.id);
-
-      const airTemp = isExtremeHub ? 44.2 : isSubtropical ? 34.5 : isEquatorial ? 31.5 : 21.0;
-      const humidity = isEquatorial ? 75 : isSubtropical ? 32 : isExtremeHub ? 16 : 55;
-      const solar = isExtremeHub ? 920 : isSubtropical ? 750 : isEquatorial ? 680 : 420;
-      const heatIndex = computeHeatIndex(airTemp, humidity);
-      const surfaceTemp = Math.round((airTemp + (solar / 1000) * 14) * 10) / 10;
-      const score = computeCalibratedHeatScore(airTemp, surfaceTemp, heatIndex, solar);
-      const category = determineHeatCategory(score, airTemp, surfaceTemp, heatIndex);
-
-      let primaryContributor = 'High Solar Insolation & Impervious Surface';
-      if (isExtremeHub) primaryContributor = 'Hyper-Thermal Atmospheric Heat Dome & Bare Ground';
-      else if (humidity > 60 && airTemp > 28) primaryContributor = 'High Moisture & Suppressed Evaporation';
-      else if (category === 'Extreme' || category === 'Very High') primaryContributor = 'Built-Environment Concrete Storage & Zero Canopy';
-
-      return {
-        id: hub.id,
-        name: hub.name,
-        country: hub.country,
-        state: (hub as any).state,
-        lat: hub.lat,
-        lng: hub.lng,
-        airTemp,
-        heatIndex,
-        surfaceTemp,
-        heatScore: score,
-        category,
-        primaryContributor,
-        population: hub.population,
-        climateZone: hub.climateZone,
-        recentTrend: 'stable',
-      };
-    });
-
-    cachedHotspots = results;
-    cacheTimestamp = now;
-
-    res.json({
-      success: true,
-      source: 'Thermodynamic Macroclimatic Baseline (Network Fallback)',
-      timestamp: new Date().toISOString(),
-      count: results.length,
-      hotspots: results,
+    res.status(503).json({
+      success: false,
+      error: 'Live planetary weather observation feed is temporarily unavailable. No static or fabricated values are served.',
+      count: 0,
+      hotspots: [],
     });
   }
 });

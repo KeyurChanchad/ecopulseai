@@ -13,6 +13,7 @@ import { AnalysisProgressModal } from './components/jobs/AnalysisProgressModal';
 import { EvidenceGraphModal } from './components/evidence/EvidenceGraphModal';
 import { ConnectivityAlertBanner } from './components/common/ConnectivityAlertBanner';
 import { AiWeatherHeatDossierModal } from './components/dossier/AiWeatherHeatDossierModal';
+import { WeatherComparisonModal } from './components/weather/WeatherComparisonModal';
 import { INITIAL_MAP_LAYERS } from './config/mapLayers';
 import {
   fetchLiveHotspots,
@@ -186,6 +187,7 @@ export const App: React.FC = () => {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isAiDossierOpen, setIsAiDossierOpen] = useState(false);
   const [isWhyHotModalOpen, setIsWhyHotModalOpen] = useState(false);
+  const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
   const [keyRefreshCounter, setKeyRefreshCounter] = useState(0);
 
   // Simulator Initial Preload
@@ -393,6 +395,7 @@ export const App: React.FC = () => {
         onOpenMethodology={() => setIsMethodologyOpen(true)}
         onOpenReports={() => setIsReportOpen(true)}
         onOpenAiDossier={() => setIsAiDossierOpen(true)}
+        onOpenCompare={() => setIsCompareModalOpen(true)}
         selectedCityName={profile.location.city}
       />
 
@@ -548,14 +551,14 @@ export const App: React.FC = () => {
                                 onClick={() => handleSelectCity('london')}
                                 className="flex-1 py-1.5 px-2 text-center font-bold text-[11px] rounded-xl bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-700 hover:border-slate-500 transition flex items-center justify-center space-x-1"
                               >
-                                <span>London 🇬🇧 ({londonLive ? `${londonLive.airTemp}°` : '18.4°'})</span>
+                                <span>London 🇬🇧{londonLive ? ` (${londonLive.airTemp}°)` : ''}</span>
                                 <ChevronRight className="w-3 h-3 text-slate-400" />
                               </button>
                               <button
                                 onClick={() => handleSelectCity('delhi')}
                                 className="flex-1 py-1.5 px-2 text-center font-bold text-[11px] rounded-xl bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-md shadow-emerald-500/20 transition flex items-center justify-center space-x-1"
                               >
-                                <span>Delhi 🇮🇳 ({delhiLive ? `${delhiLive.airTemp}°` : '38.5°'})</span>
+                                <span>Delhi 🇮🇳{delhiLive ? ` (${delhiLive.airTemp}°)` : ''}</span>
                                 <ChevronRight className="w-3 h-3" />
                               </button>
                             </>
@@ -636,9 +639,11 @@ export const App: React.FC = () => {
                   <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
                     <div>
                       Air Temp: <strong className="text-orange-400">{profile.weather.airTemperature}°C</strong>{' '}
-                      <span className="text-[9px] text-slate-400 font-normal">
-                        (H:{profile.weather.tempHigh ?? Math.round((profile.weather.airTemperature + 4.5) * 10) / 10}°/L:{profile.weather.tempLow ?? Math.round((profile.weather.airTemperature - 6.0) * 10) / 10}°)
-                      </span>
+                      {profile.weather.tempHigh != null && profile.weather.tempLow != null && (
+                        <span className="text-[9px] text-slate-400 font-normal">
+                          (H:{profile.weather.tempHigh}°/L:{profile.weather.tempLow}°)
+                        </span>
+                      )}
                     </div>
                     <div>Feels Like: <strong className="text-rose-400">{profile.weather.feelsLike}°C</strong></div>
                     <div>Surface LST: <strong className="text-amber-400">{profile.weather.surfaceTemperature}°C</strong></div>
@@ -857,6 +862,7 @@ export const App: React.FC = () => {
               onOpenWhyHotModal={() => setIsWhyHotModalOpen(true)}
               onOpenEvidenceGraph={() => setIsEvidenceGraphOpen(true)}
               onOpenAiDossier={() => setIsAiDossierOpen(true)}
+              onOpenCompare={() => setIsCompareModalOpen(true)}
               activeJobId={currentJob?.jobId}
               onChangeRadius={handleRadiusChange}
             />
@@ -960,6 +966,15 @@ export const App: React.FC = () => {
         isOpen={isEvidenceGraphOpen}
         onClose={() => setIsEvidenceGraphOpen(false)}
         graph={evidenceGraph}
+        locationName={profile.location.name}
+      />
+
+      {/* Multi-Provider Weather Comparison Modal */}
+      <WeatherComparisonModal
+        isOpen={isCompareModalOpen}
+        onClose={() => setIsCompareModalOpen(false)}
+        latitude={profile.location.latitude}
+        longitude={profile.location.longitude}
         locationName={profile.location.name}
       />
 

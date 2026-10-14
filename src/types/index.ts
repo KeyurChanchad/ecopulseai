@@ -36,6 +36,153 @@ export interface LocationData {
   analysisRadius?: AnalysisRadius;
 }
 
+export interface NormalizedDailyForecast {
+  date: string; // "YYYY-MM-DD"
+  temperatureMin: number | null; // °C
+  temperatureMax: number | null; // °C
+  apparentTemperatureMin?: number | null;
+  apparentTemperatureMax?: number | null;
+  precipitationProbability: number | null; // %
+  precipitationSum: number | null; // mm
+  weatherCode: number | null;
+  condition: string;
+  icon: string;
+  sunrise: string | null;
+  sunset: string | null;
+  uvIndexMax: number | null;
+  windSpeedMax?: number | null; // km/h
+  windGustsMax?: number | null; // km/h
+  windDirectionDominant?: string | null;
+}
+
+export interface NormalizedHourlyForecast {
+  timestamp: string; // ISO8601
+  temperature: number | null; // °C
+  feelsLike: number | null; // °C
+  humidity: number | null; // %
+  dewPoint: number | null; // °C
+  precipitationProbability: number | null; // %
+  precipitation: number | null; // mm
+  weatherCode: number | null;
+  condition: string;
+  icon: string;
+  windSpeed: number | null; // km/h
+  windDirection: number | null; // deg
+  windDirectionCardinal: string;
+  windGusts: number | null; // km/h
+  pressureHpa: number | null;
+  cloudCover: number | null;
+  visibilityKm: number | null;
+  uvIndex: number | null;
+}
+
+export interface NormalizedAirQuality {
+  aqi: number | null;
+  aqiScale: 'US AQI (0-500)' | 'European AQI (0-100)' | 'Unknown';
+  aqiCategory: string;
+  aqiEuropean: number | null;
+  pm25: number | null; // µg/m³
+  pm10: number | null; // µg/m³
+  nitrogenDioxide: number | null; // µg/m³
+  ozone: number | null; // µg/m³
+  sulphurDioxide: number | null; // µg/m³
+  carbonMonoxide: number | null; // µg/m³
+  uvIndex: number | null;
+  observedAt: string | null;
+  isModelled: boolean;
+  stationName: string | null;
+  healthRecommendation: string;
+}
+
+export interface WeatherMetadata {
+  provider: string;
+  secondaryProvider?: string | null;
+  fetchedAt: string;
+  dataTimestamp: string | null;
+  dataType: string;
+  units: {
+    temperature: '°C';
+    windSpeed: 'km/h';
+    precipitation: 'mm';
+    pressure: 'hPa';
+    pollutants: 'µg/m³';
+    distance: 'km';
+  };
+  isStale: boolean;
+  cachedAt?: string;
+  attribution: string;
+  licensingUrl?: string;
+}
+
+export interface NormalizedWeatherBundle {
+  location: LocationData;
+  current: {
+    temperature: number | null;
+    feelsLike: number | null;
+    temperatureMin: number | null;
+    temperatureMax: number | null;
+    humidity: number | null;
+    dewPoint: number | null;
+    windSpeed: number | null;
+    windDirection: number | null;
+    windDirectionCardinal: string;
+    windGusts: number | null;
+    precipitation: number | null;
+    precipitationProbability: number | null;
+    weatherCode: number | null;
+    condition: string;
+    icon: string;
+    cloudCover: number | null;
+    pressureHpa: number | null;
+    visibilityKm: number | null;
+    uvIndex: number | null;
+    isDay: boolean | null;
+    sunrise: string | null;
+    sunset: string | null;
+    observedAt: string | null;
+    solarRadiation: number | null;
+    surfaceTemperatureEstimate: number | null;
+  };
+  daily: NormalizedDailyForecast[];
+  hourly: NormalizedHourlyForecast[];
+  airQuality: NormalizedAirQuality;
+  metadata: WeatherMetadata;
+}
+
+export interface ProviderComparisonField {
+  label: string;
+  unit: string;
+  primaryValue: string | number | null;
+  secondaryValue: string | number | null;
+  delta?: string | number | null;
+  interpretation?: string;
+}
+
+export interface WeatherComparisonResult {
+  coordinates: { lat: number; lon: number };
+  retrievedAt: string;
+  primary: {
+    name: string;
+    configured: boolean;
+    data: NormalizedWeatherBundle | null;
+    error: string | null;
+    isStale: boolean;
+  };
+  secondary: {
+    name: string;
+    configured: boolean;
+    data: NormalizedWeatherBundle | null;
+    error: string | null;
+    isStale: boolean;
+  };
+  fields: ProviderComparisonField[];
+  evaluationSummary: string;
+  attribution: {
+    primary: string;
+    secondary: string;
+  };
+}
+
 export interface WeatherObservation {
   airTemperature: number;     // Celsius — from Open-Meteo 2m air temp
   feelsLike: number;          // Celsius — apparent temperature (heat index / wind chill)
@@ -43,16 +190,32 @@ export interface WeatherObservation {
   humidity: number;           // % relative humidity
   windSpeed: number;          // km/h at 10m height
   windDirection: string;      // 16-point compass cardinal
+  windDirectionDeg?: number;  // degrees (0-360)
   solarRadiation: number;     // W/m² shortwave downward radiation
   uvIndex: number;            // UV index (0-12+)
   cloudCover: number;         // %
   precipitationMm?: number;   // mm/h precipitation
+  precipitationProbability?: number; // % chance of precipitation
   condition?: string;         // WMO weather code description
+  weatherCode?: number;       // WMO code
+  weatherIcon?: string;       // Lucide icon key
   pressureHpa: number;        // hPa mean sea level pressure
-  windGusts?: number;         // km/h wind gusts (optional, from Open-Meteo)
+  windGusts?: number;         // km/h wind gusts (from Open-Meteo)
   dewPoint?: number;          // Celsius dew point temperature
+  visibilityKm?: number;      // km visibility
+  sunrise?: string;           // sunrise time
+  sunset?: string;            // sunset time
+  timezone?: string;          // location timezone
   aqi: number;                // 0-500 US AQI (0 if DATA_UNAVAILABLE)
   aqiStatus: string;          // US EPA AQI category or 'DATA_UNAVAILABLE'
+  aqiScale?: string;          // 'US AQI (0-500)'
+  aqiEuropean?: number;       // European AQI
+  pm25?: number;              // µg/m³
+  pm10?: number;              // µg/m³
+  nitrogenDioxide?: number;   // µg/m³
+  ozone?: number;             // µg/m³
+  sulphurDioxide?: number;    // µg/m³
+  carbonMonoxide?: number;    // µg/m³
   uhiDelta: number;           // Urban Heat Island delta estimate (+°C above rural background) [MODELLED]
   timestamp: string;          // ISO8601 observation time from provider
   warmingAnomaly?: number;    // Global warming anomaly vs pre-industrial baseline (IPCC AR6 avg: ~1.2°C)
@@ -68,8 +231,11 @@ export interface WeatherObservation {
   // Low and High Temperatures
   tempHigh?: number;          // Celsius — today's maximum temperature
   tempLow?: number;           // Celsius — today's minimum temperature
+  dailyForecasts?: NormalizedDailyForecast[];
+  hourlyForecasts?: NormalizedHourlyForecast[];
   accuWeatherUrl?: string;    // Direct AccuWeather reference URL if available
-  weatherProvider?: string;   // Provider name (Open-Meteo, AccuWeather, etc.)
+  weatherProvider?: string;   // Provider name (Open-Meteo, WeatherAPI.com, etc.)
+  isStale?: boolean;
 }
 
 export interface HeatScoreData {

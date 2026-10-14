@@ -44,6 +44,7 @@ interface HeaderProps {
   onOpenMethodology: () => void;
   onOpenReports: () => void;
   onOpenAiDossier?: () => void;
+  onOpenCompare?: () => void;
   selectedCityName: string;
 }
 
@@ -55,6 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenMethodology,
   onOpenReports,
   onOpenAiDossier,
+  onOpenCompare,
   selectedCityName,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -430,6 +432,18 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right Controls: Streamlined & Clutter-Free */}
       <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+        {/* Multi-Provider Weather Comparison */}
+        {onOpenCompare && (
+          <button
+            onClick={onOpenCompare}
+            className="hidden sm:flex px-2.5 py-1.5 rounded-xl border border-teal-500/40 bg-teal-950/40 hover:bg-teal-900/50 text-xs font-semibold text-teal-300 hover:text-white transition shadow-sm items-center space-x-1.5"
+            title="Multi-Provider Weather Comparison (Open-Meteo & WeatherAPI)"
+          >
+            <Layers className="w-3.5 h-3.5 text-teal-400" />
+            <span>Compare Providers</span>
+          </button>
+        )}
+
         {/* Scientific Methodology */}
         <button
           onClick={onOpenMethodology}
@@ -506,6 +520,18 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           <div className="pt-2 border-t border-slate-800 flex flex-col gap-1.5">
+            {onOpenCompare && (
+              <button
+                onClick={() => {
+                  onOpenCompare();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-teal-300 bg-teal-950/40 border border-teal-500/40 hover:bg-teal-900/50 transition"
+              >
+                <Layers className="w-4 h-4 text-teal-400" />
+                <span>Compare Weather Providers</span>
+              </button>
+            )}
             <button
               onClick={() => {
                 onOpenMethodology();

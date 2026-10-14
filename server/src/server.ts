@@ -5,6 +5,7 @@ import { initDatabase, isMongoConnected } from "./db/mongoClient.js";
 import { jobsRouter } from "./routes/jobs.js";
 import { geoRouter } from "./routes/geo.js";
 import { weatherRouter } from "./routes/weather.js";
+import { geocodingRouter } from "./routes/geocoding.js";
 import { dossierRouter } from "./routes/dossier.js";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -47,6 +48,7 @@ app.get("/api/health", healthHandler);
 // Mount API routes
 app.use("/api/jobs", jobsRouter);
 app.use("/api/geo", geoRouter);
+app.use("/api/geocoding", geocodingRouter);
 app.use("/api/weather", weatherRouter);
 app.use("/api/ai/dossier", dossierRouter);
 

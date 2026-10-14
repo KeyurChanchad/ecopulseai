@@ -31,6 +31,7 @@ import {
 import { getHeatCategoryColor } from '../../services/heatModel';
 import { getHubDataCenterIntelligence } from '../../services/dataCenterHubs';
 import { UrbanHeatCausesAndMitigationGuide } from './UrbanHeatCausesAndMitigationGuide';
+import { ForecastAndEnvironmentalWidget } from '../weather/ForecastAndEnvironmentalWidget';
 
 interface LocationDashboardProps {
   profile: FullLocationProfile;
@@ -39,6 +40,7 @@ interface LocationDashboardProps {
   onOpenWhyHotModal?: () => void;
   onOpenEvidenceGraph?: () => void;
   onOpenAiDossier?: () => void;
+  onOpenCompare?: () => void;
   activeJobId?: string;
   onChangeRadius?: (radius: AnalysisRadius) => void;
 }
@@ -48,6 +50,7 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
   onOpenSimulatorWithAction,
   onOpenReport,
   onOpenWhyHotModal,
+  onOpenCompare,
   onChangeRadius,
 }) => {
   const [dashboardMode, setDashboardMode] = useState<'ai-dossier' | 'geospatial'>('ai-dossier');
@@ -66,8 +69,8 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
   });
 
   const airTemp = weather.airTemperature;
-  const tempHigh = weather.tempHigh ?? Math.round((airTemp + 4.5) * 10) / 10;
-  const tempLow = weather.tempLow ?? Math.round((airTemp - 6.0) * 10) / 10;
+  const tempHigh = weather.tempHigh;
+  const tempLow = weather.tempLow;
   const accuWeatherUrl = weather.accuWeatherUrl;
   const feelsLike = weather.feelsLike;
   const humidity = weather.humidity;
@@ -204,6 +207,16 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
         />
       ) : (
         <>
+          {/* Live Meteorological Telemetry & 24h / 7-Day Forecasts */}
+          <ForecastAndEnvironmentalWidget
+            weather={weather}
+            locationName={location.name}
+            countryName={location.country}
+            latitude={location.latitude}
+            longitude={location.longitude}
+            onOpenCompare={onOpenCompare}
+          />
+
           {/* 2. PART 1: HOW MUCH GLOBAL WARMING & HEAT IS HITTING (Atmospheric Reality) */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -259,15 +272,15 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
               <div className="flex items-center justify-between text-[11px] font-mono">
                 <span className="text-rose-400 font-bold flex items-center space-x-1">
                   <span>High:</span>
-                  <span className="text-white font-extrabold">{tempHigh}°C</span>
+                  <span className="text-white font-extrabold">{tempHigh !== undefined ? `${tempHigh}°C` : '--'}</span>
                 </span>
                 <span className="text-cyan-400 font-bold flex items-center space-x-1">
                   <span>Low:</span>
-                  <span className="text-white font-extrabold">{tempLow}°C</span>
+                  <span className="text-white font-extrabold">{tempLow !== undefined ? `${tempLow}°C` : '--'}</span>
                 </span>
               </div>
               <div className="text-[9px] text-slate-400 font-mono flex items-center justify-between">
-                <span>Range: {Math.round((tempLow * 9) / 5 + 32)}° – {Math.round((tempHigh * 9) / 5 + 32)}°F</span>
+                <span>{tempLow !== undefined && tempHigh !== undefined ? `Range: ${Math.round((tempLow * 9) / 5 + 32)}° – ${Math.round((tempHigh * 9) / 5 + 32)}°F` : 'Range: Pending'}</span>
                 <span className="text-emerald-400 font-semibold">2m Sensor</span>
               </div>
             </div>

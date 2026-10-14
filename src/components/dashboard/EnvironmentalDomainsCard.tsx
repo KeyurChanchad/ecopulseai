@@ -105,9 +105,9 @@ export const EnvironmentalDomainsCard: React.FC<EnvironmentalDomainsCardProps> =
               <span className="text-[10px] text-slate-400 block mb-0.5">Atmospheric Air Temp (2m)</span>
               <div className="text-xl font-bold text-orange-400">{weather.airTemperature}°C</div>
               <div className="text-[10px] text-slate-400 mt-0.5 flex items-center space-x-1.5">
-                <span className="text-rose-400 font-semibold">H: {weather.tempHigh ?? Math.round((weather.airTemperature + 4.5) * 10) / 10}°C</span>
+                <span className="text-rose-400 font-semibold">H: {weather.tempHigh !== undefined ? `${weather.tempHigh}°C` : 'N/A'}</span>
                 <span className="text-slate-600">•</span>
-                <span className="text-cyan-400 font-semibold">L: {weather.tempLow ?? Math.round((weather.airTemperature - 6.0) * 10) / 10}°C</span>
+                <span className="text-cyan-400 font-semibold">L: {weather.tempLow !== undefined ? `${weather.tempLow}°C` : 'N/A'}</span>
               </div>
             </div>
 

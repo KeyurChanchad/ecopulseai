@@ -212,9 +212,9 @@ export function generateLocalWeatherHeatDossier(
 ): WeatherHeatDossierData {
   const currentTempC = weather.airTemperature;
   const currentTempF = cToF(currentTempC);
-  const tempHighC = weather.tempHigh ?? Math.round((currentTempC + 4.5) * 10) / 10;
+  const tempHighC = weather.tempHigh ?? currentTempC;
   const tempHighF = cToF(tempHighC);
-  const tempLowC = weather.tempLow ?? Math.round((currentTempC - 5.5) * 10) / 10;
+  const tempLowC = weather.tempLow ?? currentTempC;
   const tempLowF = cToF(tempLowC);
   const humidity = weather.humidity;
   const windSpeedKmH = Math.round(weather.windSpeed);

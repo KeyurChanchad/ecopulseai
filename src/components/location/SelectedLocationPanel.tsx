@@ -56,17 +56,18 @@ export const SelectedLocationPanel: React.FC<SelectedLocationPanelProps> = ({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const radii: AnalysisRadius[] = ['500m', '1km', '5km', '10km', '25km'];
 
-  const airTemp = weather?.airTemperature ?? 28;
-  const tempHigh = weather?.tempHigh ?? (weather?.airTemperature ? Math.round((weather.airTemperature + 4.5) * 10) / 10 : 34);
-  const tempLow = weather?.tempLow ?? (weather?.airTemperature ? Math.round((weather.airTemperature - 6.0) * 10) / 10 : 24);
+  const isWeatherLoaded = weather && weather.weatherDataType !== 'DATA_UNAVAILABLE' && typeof weather.airTemperature === 'number';
+  const airTemp = weather?.airTemperature;
+  const tempHigh = weather?.tempHigh;
+  const tempLow = weather?.tempLow;
   const accuWeatherUrl = weather?.accuWeatherUrl;
   const feelsLike = weather?.feelsLike ?? airTemp;
-  const humidity = weather?.humidity ?? 50;
-  const windSpeed = weather?.windSpeed ?? 10;
+  const humidity = weather?.humidity;
+  const windSpeed = weather?.windSpeed;
   const windDir = getWindDirectionCardinal(weather?.windDirection ?? 'NW');
-  const warmingAnomaly = weather?.warmingAnomaly ?? 1.8;
-  const uhiDelta = weather?.uhiDelta ?? 2.4;
-  const surfaceTemp = weather?.surfaceTemperature ?? (airTemp + 4.5);
+  const warmingAnomaly = weather?.warmingAnomaly ?? 1.2;
+  const uhiDelta = weather?.uhiDelta ?? 2.0;
+  const surfaceTemp = weather?.surfaceTemperature;
 
   // Derived cooling potential tailored to current urban heat burden
   const treeCooling = Math.min(3.2, Math.round((uhiDelta * 0.55 + 1.2) * 10) / 10);
@@ -74,8 +75,8 @@ export const SelectedLocationPanel: React.FC<SelectedLocationPanelProps> = ({
   const permeableCooling = Math.min(1.6, Math.round((uhiDelta * 0.25 + 0.5) * 10) / 10);
   const totalCooling = Math.round((treeCooling + coolRoofCooling * 0.6 + permeableCooling * 0.4) * 10) / 10;
 
-  const isExtremeHeat = airTemp >= 38 || feelsLike >= 41;
-  const isHighHeat = airTemp >= 32 || feelsLike >= 35;
+  const isExtremeHeat = (airTemp ?? 0) >= 38 || (feelsLike ?? 0) >= 41;
+  const isHighHeat = (airTemp ?? 0) >= 32 || (feelsLike ?? 0) >= 35;
 
   if (isCollapsed) {
     return (
@@ -88,12 +89,20 @@ export const SelectedLocationPanel: React.FC<SelectedLocationPanelProps> = ({
             <div className="min-w-0">
               <h4 className="text-xs font-bold text-white truncate">{locationName}</h4>
               <div className="flex items-center space-x-1.5 text-[10px] font-mono">
-                <span className="text-orange-400 font-bold">{airTemp}°C</span>
-                <span className="text-slate-400 text-[9px]">(H:{tempHigh}°/L:{tempLow}°)</span>
-                <span className="text-slate-500">•</span>
-                <span className="text-rose-400 font-bold">{feelsLike}°C feels</span>
-                <span className="text-slate-500">•</span>
-                <span className="text-emerald-400 font-semibold">{selectedRadius}</span>
+                {isWeatherLoaded ? (
+                  <>
+                    <span className="text-orange-400 font-bold">{airTemp}°C</span>
+                    {tempHigh !== undefined && tempLow !== undefined && (
+                      <span className="text-slate-400 text-[9px]">(H:{tempHigh}°/L:{tempLow}°)</span>
+                    )}
+                    <span className="text-slate-500">•</span>
+                    <span className="text-rose-400 font-bold">{feelsLike}°C feels</span>
+                    <span className="text-slate-500">•</span>
+                    <span className="text-emerald-400 font-semibold">{selectedRadius}</span>
+                  </>
+                ) : (
+                  <span className="text-slate-400">Loading live weather...</span>
+                )}
               </div>
             </div>
           </div>
@@ -205,17 +214,17 @@ export const SelectedLocationPanel: React.FC<SelectedLocationPanelProps> = ({
           {/* Air Temp */}
           <div
             className="bg-slate-900/90 p-2 rounded-xl border border-slate-800 flex flex-col justify-between"
-            title={`Air Temperature: ${airTemp}°C (High: ${tempHigh}°C, Low: ${tempLow}°C)`}
+            title={`Air Temperature: ${airTemp !== undefined ? `${airTemp}°C` : 'Loading'} (High: ${tempHigh ?? 'N/A'}°C, Low: ${tempLow ?? 'N/A'}°C)`}
           >
             <span className="text-[10px] font-mono text-slate-400 flex items-center justify-center space-x-1">
               <Thermometer className="w-3 h-3 text-orange-400" />
               <span>Temp</span>
             </span>
             <div className="text-base sm:text-lg font-black font-mono text-orange-400 my-0.5">
-              {airTemp}°C
+              {airTemp !== undefined ? `${airTemp}°C` : '--'}
             </div>
             <span className="text-[9px] text-slate-400 font-mono">
-              {Math.round((airTemp * 9) / 5 + 32)}°F
+              {airTemp !== undefined ? `${Math.round((airTemp * 9) / 5 + 32)}°F` : '--'}
             </span>
           </div>
 
@@ -226,7 +235,7 @@ export const SelectedLocationPanel: React.FC<SelectedLocationPanelProps> = ({
               <span>Feels</span>
             </span>
             <div className="text-base sm:text-lg font-black font-mono text-rose-400 my-0.5">
-              {feelsLike}°C
+              {feelsLike !== undefined ? `${feelsLike}°C` : '--'}
             </div>
             <span className={`text-[8px] font-mono font-bold px-1 rounded ${
               isExtremeHeat
@@ -246,7 +255,7 @@ export const SelectedLocationPanel: React.FC<SelectedLocationPanelProps> = ({
               <span>Humidity</span>
             </span>
             <div className="text-base sm:text-lg font-black font-mono text-cyan-300 my-0.5">
-              {humidity}%
+              {humidity !== undefined ? `${humidity}%` : '--'}
             </div>
             <span className="text-[9px] text-slate-400 font-mono">Relative</span>
           </div>
@@ -258,32 +267,34 @@ export const SelectedLocationPanel: React.FC<SelectedLocationPanelProps> = ({
               <span>Wind</span>
             </span>
             <div className="text-base sm:text-lg font-black font-mono text-teal-300 my-0.5">
-              {windSpeed}
+              {windSpeed !== undefined ? windSpeed : '--'}
             </div>
             <span className="text-[9px] text-slate-400 font-mono truncate">
-              km/h {windDir}
+              {windSpeed !== undefined ? `km/h ${windDir}` : '--'}
             </span>
           </div>
         </div>
 
         {/* High / Low Temperature Range Bar */}
-        <div className="bg-slate-900/90 px-2.5 py-1.5 rounded-xl border border-slate-800/80 flex items-center justify-between text-[11px] font-mono shadow-sm">
-          <div className="flex items-center space-x-1">
-            <span className="text-cyan-400 font-bold">Low:</span>
-            <span className="text-white font-extrabold">{tempLow}°C</span>
-            <span className="text-slate-500 text-[9px]">({Math.round((tempLow * 9) / 5 + 32)}°F)</span>
-          </div>
-          <div className="flex-1 mx-2.5 flex items-center">
-            <div className="w-full bg-slate-800 h-1.5 rounded-full relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-amber-400 to-rose-500 rounded-full" />
+        {tempLow !== undefined && tempHigh !== undefined ? (
+          <div className="bg-slate-900/90 px-2.5 py-1.5 rounded-xl border border-slate-800/80 flex items-center justify-between text-[11px] font-mono shadow-sm">
+            <div className="flex items-center space-x-1">
+              <span className="text-cyan-400 font-bold">Low:</span>
+              <span className="text-white font-extrabold">{tempLow}°C</span>
+              <span className="text-slate-500 text-[9px]">({Math.round((tempLow * 9) / 5 + 32)}°F)</span>
+            </div>
+            <div className="flex-1 mx-2.5 flex items-center">
+              <div className="w-full bg-slate-800 h-1.5 rounded-full relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-amber-400 to-rose-500 rounded-full" />
+              </div>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className="text-rose-400 font-bold">High:</span>
+              <span className="text-white font-extrabold">{tempHigh}°C</span>
+              <span className="text-slate-500 text-[9px]">({Math.round((tempHigh * 9) / 5 + 32)}°F)</span>
             </div>
           </div>
-          <div className="flex items-center space-x-1">
-            <span className="text-rose-400 font-bold">High:</span>
-            <span className="text-white font-extrabold">{tempHigh}°C</span>
-            <span className="text-slate-500 text-[9px]">({Math.round((tempHigh * 9) / 5 + 32)}°F)</span>
-          </div>
-        </div>
+        ) : null}
 
         <div className="flex items-center justify-between text-[10px] font-mono bg-slate-900/60 px-2.5 py-1 rounded-lg border border-slate-800/80">
           <div className="flex items-center space-x-1.5">
