@@ -42,19 +42,19 @@ export async function createAndRunBackendJob(input: CreateJobInput) {
     try {
       const { fetchLiveWeather, fetchAirQuality, aqiToStatus, degreesToCardinal } = await import('./weatherService.js');
 
-      // Default fallback weather (clearly UNAVAILABLE)
+      // Default weather state when observation cannot be retrieved
       let weatherData: any = {
-        airTemperature: 22.0, feelsLike: 22.0, surfaceTemperature: 28.0,
-        humidity: 55, dewPoint: 12.0, windSpeed: 10, windDirection: 'N',
-        windGusts: null, solarRadiation: 0, uvIndex: 0, cloudCover: 50,
-        precipitation: 0, pressureHpa: 1013, isHeatWaveAnomaly: false,
+        airTemperature: null, feelsLike: null, surfaceTemperature: null,
+        humidity: null, dewPoint: null, windSpeed: null, windDirection: 'N',
+        windGusts: null, solarRadiation: 0, uvIndex: 0, cloudCover: null,
+        precipitation: null, pressureHpa: 1013, isHeatWaveAnomaly: false,
         weatherCondition: 'DATA_UNAVAILABLE',
-        weatherSource: 'Fallback baseline (Open-Meteo unavailable)',
+        weatherSource: 'Live observation unavailable',
         weatherDataType: 'DATA_UNAVAILABLE',
         weatherObservationTime: null,
         weatherRetrievalTime: new Date().toISOString(),
         surfaceTempDataType: 'DATA_UNAVAILABLE',
-        surfaceTempNote: 'Could not retrieve weather data',
+        surfaceTempNote: 'Could not retrieve live weather observation',
       };
 
       let aqiValue = 0, aqiStatus = 'DATA_UNAVAILABLE', aqiSource = 'Not retrieved', aqiDataType = 'DATA_UNAVAILABLE';
@@ -64,25 +64,25 @@ export async function createAndRunBackendJob(input: CreateJobInput) {
       const weatherFetch = await fetchLiveWeather(latitude, longitude, 8000);
       if (weatherFetch.result) {
         const w = weatherFetch.result;
-        const airTemp = w.airTemperature.value ?? 22.0;
+        const airTemp = w.airTemperature.value;
         const solar = w.shortwaveRadiation.value ?? 0;
-        const humidity = w.humidity.value ?? 55;
-        const isHeatWave = airTemp >= 38 || (airTemp >= 34 && humidity > 60);
+        const humidity = w.humidity.value ?? 40;
+        const isHeatWave = airTemp != null && (airTemp >= 38 || (airTemp >= 34 && humidity > 60));
         const windDeg = w.windDirection.value ?? 0;
         const windCardinal = degreesToCardinal(windDeg);
 
         weatherData = {
           airTemperature: airTemp,
           feelsLike: w.feelsLike.value ?? airTemp,
-          surfaceTemperature: w.surfaceTemperatureEstimate.value ?? Math.round((airTemp + 6) * 10) / 10,
+          surfaceTemperature: w.surfaceTemperatureEstimate.value ?? (airTemp != null ? Math.round((airTemp + 6) * 10) / 10 : null),
           humidity,
-          dewPoint: w.dewPoint.value ?? Math.round((airTemp - ((100 - humidity) / 5)) * 10) / 10,
-          windSpeed: w.windSpeed.value ?? 10,
+          dewPoint: w.dewPoint.value ?? (airTemp != null ? Math.round((airTemp - ((100 - humidity) / 5)) * 10) / 10 : null),
+          windSpeed: w.windSpeed.value ?? 0,
           windDirection: windCardinal,
           windGusts: w.windGusts.value,
           solarRadiation: solar,
           uvIndex: Math.min(12, Math.max(0, Math.round(solar / 90))),
-          cloudCover: w.cloudCover.value ?? 20,
+          cloudCover: w.cloudCover.value ?? 0,
           precipitation: w.precipitation.value ?? 0,
           pressureHpa: w.pressureHpa.value ?? 1013,
           isHeatWaveAnomaly: isHeatWave,
@@ -95,7 +95,7 @@ export async function createAndRunBackendJob(input: CreateJobInput) {
           surfaceTempNote: 'Estimated from shortwave radiation + urban albedo model. NOT a satellite LST observation.',
         };
       } else {
-        console.warn(`[EcoPulse] Open-Meteo weather fetch failed: ${weatherFetch.error}`);
+        console.warn(`[EcoPulse] Open-Meteo weather fetch notice: ${weatherFetch.error}`);
       }
 
       // SECONDARY: Air Quality
@@ -109,7 +109,7 @@ export async function createAndRunBackendJob(input: CreateJobInput) {
         uvIndexFromAQ = aq.uvIndex.value;
         if (uvIndexFromAQ !== null) weatherData.uvIndex = Math.round(uvIndexFromAQ * 10) / 10;
       } else {
-        console.warn(`[EcoPulse] Air quality fetch failed: ${aqFetch.error}`);
+        console.warn(`[EcoPulse] Air quality fetch notice: ${aqFetch.error}`);
         aqiValue = 0; aqiStatus = 'DATA_UNAVAILABLE';
         aqiSource = `Not retrieved: ${aqFetch.error}`;
         aqiDataType = 'DATA_UNAVAILABLE';
@@ -117,9 +117,9 @@ export async function createAndRunBackendJob(input: CreateJobInput) {
 
       jobData.steps.weather = 'completed';
       jobData.stepList[1].status = 'completed';
-      jobData.stepList[1].detail = weatherData.weatherDataType !== 'DATA_UNAVAILABLE'
-        ? `${weatherData.airTemperature}C air | ${weatherData.solarRadiation} W/m solar | ${weatherData.humidity}% RH | ${weatherData.weatherCondition} [${weatherData.weatherDataType}]`
-        : 'Weather data unavailable — using fallback baseline';
+      jobData.stepList[1].detail = weatherData.weatherDataType !== 'DATA_UNAVAILABLE' && weatherData.airTemperature !== null
+        ? `${weatherData.airTemperature}°C air | ${weatherData.solarRadiation} W/m solar | ${weatherData.humidity}% RH | ${weatherData.weatherCondition} [${weatherData.weatherDataType}]`
+        : 'Weather observation unavailable from provider';
       jobData.steps.gis = 'running';
       jobData.stepList[2].status = 'running';
       await saveCurrentJob(jobData);
@@ -185,7 +185,7 @@ export async function createAndRunBackendJob(input: CreateJobInput) {
       // Step 5: Anthropogenic — MODELLED
       const trafficCongestionLevel = isUrbanApprox ? Math.min(85, Math.max(20, Math.round(roadSurfacePct * 0.85 + hashFactor * 15))) : 8;
       const industrialZoneProximityKm = Math.round((1.5 + hashFactor * 7) * 10) / 10;
-      const acHeatFluxEstimateWm2 = Math.round(buildingDensityPct * (weatherData.airTemperature > 30 ? 0.38 : 0.15));
+      const acHeatFluxEstimateWm2 = Math.round(buildingDensityPct * ((weatherData.airTemperature ?? 25) > 30 ? 0.38 : 0.15));
       const gridEnergyDensityWm2 = Math.round(buildingDensityPct * 0.35);
       const constructionActivityIndex = Math.round(hashFactor * 40);
 

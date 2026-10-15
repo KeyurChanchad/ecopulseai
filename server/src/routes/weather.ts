@@ -64,9 +64,12 @@ weatherRouter.get('/', async (req: Request, res: Response): Promise<void> => {
   }
 
   if (!fetchResult.result) {
-    res.status(503).json({
+    const isRateLimited = (fetchResult as any).rateLimited ?? false;
+    res.status(isRateLimited ? 429 : 503).json({
       success: false,
       error: fetchResult.error || 'Failed to retrieve live weather data from providers.',
+      rateLimited: isRateLimited,
+      provider: 'open-meteo',
       coordinates: coords,
       retrievedAt: new Date().toISOString(),
     });

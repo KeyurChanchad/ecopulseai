@@ -262,10 +262,10 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
             </div>
             <div className="my-1.5">
               <div className="text-3xl font-black font-mono text-orange-400">
-                {airTemp}°C
+                {weather.isRealTime || airTemp !== 0 ? `${airTemp}°C` : '--'}
               </div>
               <div className="text-xs text-slate-400 font-mono mt-0.5">
-                {((airTemp * 9) / 5 + 32).toFixed(1)}°F
+                {weather.isRealTime || airTemp !== 0 ? `${((airTemp * 9) / 5 + 32).toFixed(1)}°F` : 'Pending live reading'}
               </div>
             </div>
             <div className="pt-2 border-t border-slate-800/80 space-y-1">
@@ -294,7 +294,7 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
             </div>
             <div className="my-2">
               <div className="text-3xl font-black font-mono text-rose-400">
-                {feelsLike}°C
+                {weather.isRealTime || feelsLike !== 0 ? `${feelsLike}°C` : '--'}
               </div>
               <div className="text-xs text-slate-400 font-mono mt-0.5">
                 Feels like sensation

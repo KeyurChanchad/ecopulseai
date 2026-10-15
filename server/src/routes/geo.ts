@@ -51,7 +51,7 @@ const GLOBAL_OBSERVATION_HUBS = [
 
 let cachedHotspots: any[] = [];
 let cacheTimestamp = 0;
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes cache
 
 function computeHeatIndex(tempC: number, rh: number): number {
   if (tempC < 25) return tempC;
@@ -124,10 +124,36 @@ geoRouter.get('/hotspots', async (_req: Request, res: Response): Promise<void> =
     const lats = GLOBAL_OBSERVATION_HUBS.map((h) => h.lat).join(',');
     const lngs = GLOBAL_OBSERVATION_HUBS.map((h) => h.lng).join(',');
 
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}&current=temperature_2m,relative_humidity_2m,apparent_temperature,direct_normal_irradiance,shortwave_radiation&models=gfs_seamless`;
-    const response = await fetch(url);
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}&current=temperature_2m,relative_humidity_2m,apparent_temperature,direct_normal_irradiance,shortwave_radiation`;
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'EcoPulseAI/2.0 (https://ecopulseai.onrender.com; contact@ecopulse.ai)',
+        'Accept': 'application/json',
+      },
+    });
 
     if (!response.ok) {
+      if (response.status === 429) {
+        if (cachedHotspots.length > 0) {
+          res.json({
+            success: true,
+            source: 'Stale Global Surveillance Cache (Datacenter Rate Limited)',
+            timestamp: new Date(cacheTimestamp).toISOString(),
+            count: cachedHotspots.length,
+            hotspots: cachedHotspots,
+            isStale: true,
+          });
+          return;
+        }
+        res.status(429).json({
+          success: false,
+          rateLimited: true,
+          error: 'Open-Meteo rate limit exceeded on server IP. Client direct query enabled.',
+          count: 0,
+          hotspots: [],
+        });
+        return;
+      }
       throw new Error(`Open-Meteo returned status ${response.status}`);
     }
 
@@ -135,12 +161,17 @@ geoRouter.get('/hotspots', async (_req: Request, res: Response): Promise<void> =
     const dataList = Array.isArray(data) ? data : [data];
 
     const results = GLOBAL_OBSERVATION_HUBS.map((hub, idx) => {
-      const cur = dataList[idx]?.current || {};
-      const airTemp = cur.temperature_2m !== undefined ? Math.round(cur.temperature_2m * 10) / 10 : 30.0;
-      const humidity = cur.relative_humidity_2m !== undefined ? Math.round(cur.relative_humidity_2m) : 45;
-      const solar = Math.round(cur.shortwave_radiation || cur.direct_normal_irradiance || 550);
-      const heatIndex = cur.apparent_temperature !== undefined ? Math.round(cur.apparent_temperature * 10) / 10 : computeHeatIndex(airTemp, humidity);
-      const surfaceTemp = Math.round((airTemp + Math.max(3, (solar / 1000) * 14)) * 10) / 10;
+      const cur = dataList[idx]?.current;
+      if (!cur || cur.temperature_2m === undefined || cur.temperature_2m === null || isNaN(cur.temperature_2m)) {
+        return null;
+      }
+      const airTemp = Math.round(cur.temperature_2m * 10) / 10;
+      const humidity = cur.relative_humidity_2m !== undefined && cur.relative_humidity_2m !== null ? Math.round(cur.relative_humidity_2m) : 40;
+      const solar = Math.round(cur.shortwave_radiation || cur.direct_normal_irradiance || 0);
+      const heatIndex = cur.apparent_temperature !== undefined && cur.apparent_temperature !== null
+        ? Math.round(cur.apparent_temperature * 10) / 10
+        : computeHeatIndex(airTemp, humidity);
+      const surfaceTemp = Math.round((airTemp + Math.max(0, (solar / 1000) * 14)) * 10) / 10;
 
       const score = computeCalibratedHeatScore(airTemp, surfaceTemp, heatIndex, solar);
       const category = determineHeatCategory(score, airTemp, surfaceTemp, heatIndex);
@@ -168,7 +199,7 @@ geoRouter.get('/hotspots', async (_req: Request, res: Response): Promise<void> =
         climateZone: hub.climateZone,
         recentTrend: solar > 400 || airTemp > 30 ? 'rising' : 'stable',
       };
-    });
+    }).filter(Boolean);
 
     cachedHotspots = results;
     cacheTimestamp = now;

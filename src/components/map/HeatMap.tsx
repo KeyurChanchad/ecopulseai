@@ -463,7 +463,7 @@ export const HeatMap: React.FC<HeatMapProps> = ({
         weight: 1.5,
         dashArray: '4, 4',
       })
-        .bindTooltip('High LST Hotspot (>48°C) • Low Albedo Commercial Strip')
+        .bindTooltip('High LST Hotspot • Low Albedo Commercial Strip')
         .addTo(heatZonesLayerGroupRef.current);
     }
 
@@ -481,7 +481,7 @@ export const HeatMap: React.FC<HeatMapProps> = ({
           opacity: 0.7,
         }
       )
-        .bindTooltip('Major Arterial Corridor • High Asphalt Heat Retention (SG Highway)')
+        .bindTooltip('Major Arterial Corridor • High Asphalt Heat Retention')
         .addTo(heatZonesLayerGroupRef.current);
     }
 
@@ -507,7 +507,7 @@ export const HeatMap: React.FC<HeatMapProps> = ({
         fillOpacity: 0.15,
         weight: 2,
       })
-        .bindTooltip('UHI Thermal Boundary (+4.8°C Urban Excess)')
+        .bindTooltip('UHI Thermal Boundary • Elevated Urban Core Excess')
         .addTo(heatZonesLayerGroupRef.current);
     }
 

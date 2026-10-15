@@ -56,7 +56,6 @@ const AnalysisJobSchema = new Schema<IAnalysisJob>({
   error: { type: String },
 }, { strict: false });
 
-AnalysisJobSchema.index({ jobId: 1 });
 AnalysisJobSchema.index({ location: '2dsphere' });
 
 export const AnalysisJobModel = mongoose.model<IAnalysisJob>(

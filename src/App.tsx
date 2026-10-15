@@ -497,7 +497,7 @@ export const App: React.FC = () => {
                                 <span className="text-[11px] sm:text-xs font-bold text-white block truncate">Kuwait City</span>
                                 <div className="flex items-baseline space-x-1">
                                   <span className="font-mono font-black text-orange-400 text-xs sm:text-sm">
-                                    {kuwaitLive ? `${kuwaitLive.airTemp}°C` : '38.0°C'}
+                                    {kuwaitLive ? `${kuwaitLive.airTemp}°C` : '--'}
                                   </span>
                                   <span className="text-[8px] font-mono text-slate-400">Live</span>
                                 </div>
@@ -510,7 +510,7 @@ export const App: React.FC = () => {
                                 <span className="text-[11px] sm:text-xs font-bold text-white block truncate">Jacobabad</span>
                                 <div className="flex items-baseline space-x-1">
                                   <span className="font-mono font-black text-rose-400 text-xs sm:text-sm">
-                                    {jacobLive ? `${jacobLive.airTemp}°C` : '33.5°C'}
+                                    {jacobLive ? `${jacobLive.airTemp}°C` : '--'}
                                   </span>
                                   <span className="text-[8px] font-mono text-slate-400">Live</span>
                                 </div>
@@ -523,7 +523,7 @@ export const App: React.FC = () => {
                                 <span className="text-[11px] sm:text-xs font-bold text-white block truncate">Phoenix</span>
                                 <div className="flex items-baseline space-x-1">
                                   <span className="font-mono font-black text-amber-400 text-xs sm:text-sm">
-                                    {phoenixLive ? `${phoenixLive.airTemp}°C` : '30.0°C'}
+                                    {phoenixLive ? `${phoenixLive.airTemp}°C` : '--'}
                                   </span>
                                   <span className="text-[8px] font-mono text-slate-400">Live</span>
                                 </div>
@@ -638,16 +638,42 @@ export const App: React.FC = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
                     <div>
-                      Air Temp: <strong className="text-orange-400">{profile.weather.airTemperature}°C</strong>{' '}
-                      {profile.weather.tempHigh != null && profile.weather.tempLow != null && (
+                      Air Temp:{' '}
+                      <strong className="text-orange-400">
+                        {profile.weather.isRealTime || profile.weather.airTemperature !== 0
+                          ? `${profile.weather.airTemperature}°C`
+                          : '--'}
+                      </strong>{' '}
+                      {profile.weather.isRealTime && profile.weather.tempHigh != null && profile.weather.tempLow != null && (
                         <span className="text-[9px] text-slate-400 font-normal">
                           (H:{profile.weather.tempHigh}°/L:{profile.weather.tempLow}°)
                         </span>
                       )}
                     </div>
-                    <div>Feels Like: <strong className="text-rose-400">{profile.weather.feelsLike}°C</strong></div>
-                    <div>Surface LST: <strong className="text-amber-400">{profile.weather.surfaceTemperature}°C</strong></div>
-                    <div>UHI Delta: <strong className="text-purple-400">+{profile.weather.uhiDelta}°C</strong></div>
+                    <div>
+                      Feels Like:{' '}
+                      <strong className="text-rose-400">
+                        {profile.weather.isRealTime || profile.weather.feelsLike !== 0
+                          ? `${profile.weather.feelsLike}°C`
+                          : '--'}
+                      </strong>
+                    </div>
+                    <div>
+                      Surface LST:{' '}
+                      <strong className="text-amber-400">
+                        {profile.weather.isRealTime || profile.weather.surfaceTemperature !== 0
+                          ? `${profile.weather.surfaceTemperature}°C`
+                          : '--'}
+                      </strong>
+                    </div>
+                    <div>
+                      UHI Delta:{' '}
+                      <strong className="text-purple-400">
+                        {profile.weather.isRealTime || profile.weather.airTemperature !== 0
+                          ? `+${profile.weather.uhiDelta}°C`
+                          : '--'}
+                      </strong>
+                    </div>
                   </div>
                   <div className="flex items-center space-x-1.5 pt-1">
                     <button

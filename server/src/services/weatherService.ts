@@ -305,7 +305,7 @@ export async function fetchOpenMeteoBundle(
   lat: number,
   lon: number,
   timeoutMs = 15000
-): Promise<{ result: NormalizedWeatherBundle | null; error?: string; isStale?: boolean }> {
+): Promise<{ result: NormalizedWeatherBundle | null; error?: string; isStale?: boolean; rateLimited?: boolean }> {
   const cacheKey = getCacheKey('open-meteo-bundle', lat, lon);
   const cached = getFromCache<NormalizedWeatherBundle>(cacheKey);
 
@@ -386,14 +386,20 @@ export async function fetchOpenMeteoBundle(
       `&current=us_aqi,european_aqi,pm2_5,pm10,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone,uv_index` +
       `&timezone=auto`;
 
+    const headers = {
+      'User-Agent': 'EcoPulseAI/2.0 (https://ecopulseai.onrender.com; contact@ecopulse.ai)',
+      'Accept': 'application/json',
+    };
+
     const [forecastRes, aqRes] = await Promise.allSettled([
-      fetch(forecastUrl, { signal: controller.signal }),
-      fetch(aqUrl, { signal: controller.signal }),
+      fetch(forecastUrl, { signal: controller.signal, headers }),
+      fetch(aqUrl, { signal: controller.signal, headers }),
     ]);
 
     clearTimeout(timer);
 
     if (forecastRes.status !== 'fulfilled' || !forecastRes.value.ok) {
+      const isRateLimited = forecastRes.status === 'fulfilled' && forecastRes.value.status === 429;
       const statusErr = forecastRes.status === 'fulfilled'
         ? `Open-Meteo returned HTTP ${forecastRes.value.status}`
         : `Network error to Open-Meteo: ${(forecastRes.reason as Error)?.message ?? 'Connection failed'}`;
@@ -410,10 +416,11 @@ export async function fetchOpenMeteoBundle(
             },
           },
           isStale: true,
+          rateLimited: isRateLimited,
           error: `${statusErr} (Serving cached data)`,
         };
       }
-      return { result: null, error: statusErr };
+      return { result: null, error: statusErr, rateLimited: isRateLimited };
     }
 
     const forecastData = await forecastRes.value.json();
