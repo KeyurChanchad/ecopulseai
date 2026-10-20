@@ -18,6 +18,7 @@ import {
   generateLocalWeatherHeatDossier,
 } from '../../services/aiDossierService';
 import { WeatherObservation } from '../../types';
+import { WhyLocationHotCard } from '../dashboard/WhyLocationHotCard';
 
 interface AiWeatherHeatDossierViewProps {
   locationName: string;
@@ -304,46 +305,22 @@ export const AiWeatherHeatDossierView: React.FC<AiWeatherHeatDossierViewProps> =
             <div className="border-b border-slate-800 pb-2">
               <h3 className="text-lg font-black text-white flex items-center space-x-2">
                 <span className="text-emerald-400">2.</span>
-                <span>If {locationName} becomes hot, what causes it?</span>
+                <span>Why Is {locationName} Hot & What Causes It?</span>
               </h3>
               <p className="text-xs text-slate-300 mt-1">
                 {causesSection.introText}
               </p>
             </div>
 
-            <div className="space-y-4">
-              {causesSection.causes.map((cause) => (
-                <div
-                  key={cause.id}
-                  className="p-4 sm:p-5 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-slate-700 transition space-y-2.5"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs shrink-0">
-                      {cause.id}
-                    </div>
-                    <h4 className="text-sm font-bold text-white tracking-wide">
-                      {cause.title}
-                    </h4>
-                  </div>
-
-                  <p className="text-xs text-slate-300 pl-10 leading-relaxed">
-                    {cause.explanation}
-                  </p>
-
-                  <div className="ml-10 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300 flex items-start space-x-2">
-                    <span className="font-bold text-emerald-400 shrink-0">
-                      Reduction strategy:
-                    </span>
-                    <span>{cause.reductionStrategy}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-slate-900/70 border border-slate-800 text-xs text-slate-400 flex items-start space-x-2.5">
-              <Flame className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
-              <span>{causesSection.localEmpiricalNote}</span>
-            </div>
+            {/* Dynamic, User-Friendly Heating Reasons & Proven Solutions Card */}
+            <WhyLocationHotCard
+              locationName={locationName}
+              country={country}
+              latitude={latitude}
+              longitude={longitude}
+              weather={weather}
+              initialTab="reasons"
+            />
           </section>
 
           {/* ============================================================ */}

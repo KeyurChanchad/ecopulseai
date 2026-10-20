@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
 import { WeatherObservation } from '../../types';
 import { getWindDirectionCardinal } from '../../services/locationService';
-import {
-  classifyLocationClimate,
-  getTailoredCausalDrivers,
-  getTailoredSolutions,
-} from '../../services/climateCausalEngine';
+import { WhyLocationHotCard } from '../dashboard/WhyLocationHotCard';
 import {
   MapPin,
   Sparkles,
@@ -56,8 +52,6 @@ export const SelectedLocationPanel: React.FC<SelectedLocationPanelProps> = ({
   isAnalyzing = false,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [activeSubTab, setActiveSubTab] = useState<'reasons' | 'solutions'>('reasons');
-  const [expandedReasonId, setExpandedReasonId] = useState<number | null>(1);
 
   const isWeatherLoaded = weather && weather.weatherDataType !== 'DATA_UNAVAILABLE' && typeof weather.airTemperature === 'number';
   const airTemp = weather?.airTemperature;
@@ -138,31 +132,6 @@ export const SelectedLocationPanel: React.FC<SelectedLocationPanelProps> = ({
       </div>
     );
   }
-
-  // Dynamically resolve climate profile, place-specific causes and solutions
-  const resolvedWeather: WeatherObservation =
-    weather && typeof weather.airTemperature === 'number'
-      ? weather
-      : ({
-          airTemperature: 28,
-          feelsLike: 29,
-          surfaceTemperature: 33,
-          humidity: 50,
-          windSpeed: 12,
-          windDirection: 'NW',
-          solarRadiation: 650,
-          uvIndex: 7,
-          cloudCover: 15,
-          pressureHpa: 1013,
-          uhiDelta: 2.1,
-          aqi: 45,
-          aqiStatus: 'Good',
-          timestamp: new Date().toISOString(),
-        } as WeatherObservation);
-
-  const climateProfile = classifyLocationClimate(latitude, longitude, locationName, address, resolvedWeather);
-  const causalDrivers = getTailoredCausalDrivers(locationName, address, latitude, longitude, resolvedWeather);
-  const tailoredSolutions = getTailoredSolutions(locationName, address, latitude, longitude, resolvedWeather);
 
   return (
     <div className="bg-slate-950/98 backdrop-blur-xl border border-slate-700/80 rounded-2xl p-3.5 sm:p-4 shadow-2xl w-full max-w-md select-text transition-all animate-in fade-in zoom-in-95 duration-200 ring-1 ring-white/10 max-h-[82vh] overflow-y-auto no-scrollbar space-y-3.5">
@@ -338,160 +307,14 @@ export const SelectedLocationPanel: React.FC<SelectedLocationPanelProps> = ({
       </div>
 
       {/* Dynamic Heating Reasons & Solutions Card */}
-      <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-3 shadow-lg space-y-2.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2 min-w-0">
-            <div className="p-1.5 rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/30 shrink-0">
-              <Flame className="w-3.5 h-3.5" />
-            </div>
-            <div className="min-w-0">
-              <h4 className="text-xs font-bold text-white truncate flex items-center gap-1.5">
-                <span>Why Is {locationName} Hot?</span>
-              </h4>
-              <p className="text-[10px] text-slate-400 truncate">
-                Zone: <span className="text-amber-300 font-semibold">{climateProfile.zoneName}</span>
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Toggle Tabs */}
-        <div className="grid grid-cols-2 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800/80">
-          <button
-            onClick={() => setActiveSubTab('reasons')}
-            className={`py-1.5 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center space-x-1.5 transition ${
-              activeSubTab === 'reasons'
-                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
-            }`}
-          >
-            <Flame className="w-3 h-3 text-rose-400" />
-            <span>Top Reasons ({causalDrivers.length})</span>
-          </button>
-          <button
-            onClick={() => setActiveSubTab('solutions')}
-            className={`py-1.5 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center space-x-1.5 transition ${
-              activeSubTab === 'solutions'
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
-            }`}
-          >
-            <TreePine className="w-3 h-3 text-emerald-400" />
-            <span>Proven Solutions ({tailoredSolutions.solutionsTable.length})</span>
-          </button>
-        </div>
-
-        {/* Tab Content */}
-        {activeSubTab === 'reasons' ? (
-          <div className="space-y-2">
-            <p className="text-[10px] text-slate-400 leading-relaxed">
-              Based on local weather, geography, and urban layout, here are the physical reasons heating up {locationName}:
-            </p>
-            <div className="space-y-2">
-              {causalDrivers.map((driver) => {
-                const isExpanded = expandedReasonId === driver.id;
-                return (
-                  <div
-                    key={driver.id}
-                    className="bg-slate-950/70 border border-slate-800 rounded-xl overflow-hidden transition-all hover:border-slate-700"
-                  >
-                    <button
-                      onClick={() => setExpandedReasonId(isExpanded ? null : driver.id)}
-                      className="w-full text-left p-2.5 flex items-start justify-between gap-2"
-                    >
-                      <div className="flex items-start space-x-2 min-w-0">
-                        <span className="shrink-0 w-5 h-5 rounded-full bg-rose-950 text-rose-300 border border-rose-800 text-[10px] font-mono font-bold flex items-center justify-center mt-0.5">
-                          {driver.id}
-                        </span>
-                        <div className="min-w-0">
-                          <span className="text-[9px] font-semibold tracking-wider text-rose-400 uppercase font-mono block">
-                            {driver.category}
-                          </span>
-                          <h5 className="text-[11px] font-bold text-slate-100 leading-snug">
-                            {driver.title}
-                          </h5>
-                        </div>
-                      </div>
-                      <div className="shrink-0 text-slate-500 pt-1">
-                        {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                      </div>
-                    </button>
-
-                    {isExpanded && (
-                      <div className="px-2.5 pb-2.5 pt-0 border-t border-slate-800/80 mt-1 space-y-2 text-[10px]">
-                        <p className="text-slate-300 leading-relaxed pt-1.5">
-                          {driver.explanation}
-                        </p>
-                        <div className="bg-emerald-950/40 border border-emerald-800/50 rounded-lg p-2 space-y-1">
-                          <div className="flex items-center space-x-1 text-emerald-400 font-bold text-[10px]">
-                            <Lightbulb className="w-3 h-3 text-emerald-300" />
-                            <span>Proven Solution:</span>
-                          </div>
-                          <p className="text-emerald-100/90 text-[10px] leading-relaxed">
-                            {driver.reductionStrategy}
-                          </p>
-                          <div className="pt-1 flex items-center">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                              📉 {driver.quantifiedImpactC}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-2.5">
-            {/* Priority Summary */}
-            <div className="bg-slate-950/80 border border-slate-800/90 rounded-xl p-2.5 space-y-1.5 text-[10px]">
-              <div className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider font-mono flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3" />
-                <span>Priority Actions for {locationName}</span>
-              </div>
-              <div className="space-y-1 text-slate-300">
-                <div>
-                  <span className="text-white font-bold">🏙️ City-wide air: </span>
-                  <span className="text-slate-300">{tailoredSolutions.prioritization.cityWideAirTemp.recommendation}</span>
-                </div>
-                <div>
-                  <span className="text-white font-bold">🚶 Street comfort: </span>
-                  <span className="text-slate-300">{tailoredSolutions.prioritization.streetComfort.recommendation}</span>
-                </div>
-                <div>
-                  <span className="text-white font-bold">🛡️ Long-term: </span>
-                  <span className="text-slate-300">{tailoredSolutions.prioritization.longTermWarming.recommendation}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Solutions List */}
-            <div className="space-y-2">
-              {tailoredSolutions.solutionsTable.map((sol, idx) => (
-                <div
-                  key={idx}
-                  className="bg-slate-950/70 border border-slate-800/90 rounded-xl p-2.5 space-y-1.5 hover:border-slate-700 transition"
-                >
-                  <div className="flex items-start justify-between gap-1.5">
-                    <h5 className="text-[11px] font-bold text-slate-100 flex items-center space-x-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                      <span>{sol.solution}</span>
-                    </h5>
-                    <span className="shrink-0 px-2 py-0.5 rounded-full text-[9px] font-bold bg-cyan-950 text-cyan-300 border border-cyan-800 font-mono">
-                      {sol.estimatedEffect.split(';')[0]}
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-slate-300 leading-relaxed pl-5">
-                    {sol.whatItMeans}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+      <WhyLocationHotCard
+        locationName={locationName}
+        country={address}
+        latitude={latitude}
+        longitude={longitude}
+        weather={weather}
+        address={address}
+      />
 
       {/* Action Buttons */}
       <div className="grid grid-cols-2 gap-2 pt-1">

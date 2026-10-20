@@ -13,6 +13,7 @@ import {
 } from '../../types';
 import { HeatCausesAndSolutionsAccordion } from './HeatCausesAndSolutionsAccordion';
 import { UrbanHeatCausesAndMitigationGuide } from './UrbanHeatCausesAndMitigationGuide';
+import { WhyLocationHotCard } from './WhyLocationHotCard';
 import {
   Brain,
   X,
@@ -217,6 +218,17 @@ export const WhyHotExplorationModal: React.FC<WhyHotExplorationModalProps> = ({
               Traffic congestion, air conditioning rejection, and other waste-heat sources also contribute, but the available data provides lower confidence for quantifying their individual street-level effects.
             </p>
           </div>
+
+          {/* Dynamic Heating Reasons & Solutions Card */}
+          <WhyLocationHotCard
+            locationName={location.name || location.city}
+            country={location.country}
+            latitude={location.latitude}
+            longitude={location.longitude}
+            weather={weather}
+            address={location.address}
+            initialTab="reasons"
+          />
 
           {/* Causes and Solutions Accordion */}
           <div className="bg-slate-950 p-4.5 rounded-2xl border border-slate-800 shadow-lg">
