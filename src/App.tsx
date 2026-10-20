@@ -49,6 +49,14 @@ import {
 } from 'lucide-react';
 import { getHeatCategoryColor } from './services/heatModel';
 
+import {
+  AppTab,
+  tabToPath,
+  pathToTab,
+  updateBrowserUrl,
+  parseInitialUrl,
+} from './services/appRouter';
+
 function getCountryEmoji(country: string): string {
   switch (country.toLowerCase()) {
     case 'kuwait': return '🇰🇼';
@@ -78,8 +86,9 @@ function getCountryEmoji(country: string): string {
 }
 
 export const App: React.FC = () => {
-  // Navigation & View State
-  const [currentTab, setCurrentTab] = useState<'map' | 'dashboard' | 'simulator' | 'timeline' | 'reports'>('map');
+  // Navigation & View State (Synchronized with URL routes: /map, /ai-analysis, /simulator, /timeline)
+  const initialUrlInfo = useMemo(() => parseInitialUrl(), []);
+  const [currentTab, setCurrentTabState] = useState<AppTab>(() => initialUrlInfo.initialTab);
 
   // Active Selected Location Profile & Analysis Radius
   const INITIAL_COORDS = { lat: 23.0225, lng: 72.5714 };
@@ -239,12 +248,53 @@ export const App: React.FC = () => {
 
   const handleResetToGlobal = () => {
     setIsGlobalOverview(true);
+    updateBrowserUrl(currentTab, undefined);
   };
+
+  const handleTabChange = (newTab: AppTab) => {
+    setCurrentTabState(newTab);
+    const hasCity = !isGlobalOverview && profile.location.id && !profile.location.id.startsWith('loc-');
+    if (hasCity) {
+      updateBrowserUrl(newTab, { cityId: profile.location.id });
+    } else if (!isGlobalOverview) {
+      updateBrowserUrl(newTab, {
+        lat: profile.location.latitude,
+        lng: profile.location.longitude,
+        name: profile.location.name,
+      });
+    } else {
+      updateBrowserUrl(newTab, undefined);
+    }
+  };
+
+  // Sync browser back/forward buttons with app tab
+  useEffect(() => {
+    const handlePopState = () => {
+      const tabFromPath = pathToTab(window.location.pathname);
+      setCurrentTabState(tabFromPath);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Ensure initial pathname is /map or specific route instead of bare /
+  useEffect(() => {
+    if (window.location.pathname === '/' || window.location.pathname === '') {
+      updateBrowserUrl('map', undefined, true);
+    } else {
+      updateBrowserUrl(initialUrlInfo.initialTab, undefined, true);
+    }
+    if (initialUrlInfo.openMethodology) {
+      setIsMethodologyOpen(true);
+    }
+  }, [initialUrlInfo]);
 
   // Handlers
   const handleSelectCity = async (cityId: string, radius = selectedRadius) => {
     setIsGlobalOverview(false);
     setIsTargetPanelOpen(true);
+    updateBrowserUrl(currentTab, { cityId });
     let city = hotspots.find((c) => c.id === cityId);
     if (!city) {
       const fallbackHubs = [
@@ -270,22 +320,16 @@ export const App: React.FC = () => {
 
   // URL search parameter deep linking (e.g. ?city=kuwaitcity or ?lat=29.3759&lng=47.9774)
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const cityParam = params.get('city');
-    const latParam = params.get('lat');
-    const lngParam = params.get('lng');
-    const nameParam = params.get('name');
-
-    if (cityParam) {
-      handleSelectCity(cityParam);
-    } else if (latParam && lngParam) {
-      const parsedLat = parseFloat(latParam);
-      const parsedLng = parseFloat(lngParam);
-      if (!isNaN(parsedLat) && !isNaN(parsedLng)) {
-        handleSelectCoords(parsedLat, parsedLng, nameParam || undefined);
-      }
+    if (initialUrlInfo.cityId) {
+      handleSelectCity(initialUrlInfo.cityId);
+    } else if (initialUrlInfo.coords) {
+      handleSelectCoords(
+        initialUrlInfo.coords.lat,
+        initialUrlInfo.coords.lng,
+        initialUrlInfo.coords.name
+      );
     }
-  }, [hotspots]);
+  }, [hotspots, initialUrlInfo]);
 
   const handleSelectCoords = async (
     lat: number,
@@ -297,6 +341,7 @@ export const App: React.FC = () => {
     setIsGlobalOverview(false);
     setSelectedCoordinates({ lat, lng });
     setIsTargetPanelOpen(true);
+    updateBrowserUrl(currentTab, { lat, lng, name: placeName });
 
     // 1. Immediately fetch accurate live Open-Meteo weather for this exact point
     const liveWeather = await fetchAccurateLiveWeather(lat, lng);
@@ -359,7 +404,7 @@ export const App: React.FC = () => {
     } else if (rec.factor.includes('Traffic')) {
       setSimulatorParams({ trafficReductionPercent: 25 });
     }
-    setCurrentTab('simulator');
+    handleTabChange('simulator');
   };
 
   return (
@@ -367,7 +412,7 @@ export const App: React.FC = () => {
       {/* Top Application Header */}
       <Header
         currentTab={currentTab}
-        onTabChange={setCurrentTab}
+        onTabChange={handleTabChange}
         onSelectCity={handleSelectCity}
         onSelectCoords={handleSelectCoords}
         onOpenMethodology={() => setIsMethodologyOpen(true)}
@@ -561,8 +606,8 @@ export const App: React.FC = () => {
                     latitude={profile.location.latitude}
                     longitude={profile.location.longitude}
                     weather={profile.weather}
-                    onOpenSimulator={() => setCurrentTab('simulator')}
-                    onOpenDashboard={() => setCurrentTab('dashboard')}
+                    onOpenSimulator={() => handleTabChange('simulator')}
+                    onOpenDashboard={() => handleTabChange('dashboard')}
                     onOpenAiDossier={() => setIsAiDossierOpen(true)}
                     onClose={() => setIsTargetPanelOpen(false)}
                     isAnalyzing={isAnalyzing}
@@ -841,7 +886,7 @@ export const App: React.FC = () => {
         onClose={() => setIsProgressModalOpen(false)}
         onViewResults={() => {
           setIsProgressModalOpen(false);
-          setCurrentTab('dashboard');
+          handleTabChange('dashboard');
         }}
       />
 
@@ -905,7 +950,7 @@ export const App: React.FC = () => {
       {/* Mobile Bottom Navigation Bar (Visible on mobile/tablet < lg) */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800/90 py-1.5 px-3 flex items-center justify-around shadow-[0_-10px_25px_rgba(0,0,0,0.8)]">
         <button
-          onClick={() => setCurrentTab('map')}
+          onClick={() => handleTabChange('map')}
           className={`flex flex-col items-center py-1 px-3 rounded-xl transition ${currentTab === 'map'
               ? 'text-emerald-400 font-bold bg-emerald-500/15 border border-emerald-500/30'
               : 'text-slate-400 hover:text-slate-200'
@@ -915,7 +960,7 @@ export const App: React.FC = () => {
           <span className="text-[10px] mt-0.5 font-medium">Map</span>
         </button>
         <button
-          onClick={() => setCurrentTab('dashboard')}
+          onClick={() => handleTabChange('dashboard')}
           className={`flex flex-col items-center py-1 px-3 rounded-xl transition ${currentTab === 'dashboard'
               ? 'text-emerald-400 font-bold bg-emerald-500/15 border border-emerald-500/30'
               : 'text-slate-400 hover:text-slate-200'
@@ -925,7 +970,7 @@ export const App: React.FC = () => {
           <span className="text-[10px] mt-0.5 font-medium">AI Heat</span>
         </button>
         <button
-          onClick={() => setCurrentTab('simulator')}
+          onClick={() => handleTabChange('simulator')}
           className={`flex flex-col items-center py-1 px-3 rounded-xl transition ${currentTab === 'simulator'
               ? 'text-orange-400 font-bold bg-orange-500/15 border border-orange-500/30'
               : 'text-slate-400 hover:text-slate-200'
@@ -935,7 +980,7 @@ export const App: React.FC = () => {
           <span className="text-[10px] mt-0.5 font-medium">Simulator</span>
         </button>
         <button
-          onClick={() => setCurrentTab('timeline')}
+          onClick={() => handleTabChange('timeline')}
           className={`flex flex-col items-center py-1 px-3 rounded-xl transition ${currentTab === 'timeline'
               ? 'text-cyan-400 font-bold bg-cyan-500/15 border border-cyan-500/30'
               : 'text-slate-400 hover:text-slate-200'
