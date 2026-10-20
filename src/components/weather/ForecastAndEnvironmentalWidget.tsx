@@ -31,7 +31,6 @@ import {
   Sunset,
   Umbrella,
   ShieldAlert,
-  Layers,
   Sparkles,
   ExternalLink,
   ChevronRight,
@@ -45,7 +44,6 @@ interface ForecastAndEnvironmentalWidgetProps {
   countryName: string;
   latitude: number;
   longitude: number;
-  onOpenCompare?: () => void;
 }
 
 export const ForecastAndEnvironmentalWidget: React.FC<ForecastAndEnvironmentalWidgetProps> = ({
@@ -54,7 +52,6 @@ export const ForecastAndEnvironmentalWidget: React.FC<ForecastAndEnvironmentalWi
   countryName,
   latitude,
   longitude,
-  onOpenCompare,
 }) => {
   const [unit, setUnit] = useState<'C' | 'F'>('C');
   const [activeTab, setActiveTab] = useState<'hourly' | 'daily' | 'airQuality'>('hourly');
@@ -154,18 +151,6 @@ export const ForecastAndEnvironmentalWidget: React.FC<ForecastAndEnvironmentalWi
               °F
             </button>
           </div>
-
-          {/* Side-by-side compare button */}
-          {onOpenCompare && (
-            <button
-              onClick={onOpenCompare}
-              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-bold font-mono flex items-center space-x-1.5 transition shadow"
-              title="Compare Open-Meteo with WeatherAPI.com"
-            >
-              <Layers className="w-3.5 h-3.5 text-teal-400" />
-              <span>Compare Providers</span>
-            </button>
-          )}
         </div>
       </div>
 

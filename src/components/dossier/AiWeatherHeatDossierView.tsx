@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Sparkles,
-  Printer,
   Copy,
   Check,
   Thermometer,
@@ -80,10 +79,6 @@ export const AiWeatherHeatDossierView: React.FC<AiWeatherHeatDossierViewProps> =
     navigator.clipboard.writeText(data.rawMarkdown);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handlePrint = () => {
-    window.print();
   };
 
   const {
@@ -165,15 +160,6 @@ export const AiWeatherHeatDossierView: React.FC<AiWeatherHeatDossierViewProps> =
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{copied ? 'Copied' : 'Copy'}</span>
-          </button>
-
-          <button
-            onClick={handlePrint}
-            className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white flex items-center space-x-1.5 transition shadow"
-            title="Print or export as PDF"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Print / PDF</span>
           </button>
         </div>
       </div>

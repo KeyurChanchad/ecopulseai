@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { AnalysisRadius, WeatherObservation } from '../../types';
+import { WeatherObservation } from '../../types';
 import { getWindDirectionCardinal } from '../../services/locationService';
 import {
   MapPin,
-  Compass,
   Sparkles,
   ArrowRight,
   X,
@@ -16,7 +15,6 @@ import {
   TreePine,
   Building,
   SlidersHorizontal,
-  FileText,
   ChevronUp,
   ChevronDown,
   Activity,
@@ -30,8 +28,6 @@ interface SelectedLocationPanelProps {
   latitude: number;
   longitude: number;
   weather?: WeatherObservation;
-  selectedRadius: AnalysisRadius;
-  onChangeRadius: (radius: AnalysisRadius) => void;
   onOpenSimulator?: () => void;
   onOpenDashboard?: () => void;
   onOpenAiDossier?: () => void;
@@ -45,8 +41,6 @@ export const SelectedLocationPanel: React.FC<SelectedLocationPanelProps> = ({
   latitude,
   longitude,
   weather,
-  selectedRadius,
-  onChangeRadius,
   onOpenSimulator,
   onOpenDashboard,
   onOpenAiDossier,
@@ -54,7 +48,6 @@ export const SelectedLocationPanel: React.FC<SelectedLocationPanelProps> = ({
   isAnalyzing = false,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const radii: AnalysisRadius[] = ['500m', '1km', '5km', '10km', '25km'];
 
   const isWeatherLoaded = weather && weather.weatherDataType !== 'DATA_UNAVAILABLE' && typeof weather.airTemperature === 'number';
   const airTemp = weather?.airTemperature;
@@ -97,8 +90,6 @@ export const SelectedLocationPanel: React.FC<SelectedLocationPanelProps> = ({
                     )}
                     <span className="text-slate-500">•</span>
                     <span className="text-rose-400 font-bold">{feelsLike}°C feels</span>
-                    <span className="text-slate-500">•</span>
-                    <span className="text-emerald-400 font-semibold">{selectedRadius}</span>
                   </>
                 ) : (
                   <span className="text-slate-400">Loading live weather...</span>
@@ -392,36 +383,7 @@ export const SelectedLocationPanel: React.FC<SelectedLocationPanelProps> = ({
         </div>
       </div>
 
-      {/* 5. Spatial Radius Selector */}
-      <div className="space-y-1">
-        <div className="flex items-center justify-between text-[11px]">
-          <span className="font-semibold text-slate-300 flex items-center space-x-1 font-mono">
-            <Compass className="w-3 h-3 text-emerald-400" />
-            <span>Analysis Boundary:</span>
-          </span>
-          <span className="font-mono text-emerald-400 font-bold text-[10px]">{selectedRadius} radius</span>
-        </div>
-
-        <div className="grid grid-cols-5 gap-1">
-          {radii.map((r) => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => onChangeRadius(r)}
-              disabled={isAnalyzing}
-              className={`py-1 rounded-lg text-[11px] font-mono font-semibold transition ${
-                selectedRadius === r
-                  ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/50 shadow-sm'
-                  : 'bg-slate-950/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800'
-              }`}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 6. Focused Action Buttons */}
+      {/* Action Buttons */}
       <div className="grid grid-cols-2 gap-2 pt-1">
         {onOpenDashboard && (
           <button

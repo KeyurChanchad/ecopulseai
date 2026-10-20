@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FullLocationProfile, getWindDirectionCardinal } from '../../services/locationService';
 import { AiWeatherHeatDossierView } from '../dossier/AiWeatherHeatDossierView';
-import { Recommendation, AnalysisRadius } from '../../types';
+import { Recommendation } from '../../types';
 import {
   MapPin,
   Thermometer,
@@ -12,8 +12,6 @@ import {
   Activity,
   Sparkles,
   SlidersHorizontal,
-  Compass,
-  FileText,
   TrendingUp,
   TreePine,
   Building,
@@ -36,22 +34,16 @@ import { ForecastAndEnvironmentalWidget } from '../weather/ForecastAndEnvironmen
 interface LocationDashboardProps {
   profile: FullLocationProfile;
   onOpenSimulatorWithAction: (rec: Recommendation) => void;
-  onOpenReport: () => void;
   onOpenWhyHotModal?: () => void;
   onOpenEvidenceGraph?: () => void;
   onOpenAiDossier?: () => void;
-  onOpenCompare?: () => void;
   activeJobId?: string;
-  onChangeRadius?: (radius: AnalysisRadius) => void;
 }
 
 export const LocationDashboard: React.FC<LocationDashboardProps> = ({
   profile,
   onOpenSimulatorWithAction,
-  onOpenReport,
   onOpenWhyHotModal,
-  onOpenCompare,
-  onChangeRadius,
 }) => {
   const [dashboardMode, setDashboardMode] = useState<'ai-dossier' | 'geospatial'>('ai-dossier');
   const [isCausesGuideExpanded, setIsCausesGuideExpanded] = useState(false);
@@ -132,30 +124,6 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            {/* Radius Selector */}
-            {onChangeRadius && (
-              <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-mono">
-                <span className="text-[10px] text-slate-400 uppercase px-1.5 flex items-center space-x-1 shrink-0">
-                  <Compass className="w-3 h-3 text-emerald-400" />
-                  <span>Radius:</span>
-                </span>
-                {(['500m', '1km', '5km', '10km', '25km'] as const).map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => onChangeRadius(r)}
-                    className={`px-2 py-0.5 rounded-lg text-[11px] font-semibold transition ${
-                      (location.analysisRadius || '5km') === r
-                        ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/40'
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    {r}
-                  </button>
-                ))}
-              </div>
-            )}
-
             {/* Mode Switcher: AI Heat Analysis vs Geospatial Telemetry */}
             <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-mono">
               <button
@@ -183,14 +151,6 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
                 <span>Sensors & Drivers</span>
               </button>
             </div>
-
-            <button
-              onClick={onOpenReport}
-              className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 hover:text-white flex items-center space-x-1.5 transition shadow"
-            >
-              <FileText className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Export PDF Report</span>
-            </button>
           </div>
         </div>
       </div>
@@ -214,7 +174,6 @@ export const LocationDashboard: React.FC<LocationDashboardProps> = ({
             countryName={location.country}
             latitude={location.latitude}
             longitude={location.longitude}
-            onOpenCompare={onOpenCompare}
           />
 
           {/* 2. PART 1: HOW MUCH GLOBAL WARMING & HEAT IS HITTING (Atmospheric Reality) */}

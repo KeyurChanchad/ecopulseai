@@ -59,9 +59,6 @@ export const AnalysisProgressModal: React.FC<AnalysisProgressModalProps> = ({
               <h2 className="text-sm sm:text-lg font-extrabold text-slate-100 flex items-center space-x-1.5 truncate mt-0.5">
                 <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-400 shrink-0" />
                 <span className="truncate">{job.locationName}</span>
-                <span className="text-[11px] sm:text-xs text-slate-400 font-normal shrink-0">
-                  ({(job.radius / 1000).toFixed(1)} km)
-                </span>
               </h2>
             </div>
           </div>

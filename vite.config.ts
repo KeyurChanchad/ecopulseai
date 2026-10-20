@@ -19,4 +19,18 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    port: 4173,
+    host: true,
+    proxy: {
+      "/api": {
+        target: "http://localhost:5001",
+        changeOrigin: true,
+      },
+      "/health": {
+        target: "http://localhost:5001",
+        changeOrigin: true,
+      },
+    },
+  },
 });

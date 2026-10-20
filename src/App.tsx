@@ -4,8 +4,6 @@ import { HeatMap } from './components/map/HeatMap';
 import { LocationDashboard } from './components/dashboard/LocationDashboard';
 import { ScenarioSimulator } from './components/simulator/ScenarioSimulator';
 import { FuturePredictionCard } from './components/dashboard/FuturePredictionCard';
-import { LayerControlPanel } from './components/layers/LayerControlPanel';
-import { ReportModal } from './components/reports/ReportModal';
 import { MethodologyModal } from './components/modals/MethodologyModal';
 import { SelectedLocationPanel } from './components/location/SelectedLocationPanel';
 import { WhyHotExplorationModal } from './components/dashboard/WhyHotExplorationModal';
@@ -13,7 +11,6 @@ import { AnalysisProgressModal } from './components/jobs/AnalysisProgressModal';
 import { EvidenceGraphModal } from './components/evidence/EvidenceGraphModal';
 import { ConnectivityAlertBanner } from './components/common/ConnectivityAlertBanner';
 import { AiWeatherHeatDossierModal } from './components/dossier/AiWeatherHeatDossierModal';
-import { WeatherComparisonModal } from './components/weather/WeatherComparisonModal';
 import { INITIAL_MAP_LAYERS } from './config/mapLayers';
 import {
   fetchLiveHotspots,
@@ -33,20 +30,16 @@ import {
   EvidenceKnowledgeGraph,
 } from './types';
 import {
-  Layers,
   Flame,
   Globe2,
   SlidersHorizontal,
-  FileText,
   Activity,
   ChevronRight,
   TrendingUp,
   MapPin,
   Sparkles,
   Compass,
-  Brain,
   Network,
-  Cpu,
   AlertTriangle,
   Loader2,
   ChevronDown,
@@ -180,14 +173,11 @@ export const App: React.FC = () => {
 
   // GIS Map Layers
   const [layers, setLayers] = useState<MapLayerConfig[]>(INITIAL_MAP_LAYERS);
-  const [isLayerPanelOpen, setIsLayerPanelOpen] = useState(false);
 
   // Modals
   const [isMethodologyOpen, setIsMethodologyOpen] = useState(false);
-  const [isReportOpen, setIsReportOpen] = useState(false);
   const [isAiDossierOpen, setIsAiDossierOpen] = useState(false);
   const [isWhyHotModalOpen, setIsWhyHotModalOpen] = useState(false);
-  const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
   const [keyRefreshCounter, setKeyRefreshCounter] = useState(0);
 
   // Simulator Initial Preload
@@ -347,18 +337,6 @@ export const App: React.FC = () => {
     triggerDynamicInvestigation(lat, lng, resolvedName, resolvedCity, resolvedCountry, radius, false);
   };
 
-  const handleRadiusChange = (radius: AnalysisRadius) => {
-    setSelectedRadius(radius);
-    triggerDynamicInvestigation(
-      selectedCoordinates.lat,
-      selectedCoordinates.lng,
-      profile.location.name,
-      profile.location.city,
-      profile.location.country,
-      radius
-    );
-  };
-
   const handleToggleLayer = (layerId: string) => {
     setLayers((prev) =>
       prev.map((l) => (l.id === layerId ? { ...l, active: !l.active } : l))
@@ -393,9 +371,7 @@ export const App: React.FC = () => {
         onSelectCity={handleSelectCity}
         onSelectCoords={handleSelectCoords}
         onOpenMethodology={() => setIsMethodologyOpen(true)}
-        onOpenReports={() => setIsReportOpen(true)}
         onOpenAiDossier={() => setIsAiDossierOpen(true)}
-        onOpenCompare={() => setIsCompareModalOpen(true)}
         selectedCityName={profile.location.city}
       />
 
@@ -415,7 +391,6 @@ export const App: React.FC = () => {
                 selectedCoordinates={selectedCoordinates}
                 activeLayers={layers}
                 scenarioZones={profile.scenarioZones}
-                analysisRadius={selectedRadius}
                 isGlobalOverview={isGlobalOverview}
                 onResetToGlobal={handleResetToGlobal}
                 onSelectCity={handleSelectCity}
@@ -586,8 +561,6 @@ export const App: React.FC = () => {
                     latitude={profile.location.latitude}
                     longitude={profile.location.longitude}
                     weather={profile.weather}
-                    selectedRadius={selectedRadius}
-                    onChangeRadius={handleRadiusChange}
                     onOpenSimulator={() => setCurrentTab('simulator')}
                     onOpenDashboard={() => setCurrentTab('dashboard')}
                     onOpenAiDossier={() => setIsAiDossierOpen(true)}
@@ -609,107 +582,11 @@ export const App: React.FC = () => {
                     className="bg-slate-900/90 backdrop-blur border border-slate-700 px-3 py-2 rounded-xl shadow-2xl flex items-center space-x-2 text-xs font-semibold text-slate-200 hover:bg-slate-800 transition"
                   >
                     <Compass className="w-4 h-4 text-emerald-400" />
-                    <span>Location Target ({selectedRadius})</span>
+                    <span>Location Target</span>
                   </button>
                 </div>
               )}
 
-              {/* Floating Layer Drawer Toggle (Right Side) */}
-              <button
-                onClick={() => setIsLayerPanelOpen(!isLayerPanelOpen)}
-                className="absolute top-16 sm:top-4 right-3 sm:right-4 z-20 bg-slate-900/90 backdrop-blur border border-slate-700 p-2 sm:px-3 sm:py-2 rounded-xl shadow-2xl flex items-center space-x-1.5 sm:space-x-2 text-xs font-semibold text-slate-200 hover:bg-slate-800 transition"
-                title="Open GIS Layer Manager"
-              >
-                <Layers className="w-4 h-4 text-emerald-400" />
-                <span className="hidden sm:inline">GIS Layer Manager</span>
-              </button>
-
-              {/* Floating Active Target Card (Top Right) - Only shown when inspecting a city */}
-              {!isGlobalOverview && (
-                <div className="absolute top-16 right-4 z-20 bg-slate-900/90 backdrop-blur border border-slate-800 p-3.5 rounded-xl shadow-2xl max-w-xs text-xs space-y-2 hidden md:block">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
-                    <div className="flex items-center space-x-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="font-bold text-slate-200">{profile.location.city}</span>
-                    </div>
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">
-                      Score: {profile.heatScore.score}/100
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
-                    <div>
-                      Air Temp:{' '}
-                      <strong className="text-orange-400">
-                        {profile.weather.isRealTime || profile.weather.airTemperature !== 0
-                          ? `${profile.weather.airTemperature}°C`
-                          : '--'}
-                      </strong>{' '}
-                      {profile.weather.isRealTime && profile.weather.tempHigh != null && profile.weather.tempLow != null && (
-                        <span className="text-[9px] text-slate-400 font-normal">
-                          (H:{profile.weather.tempHigh}°/L:{profile.weather.tempLow}°)
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      Feels Like:{' '}
-                      <strong className="text-rose-400">
-                        {profile.weather.isRealTime || profile.weather.feelsLike !== 0
-                          ? `${profile.weather.feelsLike}°C`
-                          : '--'}
-                      </strong>
-                    </div>
-                    <div>
-                      Surface LST:{' '}
-                      <strong className="text-amber-400">
-                        {profile.weather.isRealTime || profile.weather.surfaceTemperature !== 0
-                          ? `${profile.weather.surfaceTemperature}°C`
-                          : '--'}
-                      </strong>
-                    </div>
-                    <div>
-                      UHI Delta:{' '}
-                      <strong className="text-purple-400">
-                        {profile.weather.isRealTime || profile.weather.airTemperature !== 0
-                          ? `+${profile.weather.uhiDelta}°C`
-                          : '--'}
-                      </strong>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-1.5 pt-1">
-                    <button
-                      onClick={() =>
-                        triggerDynamicInvestigation(
-                          profile.location.latitude,
-                          profile.location.longitude,
-                          profile.location.name,
-                          profile.location.city,
-                          profile.location.country,
-                          selectedRadius
-                        )
-                      }
-                      className="flex-1 py-1.5 px-2 text-center font-bold text-[11px] rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 text-emerald-300 transition flex items-center justify-center space-x-1"
-                      title="Launch Dynamic Investigation Job"
-                    >
-                      <Cpu className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Investigate</span>
-                    </button>
-                    <button
-                      onClick={() => setIsWhyHotModalOpen(true)}
-                      className="flex-1 py-1.5 px-2 text-center font-bold text-[11px] rounded-lg bg-orange-600/30 hover:bg-orange-600/50 border border-orange-500/40 text-orange-300 transition flex items-center justify-center space-x-1"
-                    >
-                      <Brain className="w-3.5 h-3.5 text-orange-400" />
-                      <span>Why Hot?</span>
-                    </button>
-                    <button
-                      onClick={() => setCurrentTab('dashboard')}
-                      className="flex-1 py-1.5 px-2 text-center font-semibold text-[11px] rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition flex items-center justify-center space-x-1"
-                    >
-                      <span>Dashboard</span>
-                      <ChevronRight className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Bottom UI/UX Max Pro World Hotspots Command Deck */}
@@ -884,13 +761,10 @@ export const App: React.FC = () => {
             <LocationDashboard
               profile={profile}
               onOpenSimulatorWithAction={handleOpenSimulatorWithAction}
-              onOpenReport={() => setIsReportOpen(true)}
               onOpenWhyHotModal={() => setIsWhyHotModalOpen(true)}
               onOpenEvidenceGraph={() => setIsEvidenceGraphOpen(true)}
               onOpenAiDossier={() => setIsAiDossierOpen(true)}
-              onOpenCompare={() => setIsCompareModalOpen(true)}
               activeJobId={currentJob?.jobId}
-              onChangeRadius={handleRadiusChange}
             />
           </div>
         )}
@@ -924,23 +798,7 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        {/* GIS Multi-Layer Control Panel */}
-        <LayerControlPanel
-          isOpen={isLayerPanelOpen}
-          onClose={() => setIsLayerPanelOpen(false)}
-          layers={layers}
-          onToggleLayer={handleToggleLayer}
-          onChangeOpacity={handleChangeLayerOpacity}
-        />
       </main>
-
-      {/* Intelligence Reports Modal */}
-      <ReportModal
-        isOpen={isReportOpen}
-        onClose={() => setIsReportOpen(false)}
-        profile={profile}
-        hotspots={hotspots}
-      />
 
       {/* AI Weather & Heat Analysis Dossier Modal (ChatGPT/Gemini Structure) */}
       <AiWeatherHeatDossierModal
@@ -995,14 +853,7 @@ export const App: React.FC = () => {
         locationName={profile.location.name}
       />
 
-      {/* Multi-Provider Weather Comparison Modal */}
-      <WeatherComparisonModal
-        isOpen={isCompareModalOpen}
-        onClose={() => setIsCompareModalOpen(false)}
-        latitude={profile.location.latitude}
-        longitude={profile.location.longitude}
-        locationName={profile.location.name}
-      />
+
 
       {/* Connectivity & Backend Offline Alert Modal */}
       {analysisError && (

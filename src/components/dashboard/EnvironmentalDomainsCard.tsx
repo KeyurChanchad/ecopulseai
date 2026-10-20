@@ -44,7 +44,7 @@ export const EnvironmentalDomainsCard: React.FC<EnvironmentalDomainsCardProps> =
             <span>Multi-Source Environmental Domains Analysis</span>
           </h3>
           <p className="text-xs text-slate-400">
-            Comprehensive biophysical evaluation within {location.analysisRadius || '5km'} radius (Satellite LST, NDVI, OSM GIS & Traffic).
+            Comprehensive biophysical evaluation (Satellite LST, NDVI, OSM GIS & Traffic).
           </p>
         </div>
 
@@ -309,7 +309,7 @@ export const EnvironmentalDomainsCard: React.FC<EnvironmentalDomainsCardProps> =
               <div className="space-y-1.5 font-mono">
                 <div className="flex justify-between">
                   <span className="text-slate-400">Industrial Facilities:</span>
-                  <strong className="text-purple-400">{industrial.facilitiesWithinRadius} in radius</strong>
+                  <strong className="text-purple-400">{industrial.facilitiesWithinRadius} nearby</strong>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Thermal Relevance:</span>

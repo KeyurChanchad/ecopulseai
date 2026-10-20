@@ -18,7 +18,7 @@ import {
   Compass,
   RotateCcw,
 } from 'lucide-react';
-import { CityHotspot, MapLayerConfig, DataCenterLocation, ScenarioZone, AnalysisRadius } from '../../types';
+import { CityHotspot, MapLayerConfig, DataCenterLocation, ScenarioZone } from '../../types';
 import { getHeatCategoryColor } from '../../services/heatModel';
 
 interface HeatMapProps {
@@ -27,7 +27,6 @@ interface HeatMapProps {
   selectedCoordinates: { lat: number; lng: number };
   activeLayers: MapLayerConfig[];
   scenarioZones?: ScenarioZone[];
-  analysisRadius?: AnalysisRadius;
   isGlobalOverview?: boolean;
   onResetToGlobal?: () => void;
   onSelectCity: (cityId: string) => void;
@@ -70,7 +69,6 @@ export const HeatMap: React.FC<HeatMapProps> = ({
   selectedCoordinates,
   activeLayers,
   scenarioZones = [],
-  analysisRadius = '5km',
   isGlobalOverview = false,
   onResetToGlobal,
   onSelectCity,
@@ -511,27 +509,6 @@ export const HeatMap: React.FC<HeatMapProps> = ({
         .addTo(heatZonesLayerGroupRef.current);
     }
 
-    // Render Analysis Radius Buffer Circle (Section 42)
-    const radiusMetersMap: Record<AnalysisRadius, number> = {
-      '500m': 500,
-      '1km': 1000,
-      '5km': 5000,
-      '10km': 10000,
-      '25km': 25000,
-    };
-    const radiusMeters = radiusMetersMap[analysisRadius] || 5000;
-
-    L.circle([lat, lng], {
-      radius: radiusMeters,
-      color: '#06b6d4',
-      fillColor: '#0891b2',
-      fillOpacity: 0.06,
-      weight: 1.5,
-      dashArray: '6, 6',
-    })
-      .bindTooltip(`Spatial Analysis Buffer (${analysisRadius})`, { permanent: false })
-      .addTo(heatZonesLayerGroupRef.current);
-
     // Section 34: Scenario Map Intervention Zones
     if (scenarioZones && scenarioZones.length > 0) {
       scenarioZones.forEach((zone) => {
@@ -569,7 +546,7 @@ export const HeatMap: React.FC<HeatMapProps> = ({
         zoneCircle.addTo(heatZonesLayerGroupRef.current!);
       });
     }
-  }, [activeLayers, selectedCoordinates, scenarioZones, analysisRadius]);
+  }, [activeLayers, selectedCoordinates, scenarioZones]);
 
   return (
     <div className="relative w-full h-full overflow-hidden select-none bg-slate-950">
@@ -633,32 +610,7 @@ export const HeatMap: React.FC<HeatMapProps> = ({
         </div>
       </div>
 
-      {/* Interactive Map Legend (Bottom Right) */}
-      <div className="absolute bottom-4 right-4 z-20 bg-slate-900/90 backdrop-blur border border-slate-800 p-3 rounded-xl shadow-2xl max-w-xs text-xs hidden sm:block">
-        <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-800">
-          <span className="font-semibold text-slate-200 flex items-center space-x-1.5">
-            <Flame className="w-3.5 h-3.5 text-orange-400" />
-            <span>Heat Intensity Scale</span>
-          </span>
-          <span className="text-[10px] font-mono text-slate-400">EcoPulse Score</span>
-        </div>
 
-        {/* Color Gradient Bar */}
-        <div className="h-2.5 w-full rounded-full bg-gradient-to-r from-emerald-500 via-amber-500 via-orange-500 via-red-500 to-purple-800 mb-1.5 shadow-inner"></div>
-
-        <div className="flex justify-between text-[10px] font-mono text-slate-400">
-          <span>Low (&lt;40)</span>
-          <span>Mod (40-60)</span>
-          <span>High (60-75)</span>
-          <span>V.High (75-88)</span>
-          <span>Extreme (&gt;88)</span>
-        </div>
-
-        <div className="mt-2 text-[10px] text-slate-400 pt-1.5 border-t border-slate-800/80 flex items-center space-x-1">
-          <Info className="w-3 h-3 text-slate-500 shrink-0" />
-          <span>Zoom up to level 20 to inspect any village, street, or house.</span>
-        </div>
-      </div>
 
       {/* Top-Right World Overview Reset HUD */}
       <div className="absolute top-16 right-4 z-20 hidden sm:flex flex-col space-y-2">

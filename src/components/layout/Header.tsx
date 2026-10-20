@@ -4,7 +4,6 @@ import {
   Search,
   Crosshair,
   SlidersHorizontal,
-  Layers,
   Activity,
   Info,
   Flame,
@@ -42,9 +41,7 @@ interface HeaderProps {
     fullAddress?: string,
   ) => void;
   onOpenMethodology: () => void;
-  onOpenReports: () => void;
   onOpenAiDossier?: () => void;
-  onOpenCompare?: () => void;
   selectedCityName: string;
 }
 
@@ -54,9 +51,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectCity,
   onSelectCoords,
   onOpenMethodology,
-  onOpenReports,
   onOpenAiDossier,
-  onOpenCompare,
   selectedCityName,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -166,11 +161,15 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="h-16 bg-slate-900/98 backdrop-blur-md border-b border-slate-800 text-slate-100 flex items-center justify-between px-2.5 sm:px-4 lg:px-6 z-50 relative select-none gap-1.5 sm:gap-3">
       {/* Brand & Platform Identity */}
       <div className="flex items-center space-x-2 shrink-0">
-        <div className="relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-emerald-500/20 via-slate-800 to-orange-500/20 border border-emerald-500/30 shadow-md shadow-emerald-500/10">
-          <Globe2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+        <div className="relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden border border-emerald-500/40 shadow-md shadow-emerald-500/10 bg-slate-900">
+          <img
+            src="/logo.png"
+            alt="EcoPulseAI Logo"
+            className="w-full h-full object-cover"
+          />
           <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-orange-500"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
           </span>
         </div>
 
@@ -432,18 +431,6 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right Controls: Streamlined & Clutter-Free */}
       <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
-        {/* Multi-Provider Weather Comparison */}
-        {onOpenCompare && (
-          <button
-            onClick={onOpenCompare}
-            className="hidden sm:flex px-2.5 py-1.5 rounded-xl border border-teal-500/40 bg-teal-950/40 hover:bg-teal-900/50 text-xs font-semibold text-teal-300 hover:text-white transition shadow-sm items-center space-x-1.5"
-            title="Multi-Provider Weather Comparison (Open-Meteo & WeatherAPI)"
-          >
-            <Layers className="w-3.5 h-3.5 text-teal-400" />
-            <span>Compare Providers</span>
-          </button>
-        )}
-
         {/* Scientific Methodology */}
         <button
           onClick={onOpenMethodology}
@@ -520,18 +507,6 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           <div className="pt-2 border-t border-slate-800 flex flex-col gap-1.5">
-            {onOpenCompare && (
-              <button
-                onClick={() => {
-                  onOpenCompare();
-                  setIsMobileMenuOpen(false);
-                }}
-                className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-teal-300 bg-teal-950/40 border border-teal-500/40 hover:bg-teal-900/50 transition"
-              >
-                <Layers className="w-4 h-4 text-teal-400" />
-                <span>Compare Weather Providers</span>
-              </button>
-            )}
             <button
               onClick={() => {
                 onOpenMethodology();

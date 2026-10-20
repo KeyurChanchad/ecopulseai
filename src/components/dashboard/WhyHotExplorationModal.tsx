@@ -97,7 +97,7 @@ export const WhyHotExplorationModal: React.FC<WhyHotExplorationModalProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Target: {location.address} • Analysis Radius: {location.analysisRadius || '5km'}
+                Target: {location.address}
               </p>
             </div>
           </div>
