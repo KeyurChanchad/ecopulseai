@@ -233,10 +233,10 @@ export const SelectedLocationPanel: React.FC<SelectedLocationPanelProps> = ({
               {feelsLike !== undefined ? `${feelsLike}°C` : '--'}
             </div>
             <span className={`text-[8px] font-mono font-bold px-1 rounded ${isExtremeHeat
-                ? 'bg-rose-950 text-rose-300'
-                : isHighHeat
-                  ? 'bg-orange-950 text-orange-300'
-                  : 'bg-emerald-950 text-emerald-300'
+              ? 'bg-rose-950 text-rose-300'
+              : isHighHeat
+                ? 'bg-orange-950 text-orange-300'
+                : 'bg-emerald-950 text-emerald-300'
               }`}>
               {isExtremeHeat ? 'Dangerous' : isHighHeat ? 'High Stress' : 'Moderate'}
             </span>
@@ -305,16 +305,6 @@ export const SelectedLocationPanel: React.FC<SelectedLocationPanelProps> = ({
           <span className="text-slate-500 text-[9px]">{weather?.isRealTime ? 'Live Observation' : 'Synoptic Feed'}</span>
         </div>
       </div>
-
-      {/* Dynamic Heating Reasons & Solutions Card */}
-      <WhyLocationHotCard
-        locationName={locationName}
-        country={address}
-        latitude={latitude}
-        longitude={longitude}
-        weather={weather}
-        address={address}
-      />
 
       {/* Action Buttons */}
       <div className="grid grid-cols-2 gap-2 pt-1">
