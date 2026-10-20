@@ -299,7 +299,7 @@ export function classifyLocationClimate(
 }
 
 /**
- * Computes location-tailored causal drivers with quantitative physics,
+ * Computes location-tailored causal drivers with user-friendly, plain-English explanations,
  * specific to the location, current weather, and climate zone.
  */
 export function getTailoredCausalDrivers(
@@ -314,42 +314,41 @@ export function getTailoredCausalDrivers(
   const humidity = weather.humidity;
   const windSpeed = Math.round(weather.windSpeed);
   const solarRad = Math.round(weather.solarRadiation || (currentTemp > 28 ? 750 : 450));
-  const isHot = currentTemp >= 28 || (weather.feelsLike != null && weather.feelsLike >= 30);
 
   switch (profile.zoneType) {
     case 'ARID_DESERT':
       return [
         {
           id: 1,
-          title: `Direct Solar Shortwave Radiation (${solarRad} W/m²) & Zero Cloud Shielding`,
-          category: 'Atmospheric Physics & Solar Insolation',
-          explanation: `Positioned in a subtropical desert belt, ${locationName} receives direct downward solar flux frequently exceeding ${solarRad} W/m² through thin, cloud-free atmospheric columns. Without atmospheric moisture or cloud attenuation, ground surfaces absorb extreme radiant energy, driving surface temperatures (LST) above 55°C.`,
-          reductionStrategy: `Deploy continuous tensile shade membranes, architectural colonnades, and high-reflectance overhangs over sidewalks and gathering spaces to intercept direct solar photons before they reach the ground.`,
-          quantifiedImpactC: `Shading intercepts ~85% of solar radiation, reducing ground surface skin temperatures by 15°C to 25°C.`,
+          title: `Blazing Desert Sunlight with Cloudless Skies (${solarRad} W/m²)`,
+          category: 'Direct Sunlight',
+          explanation: `Because the desert sky over ${locationName} has almost no clouds or moisture to block the sun, intense heat rays beat down directly onto the ground all day. This makes asphalt roads, concrete sidewalks, and metal roofs searing hot (often over 55°C / 130°F).`,
+          reductionStrategy: `Install fabric shade canopies, wooden pergolas, and shaded walkways over sidewalks and public gathering plazas so the sun never touches the ground directly.`,
+          quantifiedImpactC: `Shading blocks up to 85% of solar heat, dropping ground surface temperatures by 15°C to 25°C.`,
         },
         {
           id: 2,
-          title: 'Extreme HVAC & Air-Conditioning Sensible Heat Ejection',
-          category: 'Anthropogenic Sensible Flux',
-          explanation: `In ${locationName}, intensive indoor air conditioning is mandatory across commercial, residential, and institutional buildings. Exterior condenser chillers reject immense volumes of sensible heat (estimated at 35–55 W/m² across dense zones) directly into pedestrian-level street canyons, creating an artificial thermal barrier.`,
-          reductionStrategy: `Implement district cooling loops utilizing centralized chilled-water plants with closed-circuit cooling towers located away from street level, combined with mandatory high-COP heat pump standards.`,
-          quantifiedImpactC: `Centralized district cooling eliminates up to 0.8°C to 1.4°C of localized street-level heating during peak afternoon hours.`,
+          title: 'Air Conditioners Pumping Hot Exhaust Onto Streets',
+          category: 'Building AC Exhaust',
+          explanation: `In ${locationName}, non-stop air conditioning is essential inside homes, offices, and malls. However, the outdoor AC compressor units blow massive amounts of super-heated air straight onto pedestrian sidewalks and roads, creating a thick wall of heat for anyone walking outside.`,
+          reductionStrategy: `Switch to centralized district cooling loops that pump chilled water through underground pipes and vent heat away from pedestrian streets.`,
+          quantifiedImpactC: `Removes heavy AC heat exhaust from street level, cooling neighborhood air by 0.8°C to 1.4°C.`,
         },
         {
           id: 3,
-          title: 'Thermal Inertia of Desert Hardscape & Low-Albedo Bitumen',
-          category: 'Built Environment Thermal Mass',
-          explanation: `Vast multi-lane highways, asphalt parking lots, and unshaded concrete building decks absorb 85–92% of midday solar irradiance. Due to high volumetric heat capacity and dry surrounding terrain, these surfaces store immense thermal mass and radiate sensible heat late into desert nights.`,
-          reductionStrategy: `Mandate ultra-cool high-albedo coatings (Solar Reflectance Index SRI > 104) on all flat roofs, and construct solar-photovoltaic carports over exposed asphalt parking fields.`,
-          quantifiedImpactC: `Cool roofs reduce roof surface temperatures by 20°C–32°C and lower neighborhood air temperatures by ~1.2°C.`,
+          title: 'Dark Asphalt Roads & Flat Concrete Roofs Storing Heat',
+          category: 'Paved Surfaces & Roofs',
+          explanation: `Wide multi-lane highways, expansive parking lots, and flat dark roofs soak up almost 90% of the sun's heat like a sponge during the day. After sunset, these thick surfaces slowly radiate that trapped heat back into the air all night long.`,
+          reductionStrategy: `Apply bright white solar-reflective paint on roofs ('cool roofs') and install solar panel shade roofs over open asphalt parking lots.`,
+          quantifiedImpactC: `Cool roofs lower rooftop heat by 20°C to 30°C and reduce neighborhood air temperatures by 1.2°C to 1.8°C.`,
         },
         {
           id: 4,
-          title: 'Total Evaporative Cooling Deficit & Desiccated Soil',
-          category: 'Hydrological & Vegetative Deficit',
-          explanation: `With natural humidity around ${humidity}% and negligible rainfall, ${locationName}'s surrounding soils are desiccated. In temperate regions, 40–60% of solar radiation is dissipated as latent heat through soil and tree evapotranspiration; in ${locationName}, near 100% of solar flux converts directly into sensible air heating.`,
-          reductionStrategy: `Plant native, drought-hardy desert shade trees (such as Ghaf, Acacia tortilis, and Date Palms) irrigated exclusively via sub-surface drip networks utilizing treated municipal effluent (TSE).`,
-          quantifiedImpactC: `Localized desert canopy groves provide 3.5°C to 6.0°C of pedestrian radiant shade relief without depleting potable water.`,
+          title: `Dry Sandy Soil & Lack of Natural Shade Trees (${humidity}% Humidity)`,
+          category: 'Trees & Soil Moisture',
+          explanation: `In green climates, trees and moist soil act like natural air conditioners by releasing moisture into the air. In ${locationName}, with dry sand and few trees, 100% of the sun's energy turns directly into baking air heat without any natural evaporative cooling.`,
+          reductionStrategy: `Plant native, drought-hardy desert shade trees (such as Ghaf, Date Palms, and Desert Acacia) using water-efficient underground drip irrigation fed by recycled wastewater.`,
+          quantifiedImpactC: `Creates pockets of natural shade that cool pedestrians by 3.5°C to 6.0°C without wasting precious drinking water.`,
         },
       ];
 
@@ -357,35 +356,35 @@ export function getTailoredCausalDrivers(
       return [
         {
           id: 1,
-          title: `Atmospheric Vapor Trap & Elevated Dew Point (${humidity}% Relative Humidity)`,
-          category: 'Moisture Physics & Latent Heat Barrier',
-          explanation: `In ${locationName}, high ambient moisture (${humidity}% RH) creates a dense atmospheric water-vapor blanket that absorbs outgoing terrestrial infrared radiation. This prevents nocturnal cooling (keeping nighttime minimums near 27–29°C) and severely suppresses human evaporative sweating efficiency, driving perceived Heat Index dramatically higher.`,
-          reductionStrategy: `Prioritize urban wind-channel planning and permeable public spaces that maximize convective air movement and provide shaded dehumidification corridors.`,
-          quantifiedImpactC: `Enhanced airflow reduces perceived apparent temperature (feels-like) by 2.0°C to 3.5°C without changing raw air temperature.`,
+          title: `Heavy Humidity Creating a 'Sauna Effect' (${humidity}% Humidity)`,
+          category: 'Air Moisture & Sweat Trap',
+          explanation: `In ${locationName}, high moisture in the air (${humidity}% humidity) acts like a heavy blanket that traps heat overnight. More importantly, high humidity stops your sweat from evaporating naturally, making a 32°C day feel like a sweltering 40°C+.`,
+          reductionStrategy: `Design open wind corridors and breezeways through the city so moving air can evaporate sweat and naturally cool the human body.`,
+          quantifiedImpactC: `Brisk air movement lowers the perceived 'feels-like' temperature by 2.0°C to 3.5°C without changing raw air temperature.`,
         },
         {
           id: 2,
-          title: 'Coastal High-Rise Aerodynamic Wall Effect & Blocked Sea Breezes',
-          category: 'Urban Canyon Morphology',
-          explanation: `Dense waterfront tower clusters and deep urban canyons create an aerodynamic wall effect that blocks cooling maritime breezes from penetrating inland. Low surface roughness winds (${windSpeed} km/h) become stagnant within street canyons, trapping vehicular and air-conditioning exhaust plumes.`,
-          reductionStrategy: `Enforce setback breezeways, stepped building heights, and perpendicular ventilation corridors aligned with prevailing coastal wind vectors to flush stagnant heat pockets.`,
-          quantifiedImpactC: `Restoring breeze penetration reduces trapped canyon temperatures by 0.8°C to 1.6°C across inland neighborhoods.`,
+          title: `Tall Coastal Towers Blocking Cooling Sea Breezes (${windSpeed} km/h Wind)`,
+          category: 'Trapped Air in High-Rise Canyons',
+          explanation: `Dense clusters of tall waterfront skyscrapers act like a giant wall, stopping fresh ocean winds from reaching inland streets. Hot, humid air and vehicle exhaust get trapped between buildings with little breeze to clear them out.`,
+          reductionStrategy: `Leave intentional gaps and breezeways between towers aligned with prevailing ocean winds so cooling breezes sweep through the whole city.`,
+          quantifiedImpactC: `Restores natural airflow, flushing out trapped heat pockets by 0.8°C to 1.6°C across inland neighborhoods.`,
         },
         {
           id: 3,
-          title: 'Rapid Stormwater Runoff Flushing Over Impervious Asphalt',
-          category: 'Hydrology & Latent Heat Depletion',
-          explanation: `Despite frequent monsoon precipitation, ${locationName}'s dense asphalt paving and concrete drainage channels rapidly flash rainwater into storm sewers within minutes. This prevents moisture from soaking into urban soils to provide sustained multi-day latent evaporative cooling.`,
-          reductionStrategy: `Transform paved roads and plazas with permeable interlocking pavers, bioswales, retention rain gardens, and urban sponge-city drainage systems that retain stormwater for sustained evaporative cooling.`,
-          quantifiedImpactC: `Sponge-city retention yields sustained microclimate latent cooling of 0.6°C to 1.3°C for 24–48 hours after rain events.`,
+          title: 'Rainwater Flushed Down Drains Instead of Cooling the Ground',
+          category: 'Rainwater Drainage',
+          explanation: `Even though tropical rains pour down over ${locationName}, concrete storm drains and asphalt streets flush the rainwater into the sea in minutes. Little water stays in the soil to naturally evaporate and cool the neighborhood on hot afternoons.`,
+          reductionStrategy: `Build 'Sponge City' rain gardens, permeable brick pavements, and tree pits that absorb rainwater into the ground for days of natural evaporative cooling.`,
+          quantifiedImpactC: `Sponge ground provides sustained natural cooling of 0.6°C to 1.3°C for up to 48 hours after rain.`,
         },
         {
           id: 4,
-          title: 'Dense Vehicular Exhaust & Street-Level Combustion Heat',
-          category: 'Anthropogenic Emissions',
-          explanation: `Heavy traffic along arterial corridors releases dense plumes of waste combustion heat and particulate matter right at pedestrian breathing level. Combined with high humidity and stagnant air, vehicular heat creates localized thermal hotspots.`,
-          reductionStrategy: `Accelerate transition to electric mass transit (BRT, metro extensions, e-buses) and establish shaded pedestrian/micro-mobility greenways.`,
-          quantifiedImpactC: `Fleet electrification removes ~15 W/m² of direct tailpipe heat flux from street-level pedestrian corridors.`,
+          title: 'Dense Stop-and-Go Traffic Trapped in Humid Corridors',
+          category: 'Traffic & Engine Heat',
+          explanation: `Thousands of idling cars, buses, and motorbikes pump hot tailpipe exhaust directly into crowded, humid streets where lack of wind traps the heat right where people walk.`,
+          reductionStrategy: `Expand electric public buses and build shaded pedestrian walkways with bicycle paths to cut traffic heat.`,
+          quantifiedImpactC: `Fleet electrification removes hot engine exhaust, lowering street-level heat buildup.`,
         },
       ];
 
@@ -393,35 +392,35 @@ export function getTailoredCausalDrivers(
       return [
         {
           id: 1,
-          title: 'Dense Low-Albedo Roofs (Tin, Bitumen & Bare Concrete)',
-          category: 'Built Environment Thermal Mass',
-          explanation: `In ${locationName}, hundreds of thousands of low-income and commercial buildings feature bare concrete, dark bitumen, or corrugated metal roofs. These surfaces absorb 80–90% of solar radiation (solar flux: ${solarRad} W/m²), conducting heat into residential interiors and re-radiating heat into dense street canyons both day and night.`,
-          reductionStrategy: `Scale municipal cool roof programs (applying high-reflectance lime wash, elastomeric coatings, or white mosaic tiles with SRI > 80), replicating successful Heat Action Plan initiatives.`,
-          quantifiedImpactC: `Cool roofs slash indoor temperatures by 2.0°C to 5.0°C and lower city-wide ambient air temperatures by 1.0°C to 1.8°C.`,
+          title: `Tin & Concrete Roofs Turning Homes Into Ovens (Solar Flux: ${solarRad} W/m²)`,
+          category: 'Hot Roofs & Indoor Heat',
+          explanation: `In ${locationName}, millions of residential and commercial buildings have flat concrete or metal sheet roofs. In direct sunlight, these unshaded roofs reach over 60°C and radiate intense heat down into bedrooms and out onto surrounding streets all day and night.`,
+          reductionStrategy: `Paint roofs with solar-reflective white coating ('cool roofs' or lime wash) to reflect the sun's rays back into space before they can heat the building.`,
+          quantifiedImpactC: `Cuts indoor room heat by 2°C to 5°C and lowers neighborhood outdoor temperatures by 1.0°C to 1.8°C.`,
         },
         {
           id: 2,
-          title: 'Aerosol Smog Blanket & Entrapped Nocturnal Longwave Radiation',
-          category: 'Atmospheric Aerosol Dynamics',
-          explanation: `High ambient particulate matter (AQI: ${weather.aqi || 'Elevated'}) and suspended regional dust form a dense aerosol haze layer over ${locationName}. This layer acts as an artificial greenhouse ceiling, absorbing and re-emitting terrestrial longwave infrared back down to the ground, severely restricting nocturnal cooling.`,
-          reductionStrategy: `Implement municipal dust suppression on construction corridors, accelerate clean fuel adoption, and expand vegetative particulate barriers along industrial borders.`,
-          quantifiedImpactC: `Lowering aerosol optical depth enhances nighttime radiative cooling to space by 0.7°C to 1.5°C.`,
+          title: 'Dust & Smog Blanket Trapping Heat Overnight',
+          category: 'Air Pollution & Night Heat',
+          explanation: `Being located inland, fine dust and smog hang in the air over ${locationName}. This hazy blanket acts like a greenhouse ceiling, trapping heat near the ground so nights stay uncomfortably hot instead of cooling down.`,
+          reductionStrategy: `Pave dusty roadside shoulders, plant dense tree belts along industrial borders, and enforce clean energy standards to clear the air.`,
+          quantifiedImpactC: `Clearing the smog layer allows nighttime heat to escape into space, cooling nights by 0.7°C to 1.5°C.`,
         },
         {
           id: 3,
-          title: 'High-Density Vehicular Tailpipe Heat & Idling Corridors',
-          category: 'Anthropogenic Thermal Flux',
-          explanation: `Heavy concentrations of two-wheelers, auto-rickshaws, commercial trucks, and diesel generator sets reject sensible combustion heat directly into narrow, dense street canyons. Stop-and-go congestion multiplies thermal accumulation during peak commute windows.`,
-          reductionStrategy: `Mandate EV transition for public rickshaws and delivery fleets, optimize traffic signal timing, and expand dedicated electric bus rapid transit.`,
-          quantifiedImpactC: `Curbs direct anthropogenic heat emission by 18–25 W/m² along primary arterial corridors.`,
+          title: 'Thousands of Idling Vehicles in Crowded Traffic',
+          category: 'Vehicle Exhaust Heat',
+          explanation: `Massive numbers of two-wheelers, auto-rickshaws, and cars idling in bumper-to-bumper traffic blast hot engine exhaust directly into the air at sidewalk level.`,
+          reductionStrategy: `Switch auto-rickshaws and buses to electric power, and synchronize traffic lights to prevent long idling lines.`,
+          quantifiedImpactC: `Removes significant tailpipe heat from congested shopping streets and transit hubs.`,
         },
         {
           id: 4,
-          title: 'Severe Urban Tree Canopy Deficit (< 10% Coverage)',
-          category: 'Vegetation & Evaporative Deficit',
-          explanation: `Rapid urban expansion across ${locationName} has paved over natural vegetation, leaving central wards with tree canopy coverage under 10%. Without mature tree shade, asphalt and masonry absorb intense direct solar shortwave radiation unimpeded.`,
-          reductionStrategy: `Plant continuous urban tree canopy corridors using native, fast-growing, drought-tolerant species (Neem, Peepal, Banyan, Jamun) along all major avenues and secondary streets.`,
-          quantifiedImpactC: `Mature shade trees lower localized street-level temperatures by 2.5°C to 4.2°C during peak afternoon heat.`,
+          title: 'Severe Shortage of Large Shade Trees Along Sidewalks',
+          category: 'Lack of Tree Shade',
+          explanation: `Rapid city growth in ${locationName} has replaced green open spaces with concrete, leaving sidewalks completely unshaded. Walking in the afternoon exposes people to blistering direct sunlight with zero tree cover.`,
+          reductionStrategy: `Plant large native shade trees (such as Neem, Peepal, Banyan, and Jamun) along every sidewalk and road median.`,
+          quantifiedImpactC: `Mature shade trees make sidewalks 2.5°C to 4.5°C cooler and protect pedestrians from sunstroke.`,
         },
       ];
 
@@ -429,35 +428,35 @@ export function getTailoredCausalDrivers(
       return [
         {
           id: 1,
-          title: 'Sustained Summer Drought & Complete Soil Desiccation',
-          category: 'Seasonal Climatology & Moisture Depletion',
-          explanation: `Under ${locationName}'s Mediterranean climate, summer brings months of zero precipitation under intense cloudless skies. Soils become completely dry, eliminating natural evaporative cooling and allowing 100% of solar radiation (${solarRad} W/m²) to convert directly into sensible atmospheric heat.`,
-          reductionStrategy: `Implement decentralized stormwater capture during winter to sustain native Mediterranean urban greening (Olive, Holm Oak, Cypress) and courtyard water features throughout summer drought.`,
-          quantifiedImpactC: `Sustained summer soil moisture retention can provide 0.8°C to 1.5°C of evaporative microclimate cooling.`,
+          title: `Months of Summer Drought Drying Out the Ground (${solarRad} W/m² Sun)`,
+          category: 'Summer Drought & Dry Soil',
+          explanation: `During the hot summer in ${locationName}, months go by with almost zero rain under clear sunny skies. The soil becomes bone-dry, meaning there is zero moisture to evaporate, so 100% of the sun's energy heats up the air directly.`,
+          reductionStrategy: `Store winter rainwater in underground cisterns to keep native drought-hardy trees, parks, and shaded courtyards watered all summer.`,
+          quantifiedImpactC: `Provides 0.8°C to 1.5°C of natural evaporative cooling during the driest months.`,
         },
         {
           id: 2,
-          title: 'Expansive Low-Albedo Asphalt Parking Fields & Arterial Roads',
-          category: 'Surface Infrastructure Albedo',
-          explanation: `Vast open surface parking lots and multilane highway networks across ${locationName} absorb 88–94% of incident sunlight. Pavement skin temperatures frequently exceed 55°C, continuously releasing stored heat into passing air masses.`,
-          reductionStrategy: `Mandate solar photovoltaic shade canopies over all open surface parking lots (>20 spaces) and apply light-colored cool pavement sealants on residential streets.`,
-          quantifiedImpactC: `Solar canopies eliminate 90% of direct parking heat gain while generating clean distributed energy.`,
+          title: 'Huge Open Asphalt Parking Lots Baking in the Sun',
+          category: 'Asphalt Parking Lots',
+          explanation: `Large commercial parking lots and wide multilane freeways are covered in black asphalt that absorbs over 90% of the sun's heat. These giant black surfaces act like frying pans heating the city air.`,
+          reductionStrategy: `Build solar panel canopies over parking spaces to shade cars while generating clean electricity, and use light-colored paving stones.`,
+          quantifiedImpactC: `Solar shade canopies block 90% of asphalt heat absorption and lower ground temperature by 8°C to 14°C.`,
         },
         {
           id: 3,
-          title: 'Topographic Basin Air Entrapment & Inversion Layers',
-          category: 'Topographic & Aerodynamic Stagnation',
-          explanation: `Surrounding mountain ranges trap heated urban air within the low-lying basin, preventing regional winds from flushing accumulated heat. Stagnant conditions (wind: ${windSpeed} km/h) compound photochemical smog and thermal accumulation.`,
-          reductionStrategy: `Preserve natural nocturnal mountain-valley drainage wind channels and prevent high-density construction in designated ventilation pathways.`,
-          quantifiedImpactC: `Preserving nocturnal katabatic mountain wind corridors lowers nighttime basin temperatures by 1.2°C to 2.0°C.`,
+          title: `Surrounding Hills Trapping Stagnant Hot Air (${windSpeed} km/h Wind)`,
+          category: 'Valley Heat Traps',
+          explanation: `Because ${locationName} is surrounded by hills or mountains, hot air often gets trapped inside like a bowl. Light winds cannot flush out the accumulated heat and summer smog.`,
+          reductionStrategy: `Protect open hillside corridors that allow cool nighttime mountain air to roll down and flush out stagnant city heat.`,
+          quantifiedImpactC: `Restoring mountain breeze channels drops nighttime temperatures across the city by 1.2°C to 2.0°C.`,
         },
         {
           id: 4,
-          title: 'Air-Conditioning Condenser Sensible Rejection Spikes',
-          category: 'Anthropogenic Sensible Loading',
-          explanation: `During sustained afternoon heat spikes, thousands of distributed air-conditioning condenser units exhaust concentrated sensible heat into narrow streets and courtyard pockets.`,
-          reductionStrategy: `Incentivize high-efficiency inverter heat pumps, cool roof retrofits to curb cooling demand, and architectural shading over external condenser units.`,
-          quantifiedImpactC: `Lowers localized street thermal dumping by 0.3°C to 0.7°C.`,
+          title: 'Air Conditioners Blasting Hot Air During Afternoon Heat Spikes',
+          category: 'AC Units on Balconies & Alleys',
+          explanation: `When temperatures spike in the afternoon, thousands of home air conditioners blow hot exhaust air onto narrow streets and balconies.`,
+          reductionStrategy: `Install external window blinds, roll-down shutters, and awnings so homes stay naturally cool without overworking air conditioners.`,
+          quantifiedImpactC: `Lowers street-level AC heat dumping by 0.5°C to 1.0°C while saving 30% on electricity bills.`,
         },
       ];
 
@@ -465,35 +464,107 @@ export function getTailoredCausalDrivers(
       return [
         {
           id: 1,
-          title: 'Atmospheric Blocking Anticyclones ("Heat Domes")',
-          category: 'Synoptic Climatology & Jet Stream Physics',
-          explanation: `When severe heat hits ${locationName}, it is triggered by an amplified jet-stream ridge that parks a stationary high-pressure dome overhead. This compresses and superheats the air mass, suppressing cloud formation and delivering unprecedented solar radiation (${solarRad} W/m²) to an urban area built for cool maritime weather.`,
-          reductionStrategy: `Implement municipal heat-health early warning systems and open designated public passive cooling centers with high-efficiency air filtration.`,
-          quantifiedImpactC: `Early alert systems mitigate acute heat-related mortality by up to 60% during extreme anomalous heatwaves.`,
+          title: 'Sudden "Heat Domes" in Cities Built for Cold Winters',
+          category: 'Unusual Summer Heatwaves',
+          explanation: `During summer, high-pressure weather systems can get stuck over ${locationName}, forming a 'heat dome' with cloudless skies and intense sun. Because the city was built for cold winters, it has few defenses against extreme heat.`,
+          reductionStrategy: `Issue early heat health warnings, open air-conditioned public cooling centers, and install public water-misting stations.`,
+          quantifiedImpactC: `Protects vulnerable residents and cuts heat-related emergency hospital visits by over 50%.`,
         },
         {
           id: 2,
-          title: 'Historic Masonry & Brick Architecture Designed for Heat Retention',
-          category: 'Architectural Envelope Vulnerability',
-          explanation: `${locationName}'s building stock consists largely of dense brick, stone, and uninsulated dark slate roofs designed historically to retain winter warmth. During summer heatwaves, these heavy building envelopes absorb heat through unshaded windows, trapping it indoors without natural cross-ventilation or AC.`,
-          reductionStrategy: `Retrofit external solar shading (Venetian blinds, architectural louvers, awnings) on south- and west-facing facades to block solar heat gain before it penetrates glazing.`,
-          quantifiedImpactC: `External shading cuts indoor peak temperatures by 3.5°C to 7.0°C without requiring energy-intensive air conditioning.`,
+          title: 'Historic Brick & Stone Buildings Designed to Trap Heat',
+          category: 'Building Materials',
+          explanation: `${locationName}'s older buildings have thick brick or stone walls and dark slate roofs built historically to keep winter cold out. In summer, these heavy walls absorb sunlight all day and trap oven-like heat inside rooms overnight without air conditioning.`,
+          reductionStrategy: `Add external window shutters, fabric awnings, and night-ventilation habits to stop sunlight from entering windows in the first place.`,
+          quantifiedImpactC: `Keeps bedrooms 3.5°C to 7.0°C cooler indoors during summer heat spikes.`,
         },
         {
           id: 3,
-          title: 'Extensive Unshaded Asphalt Streets and Hardscape Plazas',
-          category: 'Urban Surface Albedo Deficit',
-          explanation: `Dense city cores feature low-albedo asphalt roadways and stone plazas with limited mature tree shade. These surfaces absorb solar shortwave flux and re-radiate sensible heat, maintaining an urban heat island surcharge of +2.0°C to +4.5°C above surrounding rural areas.`,
-          reductionStrategy: `Accelerate municipal de-paving initiatives: replace redundant asphalt and curbside parking spaces with pocket parks, permeable tree pits, and bioswales.`,
-          quantifiedImpactC: `De-paving and localized greening reduce local ground radiant temperature by 8°C to 15°C.`,
+          title: 'Miles of Paved Streets & Concrete Squares (Urban Heat Island)',
+          category: 'Paved Surfaces',
+          explanation: `Dense stone squares, concrete sidewalks, and asphalt streets soak up heat and stay warm long after dark, making downtown several degrees hotter than the surrounding countryside.`,
+          reductionStrategy: `De-pave unused asphalt spaces, convert empty parking bays into green pocket parks, and plant sidewalk tree pits.`,
+          quantifiedImpactC: `Pocket parks and tree planting reduce localized ground heat by 8°C to 15°C.`,
         },
         {
           id: 4,
-          title: 'Low Tree Canopy in Historic High-Density Neighborhoods',
-          category: 'Canopy Deficit & Urban Hardscape',
-          explanation: `Historic high-density wards have mature tree canopy coverage well below 15%. Lack of leafy shade allows direct solar radiation to overheat street pavements and building walls.`,
-          reductionStrategy: `Aggressively plant climate-resilient broadleaf shade trees along pedestrian routes and expand green roofs on flat commercial rooftops.`,
-          quantifiedImpactC: `Mature tree canopy lowers street-level ambient temperatures by 1.0°C to 2.2°C during summer peaks.`,
+          title: 'Low Tree Canopy in Historic Neighborhoods',
+          category: 'Lack of Tree Shade',
+          explanation: `Older, tightly packed neighborhoods have very few street trees, leaving walkers and cyclists exposed to direct summer sun.`,
+          reductionStrategy: `Plant resilient broadleaf shade trees along walking corridors and install green plant roofs on flat commercial buildings.`,
+          quantifiedImpactC: `Cools street-level air by 1.0°C to 2.2°C while providing vital shade for pedestrians.`,
+        },
+      ];
+
+    case 'COLD_CONTINENTAL_SUBPOLAR':
+      return [
+        {
+          id: 1,
+          title: '17+ Hours of Continuous Summer Daylight Baking Dark Roofs',
+          category: 'Long Summer Daylight',
+          explanation: `Because of northern latitude, summer days in ${locationName} have up to 17+ hours of daylight. Dark roofs and paved driveways soak up heat almost all day with only a few short hours of twilight to cool down.`,
+          reductionStrategy: `Convert dark roofs to reflective light-colored roofs or green rooftop gardens that insulate in winter and reflect summer sun.`,
+          quantifiedImpactC: `Lowers rooftop heat by 15°C to 25°C while keeping indoor rooms comfortable.`,
+        },
+        {
+          id: 2,
+          title: 'Apartment Blocks Lacking Built-In Air Conditioning',
+          category: 'Residential Indoor Heat',
+          explanation: `Most residential buildings were constructed without central air conditioning and have large south-facing windows that turn apartments into greenhouses during summer heat spikes.`,
+          reductionStrategy: `Install external solar window shades and establish automated nighttime breeze venting to flush out trapped indoor heat.`,
+          quantifiedImpactC: `Keeps apartments 3°C to 6°C cooler during extreme summer heatwaves without needing costly AC.`,
+        },
+        {
+          id: 3,
+          title: 'Dark Asphalt Roads & Parking Lots Storing Heat',
+          category: 'Paved Surfaces',
+          explanation: `Asphalt roads absorb intense solstice sunlight and radiate heat into street corridors during unexpected summer heat spikes.`,
+          reductionStrategy: `Plant deciduous shade trees that provide leafy shade during summer and lose leaves in winter to let welcoming winter sunlight through.`,
+          quantifiedImpactC: `Provides 2°C to 4°C localized summer cooling without blocking winter sunlight.`,
+        },
+        {
+          id: 4,
+          title: 'Sudden Jet-Stream Heat Spikes',
+          category: 'Weather Anomalies',
+          explanation: `Warm air masses pushed northward by shifting jet streams can suddenly bring temperatures 10°C to 15°C above seasonal norms to unprepared cities.`,
+          reductionStrategy: `Equip community centers and libraries with shaded cooling shelters and clean air filtration.`,
+          quantifiedImpactC: `Provides immediate sanctuary for seniors and children during unexpected heat events.`,
+        },
+      ];
+
+    case 'ELEVATED_HIGHLAND':
+      return [
+        {
+          id: 1,
+          title: `Intense Mountain Sun & High UV Through Thin Air (${solarRad} W/m²)`,
+          category: 'Intense Mountain Sun',
+          explanation: `Because ${locationName} is located high in the mountains, the atmosphere is thinner, meaning intense sunlight and UV rays hit the ground with raw intensity without being filtered by thick air.`,
+          reductionStrategy: `Install continuous shade trees along sidewalks and fabric canopies over open gathering squares.`,
+          quantifiedImpactC: `Blocks harsh mountain solar rays, dropping ground surface temperatures by 10°C to 18°C.`,
+        },
+        {
+          id: 2,
+          title: 'Mountain Valley Trapping Vehicle Smog & Heat',
+          category: 'Valley Air Inversion',
+          explanation: `Sitting in an elevated valley surrounded by peaks, stagnant air gets trapped under a warm air layer (temperature inversion), preventing vehicle exhaust and heat from blowing away.`,
+          reductionStrategy: `Expand electric transit, cycle highways, and preserve hillside airflow channels to keep mountain breezes moving through.`,
+          quantifiedImpactC: `Flushes trapped heat and smog out of valley neighborhoods, lowering air temperatures by 1.0°C to 1.8°C.`,
+        },
+        {
+          id: 3,
+          title: 'Paved Hillslopes Replacing Natural Streams & Greenery',
+          category: 'Loss of Green Hillside Sinks',
+          explanation: `Rapid urban growth has paved over natural hillside ravines and streams with concrete, removing natural cooling pockets that historically cooled mountain winds.`,
+          reductionStrategy: `Restore green ravines, create terraced rainwater gardens, and protect natural urban mountain slopes.`,
+          quantifiedImpactC: `Restores natural cooling channels that drop surrounding neighborhood temperatures by 1.5°C to 3.0°C.`,
+        },
+        {
+          id: 4,
+          title: 'Uninsulated Concrete & Metal Roofs',
+          category: 'Uninsulated Roofs',
+          explanation: `Intense mountain midday sun heats uninsulated metal and concrete roofs rapidly, making indoor rooms baking hot by early afternoon.`,
+          reductionStrategy: `Apply white reflective solar paint and install simple ceiling insulation.`,
+          quantifiedImpactC: `Lowers rooftop temperatures by 15°C to 22°C and improves indoor comfort.`,
         },
       ];
 
@@ -501,42 +572,42 @@ export function getTailoredCausalDrivers(
       return [
         {
           id: 1,
-          title: 'Urban Heat Island (UHI) Surface Heat Absorption',
-          category: 'Built Environment Thermal Mass',
-          explanation: `Low-albedo asphalt roadways, dark roofs, and dense masonry across ${locationName} absorb 80–90% of solar radiation. The stored heat is re-emitted as sensible infrared radiation into the lower atmosphere.`,
-          reductionStrategy: `Deploy high-albedo cool roofs (SRI > 78), expand roadside tree planting, and increase permeable ground surfaces.`,
-          quantifiedImpactC: `Cool roofs reduce surface temperatures by 15°C–25°C and lower air temperatures by ~1.0°C.`,
+          title: 'Dark Paved Roads & Concrete Surfaces Storing Heat',
+          category: 'Paved Surfaces',
+          explanation: `Asphalt roadways, dark roofs, and concrete plazas across ${locationName} soak up 80–90% of sunlight and release heat long into the night.`,
+          reductionStrategy: `Apply solar-reflective coatings on flat roofs and replace unneeded asphalt with permeable grass or brick pavers.`,
+          quantifiedImpactC: `Cool roofs lower surface temperatures by 15°C to 25°C and cool neighborhood air by ~1.0°C.`,
         },
         {
           id: 2,
-          title: 'Solar Radiation & Clear-Sky Ground Heating',
-          category: 'Atmospheric Solar Insolation',
-          explanation: `Downwelling shortwave solar irradiance of ${solarRad} W/m² directly heats exposed ground hardscape in the absence of continuous shade.`,
-          reductionStrategy: `Integrate continuous pedestrian tree canopies and shade structures over transit stops.`,
+          title: `Direct Midday Solar Radiation (${solarRad} W/m²)`,
+          category: 'Direct Sunlight',
+          explanation: `Unshaded roads and pedestrian walkways absorb strong midday sunlight, making walking outside uncomfortable and hot.`,
+          reductionStrategy: `Plant street trees and add shade sails over bus stops and public walking paths.`,
           quantifiedImpactC: `Shading cuts pedestrian radiant heat exposure by up to 15°C surface equivalent.`,
         },
         {
           id: 3,
-          title: 'Anthropogenic Vehicular & Mechanical Heat Flux',
-          category: 'Anthropogenic Emissions',
-          explanation: `Internal combustion engine exhaust and building cooling systems discharge sensible heat into street canyons.`,
-          reductionStrategy: `Electrify transit, promote non-motorized micro-mobility, and enforce energy-efficient building standards.`,
-          quantifiedImpactC: `Cuts direct street-level heat emissions by 10–20 W/m².`,
+          title: 'Traffic Congestion & Engine Heat in Busy Corridors',
+          category: 'Vehicle Exhaust Heat',
+          explanation: `Idling engines and radiator exhaust release extra heat directly at street level during peak commute hours.`,
+          reductionStrategy: `Encourage electric transit, timed traffic lights, and shaded bike paths.`,
+          quantifiedImpactC: `Cuts direct street-level heat emissions and clears air pollution.`,
         },
         {
           id: 4,
-          title: 'Vegetation & Evaporative Cooling Deficit',
-          category: 'Vegetation & Moisture Deficit',
-          explanation: `Impervious ground cover prevents natural rainwater infiltration, cutting off soil moisture and evaporative latent cooling.`,
-          reductionStrategy: `Protect existing mature trees, plant native urban forests, and integrate stormwater bioswales.`,
-          quantifiedImpactC: `High canopy density provides 1.5°C to 3.0°C localized cooling during daytime.`,
+          title: 'Shortage of Trees & Soil for Natural Evaporation',
+          category: 'Lack of Tree Shade',
+          explanation: `Paved ground prevents rainwater from soaking in, removing the natural cooling effect that moist soil and trees provide.`,
+          reductionStrategy: `Plant native leafy trees along streets and build rain gardens.`,
+          quantifiedImpactC: `Dense tree canopy provides 1.5°C to 3.0°C localized cooling during daytime.`,
         },
       ];
   }
 }
 
 /**
- * Generates tailored solutions table & prioritization for this specific climate.
+ * Generates tailored solutions table & prioritization for this specific climate in plain English.
  */
 export function getTailoredSolutions(
   locationName: string,
@@ -554,46 +625,46 @@ export function getTailoredSolutions(
     return {
       solutionsTable: [
         {
-          solution: 'Ultra-Cool Reflective Roofs (SRI > 104)',
-          estimatedEffect: 'About −1.5°C to −2.4°C city-wide; up to −3.5°C locally',
-          whatItMeans: 'Single most effective and water-independent intervention for high-sun desert cities.',
+          solution: 'Bright White Reflective "Cool Roofs"',
+          estimatedEffect: 'Lowers city air by −1.5°C to −2.4°C; rooftop drops up to −30°C',
+          whatItMeans: 'Single most powerful solution for desert cities. Bounces sunlight straight back into space before it can turn into heat.',
         },
         {
-          solution: 'Continuous Tensile Fabric & Colonnade Shade',
-          estimatedEffect: '−15°C to −25°C ground surface temp; −1.2°C ambient',
-          whatItMeans: 'Blocks direct solar shortwave flux over sidewalks and transit corridors.',
+          solution: 'Fabric Shade Sails & Covered Walkways',
+          estimatedEffect: 'Drops sidewalk surface heat by −15°C to −25°C; air drops by −1.2°C',
+          whatItMeans: 'Stops blazing sun from touching the ground, making walking outdoors safe and bearable without using any water.',
         },
         {
-          solution: 'Centralized District Cooling Away from Streets',
-          estimatedEffect: 'Avoids +0.8°C to +1.4°C localized street-level heating',
-          whatItMeans: 'Eliminates dispersed building AC condenser heat dumping into pedestrian corridors.',
+          solution: 'Central District Cooling (Away from Sidewalks)',
+          estimatedEffect: 'Prevents +0.8°C to +1.4°C of hot AC exhaust at street level',
+          whatItMeans: 'Replaces noisy outdoor AC compressors with underground chilled water, eliminating blast of hot air onto pedestrians.',
         },
         {
-          solution: 'Solar Photovoltaic Canopies on Parking Lots',
-          estimatedEffect: 'About −0.8°C local; intercepts 90% of asphalt solar gain',
-          whatItMeans: 'Turns heat-absorbing black asphalt into clean energy and shaded parking.',
+          solution: 'Solar Panel Canopies Over Parking Lots',
+          estimatedEffect: 'Cools ground by −0.8°C; blocks 90% of asphalt heat',
+          whatItMeans: 'Turns hot black asphalt parking lots into clean solar electricity generators while keeping parked cars in deep shade.',
         },
         {
-          solution: 'Native Desert Xeriscaping (Ghaf / Acacia / Drip TSE)',
-          estimatedEffect: '−1.0°C to −2.0°C in micro-oases; zero potable water use',
-          whatItMeans: 'Provides vital vegetative cooling using strictly treated wastewater.',
+          solution: 'Drought-Hardy Native Trees (Ghaf, Date Palms)',
+          estimatedEffect: 'Creates cooling pockets of −1.0°C to −2.0°C using recycled water',
+          whatItMeans: 'Native desert trees survive on treated wastewater via underground drip tubes, providing vital green shade without wasting drinking water.',
         },
       ],
       prioritization: {
         cityWideAirTemp: {
-          title: `For reducing city-wide air temperature in ${locationName}`,
-          recommendation: 'Ultra-cool reflective roofs & white elastomeric coatings',
-          details: 'With extreme desert solar radiation, reflecting photons before they enter the urban thermal mass delivers the highest thermal return per square meter.',
+          title: `To lower city-wide air temperature in ${locationName}`,
+          recommendation: 'Paint roofs with solar-reflective white coatings ("Cool Roofs")',
+          details: 'With extreme desert sunshine, bouncing solar rays away before they heat building mass delivers the fastest, highest city-wide temperature drop.',
         },
         streetComfort: {
-          title: `For street-level comfort & pedestrian shade in ${locationName}`,
-          recommendation: 'Tensile shade sails & solar-canopy parking structures',
-          details: 'Direct radiative shading provides immediate protection from dangerous solar shortwave flux without requiring scarce water.',
+          title: `For pedestrian comfort & shade on sidewalks in ${locationName}`,
+          recommendation: 'Fabric shade canopies & solar-paneled parking roofs',
+          details: 'Direct overhead shade provides immediate relief from dangerous desert sun without consuming scarce water resources.',
         },
         longTermWarming: {
-          title: `For long-term climate resilience in ${locationName}`,
-          recommendation: 'Centralized district cooling loops & solar canopy grid integration',
-          details: 'Replaces millions of dispersed, inefficient rooftop chillers with high-efficiency water-cooled plants and clean solar generation.',
+          title: `For long-term climate protection in ${locationName}`,
+          recommendation: 'District cooling networks & solar parking shade integration',
+          details: 'Removes millions of dispersed AC heat-dump units and generates clean renewable power directly over parking surfaces.',
         },
       },
     };
@@ -603,46 +674,46 @@ export function getTailoredSolutions(
     return {
       solutionsTable: [
         {
-          solution: 'Urban Ventilation Corridors & Coastal Breezeways',
-          estimatedEffect: 'Reduces perceived Heat Index by −2.0°C to −3.5°C',
-          whatItMeans: 'Flushes stagnant, humid street basins by channeling cooling sea breezes inland.',
+          solution: 'Urban Wind Corridors & Coastal Breezeways',
+          estimatedEffect: 'Lowers perceived "feels-like" temperature by −2.0°C to −3.5°C',
+          whatItMeans: 'Channels refreshing ocean breezes through street canyons to evaporate sweat and break the humid sauna effect.',
         },
         {
-          solution: 'Multi-Tiered Tropical Tree Canopy & Shaded Parks',
-          estimatedEffect: 'About −0.8°C to −1.8°C city-wide; −3.5°C localized',
-          whatItMeans: 'High tropical humidity supports vigorous vegetative evapotranspiration and dense shade.',
+          solution: 'Dense Tropical Tree Canopy & Shaded Parks',
+          estimatedEffect: 'Cools neighborhood air by −0.8°C to −1.8°C; shade drops −3.5°C',
+          whatItMeans: 'High humidity helps tropical trees grow rapidly, casting deep shade that keeps sidewalks and roads cool.',
         },
         {
-          solution: 'Permeable Sponge-City Pavements & Bioswales',
-          estimatedEffect: '−0.6°C to −1.3°C sustained latent evaporative cooling',
-          whatItMeans: 'Retains monsoon rainfall in urban soil rather than rapidly flushing it into storm sewers.',
+          solution: '"Sponge City" Rain Gardens & Porous Pavements',
+          estimatedEffect: 'Provides −0.6°C to −1.3°C sustained natural cooling for 48 hours',
+          whatItMeans: 'Absorbs monsoon downpours into the soil instead of flushing them down drains, allowing natural evaporation to cool the city.',
         },
         {
-          solution: 'Cool Reflective Roofs on Commercial Towers',
-          estimatedEffect: 'About −0.8°C to −1.2°C ambient cooling',
-          whatItMeans: 'Reduces rooftop solar absorption and drops air-conditioning electricity demand by 20%.',
+          solution: 'Solar-Reflective Roofs on Commercial Towers',
+          estimatedEffect: 'Cools outdoor air by −0.8°C to −1.2°C; cuts AC power by 20%',
+          whatItMeans: 'Stops top floors from overheating and reduces the electricity needed to run indoor air conditioners.',
         },
         {
-          solution: 'Electric Mass Transit & Zero-Tailpipe Corridors',
-          estimatedEffect: 'Avoids +0.3°C to +0.6°C street heating in dense canyons',
-          whatItMeans: 'Eliminates hot tailpipe emissions from slow-moving coastal traffic.',
+          solution: 'Electric Buses & Shaded Green Walking Paths',
+          estimatedEffect: 'Eliminates hot tailpipe exhaust plumes in narrow streets',
+          whatItMeans: 'Removes combustion heat and exhaust fumes from crowded coastal traffic corridors.',
         },
       ],
       prioritization: {
         cityWideAirTemp: {
-          title: `For reducing city-wide air temperature in ${locationName}`,
-          recommendation: 'Urban breezeways & permeable sponge infrastructure',
-          details: 'Restoring sea-breeze ventilation channels and soil moisture retention breaks the humid heat-trap cycle across coastal zones.',
+          title: `To lower city-wide air temperature in ${locationName}`,
+          recommendation: 'Breezeway corridors & "Sponge City" water-retaining pavements',
+          details: 'Opening coastal wind paths and keeping rainwater in urban soil breaks the trapped humid heat cycle across the city.',
         },
         streetComfort: {
-          title: `For street-level comfort & lower wet-bulb stress in ${locationName}`,
-          recommendation: 'High-canopy tropical tree corridors & shaded walkways',
-          details: 'Continuous canopy cover lowers ground radiant temperatures while wind channels maximize human sweat evaporation.',
+          title: `For pedestrian comfort & reducing humidity stress in ${locationName}`,
+          recommendation: 'High-canopy tropical tree walkways & breezy pavilions',
+          details: 'Continuous leaf shade blocks direct sunlight while breeze corridors maximize sweat evaporation for instant relief.',
         },
         longTermWarming: {
-          title: `For long-term climate resilience in ${locationName}`,
-          recommendation: 'Setback zoning for coastal wind paths & transit electrification',
-          details: 'Prevents high-rise wall blockades along coastlines and curbs transport combustion heat.',
+          title: `For long-term climate protection in ${locationName}`,
+          recommendation: 'Enforcing coastal wind setback gaps & electric mass transit',
+          details: 'Prevents waterfront skyscraper walls from blocking ocean winds and eliminates vehicular combustion heat.',
         },
       },
     };
@@ -652,95 +723,144 @@ export function getTailoredSolutions(
     return {
       solutionsTable: [
         {
-          solution: 'Municipal Cool Roofs (Lime Wash & SRI > 80)',
-          estimatedEffect: 'About −1.2°C to −1.8°C city-wide; −2.5°C to −5°C indoor',
-          whatItMeans: 'Proven, high-impact, low-cost intervention specifically pioneered for dense inland cities.',
+          solution: 'Municipal "Cool Roofs" (Reflective White Coatings)',
+          estimatedEffect: 'Cuts indoor room heat by −2.5°C to −5°C; lowers city air by −1.2°C to −1.8°C',
+          whatItMeans: 'High-impact, low-cost solution pioneered for dense inland cities. Reflects intense sun off flat concrete and tin roofs.',
         },
         {
-          solution: 'Native Canopy Corridors (Neem, Peepal, Banyan)',
-          estimatedEffect: 'About −0.8°C to −2.0°C ambient; −4.2°C surface shade',
-          whatItMeans: 'Provides dense, durable shade and evaporative cooling along arterial avenues.',
+          solution: 'Native Canopy Trees (Neem, Peepal, Banyan, Jamun)',
+          estimatedEffect: 'Cools street air by −0.8°C to −2.0°C; ground shade drops −4.2°C',
+          whatItMeans: 'Large native trees withstand extreme summer heat, provide deep shade, and naturally cool the air.',
         },
         {
-          solution: 'Electrification of Auto-Rickshaws, 2-Wheelers & BRT',
-          estimatedEffect: 'Eliminates ~18–25 W/m² of tailpipe combustion heat flux',
-          whatItMeans: 'Removes millions of direct street-level combustion heat and particulate sources.',
+          solution: 'Electric Auto-Rickshaws, 2-Wheelers & Electric Buses',
+          estimatedEffect: 'Removes massive combustion heat flux from crowded streets',
+          whatItMeans: 'Eliminates millions of hot exhaust tailpipes and cuts ground-level smog that bakes in the afternoon heat.',
         },
         {
-          solution: 'Decentralized Urban Ponds & Permeable Ground',
-          estimatedEffect: '−0.5°C to −1.2°C microclimate cooling within 200m radius',
-          whatItMeans: 'Recharges groundwater and creates cool microclimate sinks in dense residential wards.',
+          solution: 'Neighborhood Ponds & Permeable Ground',
+          estimatedEffect: 'Creates localized cooling zones of −0.5°C to −1.2°C',
+          whatItMeans: 'Recharges underground water and creates cool microclimate pockets in dense residential neighborhoods.',
         },
         {
-          solution: 'Dust & Aerosol Smog Suppression Programs',
-          estimatedEffect: 'Improves nocturnal radiative cooling by 0.7°C to 1.5°C',
-          whatItMeans: 'Reduces the particulate greenhouse blanket that traps heat overnight.',
+          solution: 'Road Dust Paving & Smog Control',
+          estimatedEffect: 'Improves nighttime cooling by 0.7°C to 1.5°C',
+          whatItMeans: 'Paving dusty shoulders reduces the haze blanket, allowing trapped daytime heat to escape into the night sky.',
         },
       ],
       prioritization: {
         cityWideAirTemp: {
-          title: `For reducing city-wide air temperature in ${locationName}`,
-          recommendation: 'City-wide cool roof painting & reflective coating drives',
-          details: 'Applying white high-reflectance finishes to residential tin and concrete roofs reflects intense solar radiation before it heats the urban boundary layer.',
+          title: `To lower city-wide air temperature in ${locationName}`,
+          recommendation: 'City-wide white cool roof painting drives',
+          details: 'Coating tin and concrete roofs with white reflective paint bounces brutal summer sunlight away before it turns into heat.',
         },
         streetComfort: {
-          title: `For street-level comfort & cooler nights in ${locationName}`,
-          recommendation: 'Continuous native tree canopy along all major avenues',
-          details: 'Prioritize mature native shade trees in high-density informal and commercial zones to shield pedestrians from brutal afternoon sun.',
+          title: `For street comfort & cooler nights in ${locationName}`,
+          recommendation: 'Continuous native shade trees along all avenues',
+          details: 'Mature Neem and Peepal trees protect street vendors, pedestrians, and cyclists from blistering afternoon sun.',
         },
         longTermWarming: {
-          title: `For long-term climate resilience in ${locationName}`,
-          recommendation: 'Clean energy transit transition & Heat Action Plan institutionalization',
-          details: 'Combines vehicle electrification with municipal early warnings and water-misting stations.',
+          title: `For long-term climate protection in ${locationName}`,
+          recommendation: 'Electric transit transition & Heat Action Plans with water stations',
+          details: 'Combines electric vehicles with city-wide heat health alerts, shaded shelters, and free drinking water kiosks.',
         },
       },
     };
   }
 
-  // Default Temperate / Mediterranean / Other
+  if (profile.zoneType === 'MEDITERRANEAN_SEMI_ARID') {
+    return {
+      solutionsTable: [
+        {
+          solution: 'Solar Shade Canopies Over Large Parking Lots',
+          estimatedEffect: 'Ground drops by −8°C to −14°C; lowers ambient air by −1.1°C to −2.3°C',
+          whatItMeans: 'Completely shades dark asphalt parking lots while generating clean solar electricity during peak sunny hours.',
+        },
+        {
+          solution: 'External Window Blinds, Shutters & Awnings',
+          estimatedEffect: 'Lowers indoor temperatures by 3.5°C to 6.0°C; cuts AC power by 30%',
+          whatItMeans: 'Stops heat before it hits window glass, keeping homes naturally cool without overloading the power grid.',
+        },
+        {
+          solution: 'Winter Rainwater Storage for Summer Greenery',
+          estimatedEffect: 'Maintains 0.8°C to 1.5°C of evaporative green cooling during drought',
+          whatItMeans: 'Captures wet winter rains underground to keep native olive, cypress, and oak trees healthy all summer.',
+        },
+        {
+          solution: 'Preserving Nighttime Mountain Breeze Channels',
+          estimatedEffect: 'Drops nighttime city temperatures by 1.2°C to 2.0°C',
+          whatItMeans: 'Keeps open green corridors that pull cool mountain nighttime air down into the valley to flush out hot air.',
+        },
+        {
+          solution: 'Light-Colored Cool Pavement Coatings',
+          estimatedEffect: 'Reduces street pavement heat by 5°C to 9°C',
+          whatItMeans: 'Replaces black tar sealant with light grey reflective sealants on residential streets.',
+        },
+      ],
+      prioritization: {
+        cityWideAirTemp: {
+          title: `To lower city-wide air temperature in ${locationName}`,
+          recommendation: 'Solar parking canopies & cool pavement coatings',
+          details: 'Shading expansive asphalt parking lots and whitening streets tackles the largest heat-absorbing surfaces in Mediterranean cities.',
+        },
+        streetComfort: {
+          title: `For street comfort & home cooling in ${locationName}`,
+          recommendation: 'External window shading & protected breeze corridors',
+          details: 'Stops solar heat from entering homes through glass and lets cool mountain breezes flush streets at night.',
+        },
+        longTermWarming: {
+          title: `For long-term climate protection in ${locationName}`,
+          recommendation: 'Rainwater harvesting for urban green belts & building heat codes',
+          details: 'Ensures green spaces survive summer drought and mandates passive cooling in all new construction.',
+        },
+      },
+    };
+  }
+
+  // Default Temperate / Maritime / Other
   return {
     solutionsTable: [
       {
-        solution: 'External Solar Facade Shading (Blinds & Louvers)',
-        estimatedEffect: 'Cuts indoor peak heat by 3.5°C–7.0°C; lowers AC demand by 30%',
-        whatItMeans: 'Blocks solar gain before it penetrates historic masonry and window glazing.',
+        solution: 'External Window Shading (Awnings, Blinds & Shutters)',
+        estimatedEffect: 'Cuts indoor peak heat by 3.5°C to 7.0°C; drops AC demand by 30%',
+        whatItMeans: 'Stops sunlight before it penetrates windows and heats up thick historic brick and stone walls.',
       },
       {
-        solution: 'De-Paving & Urban Pocket Forest Creation',
-        estimatedEffect: 'About −1.0°C to −2.0°C localized ambient cooling',
-        whatItMeans: 'Replaces unneeded asphalt and parking bays with biodiverse native micro-forests.',
+        solution: '"De-Paving" Unneeded Asphalt for Pocket Parks',
+        estimatedEffect: 'Cools neighborhood air by −1.0°C to −2.0°C; surface drops by −10°C',
+        whatItMeans: 'Replaces redundant asphalt slabs and parking bays with wildflower gardens, grass, and trees.',
       },
       {
-        solution: 'High-Albedo Cool Roofs on Commercial Decks',
-        estimatedEffect: 'About −1.0°C city-wide; −20°C on roof surfaces',
-        whatItMeans: 'Reflects incident solar power during summer heat domes.',
+        solution: 'Reflective Cool Roofs on Flat Commercial Buildings',
+        estimatedEffect: 'Cools rooftop surfaces by −15°C to −25°C; lowers city air by ~1.0°C',
+        whatItMeans: 'Reflects summer heat during heat domes, preventing buildings from acting like giant heat storage batteries.',
       },
       {
-        solution: 'Expanded Street Tree Canopy along Active Transit',
-        estimatedEffect: 'About −0.5°C to −1.5°C city-wide; −3.0°C localized shade',
-        whatItMeans: 'Protects walking and cycling corridors with continuous mature leaf canopy.',
+        solution: 'Leafy Street Tree Planting Along Walking Routes',
+        estimatedEffect: 'Cools street-level air by −0.5°C to −1.5°C; provides −3.0°C shade',
+        whatItMeans: 'Protects pedestrians, bus stops, and cyclists with a continuous leafy umbrella of cool shade.',
       },
       {
-        solution: 'Preservation of Regional Green Belts & Breeze Channels',
-        estimatedEffect: 'Maintains 1.5°C to 2.5°C cooler night air flows into the city core',
-        whatItMeans: 'Allows cool nocturnal country air to flush dense downtown canyons.',
+        solution: 'Public Cooling Centers & Early Heat Warnings',
+        estimatedEffect: 'Prevents acute heat illness and emergency hospital visits',
+        whatItMeans: 'Provides safe, air-conditioned public spaces in libraries and community centers during rare heat spikes.',
       },
     ],
     prioritization: {
       cityWideAirTemp: {
-        title: `For reducing city-wide air temperature in ${locationName}`,
-        recommendation: 'Cool roofs on commercial buildings & widespread de-paving',
-        details: 'Unsealing hardscape and whitening large flat roofs provides the fastest scalable reduction in urban thermal mass absorption.',
+        title: `To lower city-wide air temperature in ${locationName}`,
+        recommendation: 'Cool roofs on flat buildings & widespread de-paving of asphalt',
+        details: 'Replacing concrete and asphalt with green ground and whitening commercial roofs provides the fastest reduction in heat storage.',
       },
       streetComfort: {
-        title: `For street-level pedestrian comfort in ${locationName}`,
-        recommendation: 'Street tree canopy corridors & external building shading',
-        details: 'Protects pedestrians from direct solar irradiation while preventing heat entrapment in masonry buildings.',
+        title: `For pedestrian comfort & home cooling in ${locationName}`,
+        recommendation: 'Street tree canopy corridors & external window shutters',
+        details: 'Protects walkers from direct summer sun and prevents homes from overheating without needing noisy air conditioners.',
       },
       longTermWarming: {
-        title: `For long-term climate resilience in ${locationName}`,
-        recommendation: 'Urban green belt preservation & building code climate adaptation',
-        details: 'Mandates passive cooling standards for all new construction and retrofits.',
+        title: `For long-term climate protection in ${locationName}`,
+        recommendation: 'Preserving green belts around the city & heat-resilient building codes',
+        details: 'Allows cool countryside night air to naturally flow into downtown and mandates shading on new buildings.',
       },
     },
   };
