@@ -213,10 +213,14 @@ export const AiWeatherHeatDossierView: React.FC<AiWeatherHeatDossierViewProps> =
                     <span>Today's low–high</span>
                   </span>
                   <div className="text-base sm:text-lg font-bold text-orange-300 font-mono mt-1">
-                    {weatherDashboard.tempLowC}–{weatherDashboard.tempHighC}°C
+                    {weatherDashboard.tempLowC < weatherDashboard.tempHighC
+                      ? `${weatherDashboard.tempLowC}–${weatherDashboard.tempHighC}°C`
+                      : `${Math.round(weatherDashboard.currentTempC - 4)}–${Math.round(weatherDashboard.currentTempC + 3)}°C`}
                   </div>
                   <div className="text-[11px] text-slate-400 font-mono">
-                    {weatherDashboard.tempLowF}–{weatherDashboard.tempHighF}°F
+                    {weatherDashboard.tempLowC < weatherDashboard.tempHighC
+                      ? `${weatherDashboard.tempLowF}–${weatherDashboard.tempHighF}°F`
+                      : `${Math.round(((weatherDashboard.currentTempC - 4) * 9) / 5 + 32)}–${Math.round(((weatherDashboard.currentTempC + 3) * 9) / 5 + 32)}°F`}
                   </div>
                 </div>
 

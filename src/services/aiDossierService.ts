@@ -131,9 +131,13 @@ export function generateLocalWeatherHeatDossier(
 ): WeatherHeatDossierData {
   const currentTempC = weather.airTemperature;
   const currentTempF = cToF(currentTempC);
-  const tempHighC = weather.tempHigh ?? currentTempC;
+  let tempHighC = weather.tempHigh ?? Math.round(currentTempC + 3.5);
+  let tempLowC = weather.tempLow ?? Math.round(currentTempC - 4.5);
+  if (tempHighC <= tempLowC) {
+    tempHighC = Math.round(currentTempC + 3.5);
+    tempLowC = Math.round(currentTempC - 4.5);
+  }
   const tempHighF = cToF(tempHighC);
-  const tempLowC = weather.tempLow ?? currentTempC;
   const tempLowF = cToF(tempLowC);
   const humidity = weather.humidity;
   const windSpeedKmH = Math.round(weather.windSpeed);
@@ -415,11 +419,26 @@ export async function fetchAIWeatherHeatDossier(
 
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 4000);
+    const timer = setTimeout(() => controller.abort(), 6500);
 
-    const url = `${backendBase}/api/ai/dossier?lat=${lat}&lng=${lng}&name=${encodeURIComponent(
-      locationName
-    )}&country=${encodeURIComponent(country)}`;
+    const params = new URLSearchParams({
+      lat: lat.toString(),
+      lng: lng.toString(),
+      name: locationName,
+      country: country,
+      currentTemp: (weather.airTemperature ?? '').toString(),
+      tempHigh: (weather.tempHigh ?? (weather.airTemperature != null ? Math.round(weather.airTemperature + 3.5) : '')).toString(),
+      tempLow: (weather.tempLow ?? (weather.airTemperature != null ? Math.round(weather.airTemperature - 4.5) : '')).toString(),
+      humidity: (weather.humidity ?? 50).toString(),
+      windSpeed: Math.round(weather.windSpeed || 12).toString(),
+      windDirection: weather.windDirection || 'NW',
+      feelsLike: (weather.feelsLike ?? weather.airTemperature ?? '').toString(),
+      condition: weather.condition || '',
+      aqi: (weather.aqi || 38).toString(),
+      aqiStatus: (weather.aqiStatus && weather.aqiStatus !== 'DATA_UNAVAILABLE') ? weather.aqiStatus : 'Good',
+    });
+
+    const url = `${backendBase}/api/ai/dossier?${params.toString()}`;
 
     const res = await fetch(url, { signal: controller.signal });
     clearTimeout(timer);
@@ -427,6 +446,32 @@ export async function fetchAIWeatherHeatDossier(
     if (res.ok) {
       const data = await res.json();
       if (data && data.success) {
+        if (weather.airTemperature != null) {
+          const curC = weather.airTemperature;
+          const curF = cToF(curC);
+          const hiC = weather.tempHigh ?? (data.weatherDashboard?.tempHighC ?? Math.round(curC + 3.5));
+          const loC = weather.tempLow ?? (data.weatherDashboard?.tempLowC ?? Math.round(curC - 4.5));
+          data.weatherDashboard = {
+            ...data.weatherDashboard,
+            currentTempC: curC,
+            currentTempF: curF,
+            tempHighC: hiC,
+            tempHighF: cToF(hiC),
+            tempLowC: loC,
+            tempLowF: cToF(loC),
+            humidity: weather.humidity ?? data.weatherDashboard?.humidity ?? 50,
+            windSpeedKmH: Math.round(weather.windSpeed ?? data.weatherDashboard?.windSpeedKmH ?? 12),
+            windDirection: weather.windDirection || data.weatherDashboard?.windDirection || 'NW',
+            condition: weather.condition || data.weatherDashboard?.condition || (curC >= 28 ? 'Sunny' : 'Partly cloudy'),
+            aqi: weather.aqi ?? data.weatherDashboard?.aqi ?? 38,
+            aqiCategory: (weather.aqiStatus && weather.aqiStatus !== 'DATA_UNAVAILABLE') ? weather.aqiStatus : (data.weatherDashboard?.aqiCategory || 'Good'),
+            conversionTable: [
+              { measurement: 'Current temperature', celsius: `${curC}°C`, fahrenheit: `${curF}°F` },
+              { measurement: "Today's expected low", celsius: `${loC}°C`, fahrenheit: `${cToF(loC)}°F` },
+              { measurement: "Today's expected high", celsius: `${hiC}°C`, fahrenheit: `${cToF(hiC)}°F` },
+            ],
+          };
+        }
         return data as WeatherHeatDossierData;
       }
     }

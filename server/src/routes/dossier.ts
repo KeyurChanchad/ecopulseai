@@ -23,11 +23,23 @@ function cToF(c: number): number {
   return Math.round((c * 9) / 5 + 32);
 }
 
-dossierRouter.get('/', async (req: Request, res: Response): Promise<void> => {
-  const lat = parseFloat((req.query.lat as string) || '51.5074');
-  const lng = parseFloat((req.query.lng as string) || '-0.1278');
-  const locationName = (req.query.name as string) || (lat > 50 && lng < 1 ? 'London' : 'Selected Location');
-  const country = (req.query.country as string) || (lat > 50 && lng < 1 ? 'United Kingdom' : 'India');
+const handleDossierRequest = async (req: Request, res: Response): Promise<void> => {
+  const q = req.method === 'POST' ? { ...req.query, ...req.body } : req.query;
+  const lat = parseFloat((q.lat as string) || '51.5074');
+  const lng = parseFloat((q.lng as string) || '-0.1278');
+  const locationName = (q.name as string) || (lat > 50 && lng < 1 ? 'London' : 'Selected Location');
+  const country = (q.country as string) || (lat > 50 && lng < 1 ? 'United Kingdom' : 'India');
+
+  const clientTemp = q.currentTemp !== undefined && q.currentTemp !== '' ? parseFloat(q.currentTemp as string) : undefined;
+  const clientTempHigh = q.tempHigh !== undefined && q.tempHigh !== '' ? parseFloat(q.tempHigh as string) : undefined;
+  const clientTempLow = q.tempLow !== undefined && q.tempLow !== '' ? parseFloat(q.tempLow as string) : undefined;
+  const clientHumidity = q.humidity !== undefined && q.humidity !== '' ? parseFloat(q.humidity as string) : undefined;
+  const clientWindSpeed = q.windSpeed !== undefined && q.windSpeed !== '' ? parseFloat(q.windSpeed as string) : undefined;
+  const clientWindDir = (q.windDirection as string) || undefined;
+  const clientFeelsLike = q.feelsLike !== undefined && q.feelsLike !== '' ? parseFloat(q.feelsLike as string) : undefined;
+  const clientCondition = (q.condition as string) || undefined;
+  const clientAqi = q.aqi !== undefined && q.aqi !== '' ? parseFloat(q.aqi as string) : undefined;
+  const clientAqiStatus = (q.aqiStatus as string) || undefined;
 
   try {
     const bundleRes = await fetchOpenMeteoBundle(lat, lng, 8500);
@@ -36,23 +48,26 @@ dossierRouter.get('/', async (req: Request, res: Response): Promise<void> => {
     const cur = bundle?.current;
     const aq = bundle?.airQuality;
 
-    const currentTempC = cur?.temperature ?? 24.0;
+    const currentTempC = cur?.temperature ?? clientTemp ?? (lat > 45 ? 14.0 : 28.0);
     const currentTempF = cToF(currentTempC);
 
-    const tempHighC = cur?.temperatureMax ?? currentTempC;
+    let tempHighC = cur?.temperatureMax ?? clientTempHigh ?? Math.round(currentTempC + 3.5);
+    let tempLowC = cur?.temperatureMin ?? clientTempLow ?? Math.round(currentTempC - 4.5);
+    if (tempHighC <= tempLowC) {
+      tempHighC = Math.round(currentTempC + 3.5);
+      tempLowC = Math.round(currentTempC - 4.5);
+    }
     const tempHighF = cToF(tempHighC);
-
-    const tempLowC = cur?.temperatureMin ?? currentTempC;
     const tempLowF = cToF(tempLowC);
 
-    const humidity = cur?.humidity ?? 50;
-    const windSpeedKmH = cur?.windSpeed ?? 12;
-    const windDirection = cur?.windDirectionCardinal ?? 'NW';
-    const aqi = aq?.aqi ?? 45;
-    const aqiCategory = aq?.aqiCategory ?? aqiToStatus(aqi);
-    const conditionPhrase = cur?.condition ?? 'Partly cloudy';
+    const humidity = cur?.humidity ?? clientHumidity ?? 50;
+    const windSpeedKmH = cur?.windSpeed ?? (clientWindSpeed !== undefined ? Math.round(clientWindSpeed) : 12);
+    const windDirection = cur?.windDirectionCardinal ?? clientWindDir ?? 'NW';
+    const aqi = aq?.aqi ?? (clientAqi !== undefined ? Math.round(clientAqi) : 38);
+    const aqiCategory = aq?.aqiCategory ?? clientAqiStatus ?? aqiToStatus(aqi);
+    const conditionPhrase = cur?.condition ?? clientCondition ?? (currentTempC >= 28 ? 'Sunny' : 'Partly cloudy');
 
-    const isHot = currentTempC >= 28 || (cur?.feelsLike ?? currentTempC) >= 30;
+    const isHot = currentTempC >= 28 || (cur?.feelsLike ?? clientFeelsLike ?? currentTempC) >= 30;
 
     // Dates
     const today = new Date();
@@ -335,4 +350,8 @@ The primary variation across these milestones is seasonal climatological progres
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message ?? 'Dossier generation failed' });
   }
-});
+};
+
+dossierRouter.get('/', handleDossierRequest);
+dossierRouter.post('/', handleDossierRequest);
+
