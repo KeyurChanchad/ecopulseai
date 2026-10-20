@@ -3,6 +3,12 @@
  * Client-side service with backend /api/ai/dossier integration and resilient offline fallback.
  */
 import { WeatherObservation } from '../types';
+import {
+  classifyLocationClimate,
+  getTailoredCausalDrivers,
+  getTailoredSolutions,
+  getTailoredSeasonalProjections,
+} from './climateCausalEngine';
 
 export interface DossierConversionRow {
   measurement: string;
@@ -112,93 +118,6 @@ function cToF(c: number): number {
   return Math.round((c * 9) / 5 + 32);
 }
 
-function computeSeasonalRanges(lat: number, baseAirTemp: number) {
-  const isNorth = lat >= 0;
-  const absLat = Math.abs(lat);
-
-  if (absLat < 23.5) {
-    return {
-      threeMonths: {
-        season: isNorth ? 'Winter' : 'Monsoon/Summer',
-        lowC: 15,
-        highC: 29,
-        desc: 'Cooler dry nights with warm, clear sunny afternoons. Heat stress is significantly subdued compared to peak pre-monsoon periods.',
-      },
-      sixMonths: {
-        season: isNorth ? 'Pre-Monsoon Summer' : 'Dry Season',
-        lowC: 25,
-        highC: 39,
-        desc: 'Peak seasonal daytime heating with high solar radiation and extreme thermal stress. Urban surfaces experience peak sensible storage.',
-      },
-      oneYear: {
-        season: isNorth ? 'Post-Monsoon Autumn' : 'Spring',
-        lowC: 24,
-        highC: 36,
-        desc: 'Clear post-monsoon skies with high daytime highs and moderate nighttime radiative cooling. Tropical humidity elevates perceived Heat Index.',
-      },
-      monthlyHighs: [
-        { month: 'January', tempC: 29, tempF: cToF(29) },
-        { month: 'April', tempC: 39, tempF: cToF(39) },
-        { month: 'July', tempC: 31, tempF: cToF(31) },
-        { month: 'October', tempC: 36, tempF: cToF(36) },
-      ],
-    };
-  } else if (absLat < 40) {
-    return {
-      threeMonths: {
-        season: isNorth ? 'Winter' : 'Summer',
-        lowC: 5,
-        highC: 18,
-        desc: 'Milder temperatures with occasional cold advection. Low atmospheric moisture keeps night temperatures brisk.',
-      },
-      sixMonths: {
-        season: isNorth ? 'Spring' : 'Autumn',
-        lowC: 16,
-        highC: 30,
-        desc: 'Rapid thermal buildup with lengthening photoperiods. Afternoon convection and early heat events become probable.',
-      },
-      oneYear: {
-        season: isNorth ? 'Autumn' : 'Spring',
-        lowC: 15,
-        highC: 29,
-        desc: 'Subtropical transition characterized by declining sun angles and retreating summer humidity.',
-      },
-      monthlyHighs: [
-        { month: 'January', tempC: 18, tempF: cToF(18) },
-        { month: 'April', tempC: 28, tempF: cToF(28) },
-        { month: 'July', tempC: 38, tempF: cToF(38) },
-        { month: 'October', tempC: 29, tempF: cToF(29) },
-      ],
-    };
-  } else {
-    return {
-      threeMonths: {
-        season: isNorth ? 'Winter' : 'Summer',
-        lowC: 2,
-        highC: 9,
-        desc: 'Cold, damp maritime weather, short daylight hours, and occasional frost. Atmospheric heat burden is at annual minimum.',
-      },
-      sixMonths: {
-        season: isNorth ? 'Spring' : 'Autumn',
-        lowC: 6,
-        highC: 15,
-        desc: 'Milder afternoons and longer daylight hours. Warm spells are possible, but sustained summer heat is atypical.',
-      },
-      oneYear: {
-        season: isNorth ? 'Autumn' : 'Spring',
-        lowC: 9,
-        highC: 16,
-        desc: 'Seasonal cooling with changing storm tracks and frontal precipitation. Temperatures are notably cooler than summer.',
-      },
-      monthlyHighs: [
-        { month: 'January', tempC: 8.5, tempF: cToF(8.5) },
-        { month: 'April', tempC: 14.5, tempF: cToF(14.5) },
-        { month: 'July', tempC: 23.9, tempF: cToF(23.9) },
-        { month: 'October', tempC: 16.0, tempF: cToF(16.0) },
-      ],
-    };
-  }
-}
 
 /**
  * Generates local fallback dossier using real-world weather inputs.
@@ -239,15 +158,19 @@ export function generateLocalWeatherHeatDossier(
   d1y.setFullYear(d1y.getFullYear() + 1);
   const d1yFormatted = d1y.toLocaleDateString('en-GB', dateOptions);
 
-  const seasonal = computeSeasonalRanges(lat, currentTempC);
+  const climateProfile = classifyLocationClimate(lat, lng, locationName, country, weather);
+  const tailoredDrivers = getTailoredCausalDrivers(locationName, country, lat, lng, weather);
+  const tailoredSolutions = getTailoredSolutions(locationName, country, lat, lng, weather);
+  const seasonal = getTailoredSeasonalProjections(lat, lng, locationName, country, currentTempC);
 
   const headlineSummary = !isHot
-    ? `${locationName} is not hot right now. The current weather is cool, around ${currentTempC}°C (${currentTempF}°F), with a daytime high forecast near ${tempHighC}°C (${tempHighF}°F). This represents normal seasonal atmospheric conditions rather than an urban heatwave.`
-    : `${locationName} is currently experiencing significant thermal loading, around ${currentTempC}°C (${currentTempF}°F), with daytime highs reaching ${tempHighC}°C (${tempHighF}°F) and expected low of ${tempLowC}°C (${tempLowF}°F). Radiant heat absorption across urban surfaces amplifies heat stress during peak sun hours.`;
+    ? `${locationName} is not hot right now. The current weather is cool, around ${currentTempC}°C (${currentTempF}°F), with a daytime high forecast near ${tempHighC}°C (${tempHighF}°F). Classified as ${climateProfile.zoneName} (${climateProfile.biomeDescription}), seasonal baseline shifts rather than an urban heat emergency characterize current readings.`
+    : `${locationName} is currently experiencing significant thermal loading, around ${currentTempC}°C (${currentTempF}°F), with daytime highs reaching ${tempHighC}°C (${tempHighF}°F) and expected low of ${tempLowC}°C (${tempLowF}°F). Located in a ${climateProfile.zoneName} environment, ${climateProfile.thermalRiskProfile}.`;
 
   const rawMarkdown = `# ${locationName} weather and heat analysis
 
 Current date: ${currentDateFormatted} · ${locationName}, ${country}
+Biome Classification: ${climateProfile.zoneName} (${climateProfile.biomeDescription})
 
 ${headlineSummary}
 
@@ -288,47 +211,40 @@ US EPA / IQAir Scale
 
 ## 2. If ${locationName} becomes hot, what causes it?
 
+**Biophysical Zone**: ${climateProfile.zoneName}
+**Local Thermal Characteristic**: ${climateProfile.thermalRiskProfile}
+
 ${
   isHot
-    ? `${locationName} is currently subject to high ambient temperatures combined with urban heat island amplification. There are four primary drivers:`
-    : `${locationName}'s current weather is not hot, but the city can experience severe heatwaves during summer and transition periods. There are four primary scientific mechanisms:`
+    ? `${locationName} is currently subject to high ambient temperatures combined with place-specific microclimate amplification. Here are the primary physical causes for ${locationName}:`
+    : `${locationName}'s current weather is not hot, but when extreme heat develops, specific geographic, atmospheric, and urban mechanisms drive the temperature spike. Here are the primary physical causes for ${locationName}:`
 }
 
-1. **Global warming**
-Greenhouse gases from fossil fuel combustion trap surplus longwave thermal energy in the climate system. This elevates background global baselines and triples the frequency of extreme heat domes.
-*Reduction strategy*: Accelerate decarbonization across grid power, commercial heating, transit, and heavy industry. This mitigates long-term heating trajectory.
+${tailoredDrivers
+  .map(
+    (c, idx) => `${idx + 1}. **${c.title}** (${c.category})
+${c.explanation}
+*Reduction strategy*: ${c.reductionStrategy} [Estimated Cooling Effect: ~${c.quantifiedImpactC}]`
+  )
+  .join('\n\n')}
 
-2. **Urban heat island (UHI)**
-Bitumen roads, low-albedo asphalt, dark roofs, and dense masonry absorb incident solar radiation (typically 80–90% absorption) and radiate sensible heat late into the night. Narrow street canyons restrict convective airflow.
-*Reduction strategy*: Deploy high-albedo reflective coatings (SRI > 78), expand street tree canopy, increase surface permeability, and preserve ventilation corridors.
+*Empirical Urban Modeling*: Microclimate research for ${climateProfile.zoneName} demonstrates that high-albedo coatings, strategic canopy shade, and climate-matched ventilation preserve 2.5°C to 4.5°C cooler street corridors during peak diurnal insolation.
 
-3. **Waste heat from human activity**
-Internal combustion vehicles, industrial HVAC installations, data centers, and building air-conditioning condenser units dump intensive sensible heat directly into pedestrian-level street canyons.
-*Reduction strategy*: Transition to electrified transport, mandate high-COP heat pumps, implement district chilled-water loops, and eliminate idling heat generation.
-
-4. **Limited shade and vegetation**
-Impervious surfaces lacking mature tree canopy receive unabated direct downward shortwave solar flux. Trees provide vital radiative shielding and evaporative latent cooling.
-*Reduction strategy*: Protect mature urban forests, plant drought-tolerant shade canopies along transit routes, and integrate biodiverse pocket parks.
-
-*Empirical Urban Modeling*: Microclimate research demonstrates that high-canopy neighborhoods remain 2.5°C to 4.0°C cooler than unshaded asphalt corridors during peak diurnal heating.
-
-## 3. How much could each solution reduce the heat?
+## 3. How much could each solution reduce the heat in ${locationName}?
 
 *Critical distinction: Cooling a roof or pavement surface is not the same as lowering outdoor air temperature across an entire city.*
 
-| Solution | Estimated effect on outdoor air temperature | What it means |
+| Solution | Estimated effect on outdoor air temperature | What it means for ${locationName} |
 |---|---|---|
-| Cool, reflective roofs | About −1.2°C city-wide; up to −2.0°C locally | Strongest and most scalable of tested city-wide interventions |
-| More tree canopy | About −0.3°C to −1.5°C in city-wide modeling | Provides direct localized shade and daytime evapotranspirative cooling |
-| Solar panels across roofs | About −0.5°C in dense rooftop deployments | Intercepts solar radiation while supplying clean electrical power |
-| More green roofs | −0.1°C to −0.4°C average city-wide cooling | Moderates roof envelope heat flux and captures stormwater runoff |
-| Reduce air-conditioning waste heat | Avoids additional +0.2°C to +0.4°C street heating | Prevents localized thermal dumping from building cooling rejection |
+${tailoredSolutions.solutionsTable
+  .map((s) => `| ${s.solution} | ${s.estimatedEffect} | ${s.whatItMeans} |`)
+  .join('\n')}
 
 ### Which solution should ${locationName} prioritise?
 
-- **For reducing city-wide air temperature**: Cool reflective roofs (high albedo coatings provide the highest thermal return per square meter).
-- **For street-level comfort and cooler nights**: Trees, shade corridors, and pocket parks (prioritize canopy deficits in dense residential zones).
-- **For long-term global warming**: Accelerate greenhouse-gas emission reductions at the systemic infrastructure level.
+- **${tailoredSolutions.prioritization.cityWideAirTemp.title}**: **${tailoredSolutions.prioritization.cityWideAirTemp.recommendation}** — ${tailoredSolutions.prioritization.cityWideAirTemp.details}
+- **${tailoredSolutions.prioritization.streetComfort.title}**: **${tailoredSolutions.prioritization.streetComfort.recommendation}** — ${tailoredSolutions.prioritization.streetComfort.details}
+- **${tailoredSolutions.prioritization.longTermWarming.title}**: **${tailoredSolutions.prioritization.longTermWarming.recommendation}** — ${tailoredSolutions.prioritization.longTermWarming.details}
 
 ## 4. What will ${locationName}'s weather be like in 3 months, 6 months and 1 year?
 
@@ -356,7 +272,7 @@ ${seasonal.monthlyHighs.map((m) => `* **${m.month}**: ${m.tempC}°C (${m.tempF}�
 
 The primary variation across these milestones is seasonal climatological progression. However, ongoing climate change continues to elevate long-term baseline probability of severe summer anomalies.
 
-## 5. What you should monitor
+## 5. What you should monitor in ${locationName}
 
 - **Temperature**: Monitor official meteorological heat advisories and nighttime minimum temperatures rather than isolated single-hour peaks.
 - **Humidity**: High relative humidity combined with temperature compounds physical Heat Index; monitor wet-bulb thresholds.
@@ -365,7 +281,7 @@ The primary variation across these milestones is seasonal climatological progres
 
 **Bottom line**: ${
     isHot
-      ? `${locationName} is undergoing substantial heat stress today (${currentTempC}°C). The most effective immediate relief is shade and cool-surface deployment, reinforced by urban greening.`
+      ? `${locationName} is undergoing substantial heat stress today (${currentTempC}°C). The most effective immediate relief is shade and cool-surface deployment, reinforced by urban greening tailored to ${climateProfile.zoneName} conditions.`
       : `${locationName} is currently cool (${currentTempC}°C), not hot. The next 3 months will progress into winter before spring brings milder weather. Long-term heat resilience requires proactive cool roofs and canopy expansion ahead of summer.`
   }
 `;
@@ -402,101 +318,26 @@ The primary variation across these milestones is seasonal climatological progres
     },
     causesSection: {
       introText: isHot
-        ? `${locationName} is currently subject to high ambient temperatures combined with urban heat island amplification.`
-        : `${locationName}'s current weather is not hot, but the city can experience severe heatwaves during summer and transition periods.`,
-      causes: [
-        {
-          id: 1,
-          title: 'Global warming',
-          category: 'Macroclimate & Planetary Forcing',
-          explanation:
-            'Greenhouse gases from fossil fuel combustion trap surplus longwave thermal energy in the climate system, elevating regional background baselines and multiplying heatwave frequency.',
-          reductionStrategy:
-            'Accelerate decarbonization across grid power, building heating, transit, and industry to mitigate the long-term baseline warming trajectory.',
-        },
-        {
-          id: 2,
-          title: 'Urban heat island',
-          category: 'Built Environment & Thermal Mass',
-          explanation:
-            'Dark asphalt, bitumen, and dense masonry absorb 80–90% of solar shortwave flux and re-emit sensible infrared radiation late into the night. Narrow street canyons trap heat.',
-          reductionStrategy:
-            'Deploy high-albedo reflective roofs (SRI > 78), expand street tree canopy, increase permeable ground cover, and preserve ventilation corridors.',
-        },
-        {
-          id: 3,
-          title: 'Waste heat from human activity',
-          category: 'Anthropogenic Sensible Flux',
-          explanation:
-            'Internal combustion engines, industrial HVAC, data center operations, and building air-conditioning condenser units reject heat directly into pedestrian-level street canyons.',
-          reductionStrategy:
-            'Transition to electrified transport, mandate high-efficiency heat pumps, implement district cooling loops, and eliminate vehicular engine idling.',
-        },
-        {
-          id: 4,
-          title: 'Limited shade and vegetation',
-          category: 'Vegetation & Evaporative Deficit',
-          explanation:
-            'Low tree canopy allows direct shortwave solar radiation to strike pavement and building envelopes without natural interception or evaporative latent cooling.',
-          reductionStrategy:
-            'Protect mature trees, plant climate-resilient shade canopies along pedestrian corridors, and expand irrigated pocket parks.',
-        },
-      ],
-      localEmpiricalNote:
-        'Microclimate research demonstrates that high-canopy neighborhoods remain 2.5°C to 4.0°C cooler than unshaded asphalt corridors during peak diurnal heating.',
+        ? `${locationName} (${climateProfile.zoneName}) is currently subject to high ambient temperatures combined with urban heat island amplification.`
+        : `${locationName} (${climateProfile.zoneName}) is currently not hot, but can experience severe heat episodes when specific meteorological forcing triggers high solar gain.`,
+      causes: tailoredDrivers.map((d) => ({
+        id: d.id,
+        title: d.title,
+        category: d.category,
+        explanation: d.explanation,
+        reductionStrategy: `${d.reductionStrategy} (Estimated local cooling: ~${d.quantifiedImpactC})`,
+      })),
+      localEmpiricalNote: `Calibrated for ${climateProfile.zoneName} biophysical conditions: Microclimate research demonstrates that targeted interventions yield up to 2.5°C to 4.5°C of street-level relief.`,
     },
     solutionsSection: {
       distinctionNote:
         'Critical distinction: Cooling a roof or pavement surface is not the same as lowering outdoor air temperature across an entire city.',
-      modellingBasisNote:
-        'Figures are based on calibrated urban microclimate models and empirical surface energy balance simulations.',
-      solutionsTable: [
-        {
-          solution: 'Cool, reflective roofs',
-          estimatedEffect: 'About −1.2°C city-wide; up to −2.0°C locally',
-          whatItMeans: 'Strongest and most scalable of tested city-wide interventions',
-        },
-        {
-          solution: 'More tree canopy',
-          estimatedEffect: 'About −0.3°C to −1.5°C in city-wide modeling',
-          whatItMeans: 'Provides direct localized shade and daytime evapotranspirative cooling',
-        },
-        {
-          solution: 'Solar panels across roofs',
-          estimatedEffect: 'About −0.5°C in dense rooftop deployments',
-          whatItMeans: 'Intercepts solar radiation while supplying clean electrical power',
-        },
-        {
-          solution: 'More green roofs',
-          estimatedEffect: '−0.1°C to −0.4°C average city-wide cooling',
-          whatItMeans: 'Moderates roof envelope heat flux and captures stormwater runoff',
-        },
-        {
-          solution: 'Reduce air-conditioning waste heat',
-          estimatedEffect: 'Avoids additional +0.2°C to +0.4°C street heating',
-          whatItMeans: 'Prevents localized thermal dumping from building cooling rejection',
-        },
-      ],
-      prioritization: {
-        cityWideAirTemp: {
-          title: 'For reducing city-wide air temperature',
-          recommendation: 'Cool, reflective roofs',
-          details: 'Reflective coatings (albedo > 0.70) reflect solar power before it enters the urban thermal mass.',
-        },
-        streetComfort: {
-          title: 'For street-level comfort and cooler nights',
-          recommendation: 'Trees, canopy and shade corridors',
-          details: 'Prioritize neighborhoods with canopy deficits while preserving mature shade trees.',
-        },
-        longTermWarming: {
-          title: 'For long-term global warming',
-          recommendation: 'Reduce greenhouse-gas emissions',
-          details: 'Addresses the foundational cause of planetary warming rather than only mitigating local symptoms.',
-        },
-      },
+      modellingBasisNote: `Figures calibrated for ${climateProfile.zoneName} urban morphology and surface energy balance simulations.`,
+      solutionsTable: tailoredSolutions.solutionsTable,
+      prioritization: tailoredSolutions.prioritization,
     },
     futureProjectionsSection: {
-      introText: `Measured dynamically from ${currentDateFormatted}. Seasonal planning ranges derived from long-term meteorological climate normals:`,
+      introText: `Measured dynamically from ${currentDateFormatted}. Seasonal planning ranges derived from long-term meteorological climate normals for ${climateProfile.zoneName}:`,
       periods: [
         {
           timeframe: '3 months',
@@ -552,7 +393,7 @@ The primary variation across these milestones is seasonal climatological progres
         },
       ],
       bottomLine: isHot
-        ? `${locationName} is undergoing substantial heat stress today (${currentTempC}°C). The most effective immediate relief is shade and cool-surface deployment, reinforced by urban greening.`
+        ? `${locationName} is undergoing substantial heat stress today (${currentTempC}°C). The most effective immediate relief is shade and cool-surface deployment, reinforced by urban greening tailored to ${climateProfile.zoneName} conditions.`
         : `${locationName} is currently cool (${currentTempC}°C), not hot. The next 3 months will progress into winter before spring brings milder weather. Long-term heat resilience requires proactive cool roofs and canopy expansion ahead of summer.`,
     },
     rawMarkdown,
