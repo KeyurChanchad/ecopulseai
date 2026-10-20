@@ -102,14 +102,10 @@ export const HeatMap: React.FC<HeatMapProps> = ({
     : '';
 
   const basemapUrls = {
-    satellite: googleKey
-      ? `https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}&key=${googleKey}`
-      : 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    street: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    terrain: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
-    dark: cartoKey 
-      ? `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?api_key=${cartoKey}`
-      : 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    satellite: 'https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+    street: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    terrain: 'https://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}',
+    dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
   };
 
   // Initialize Map
@@ -121,7 +117,7 @@ export const HeatMap: React.FC<HeatMapProps> = ({
       : [selectedCoordinates.lat, selectedCoordinates.lng];
     const initialZoom = isGlobalOverview ? 2.3 : 12;
 
-    // Up to zoom 20 for full village and street level zoomability
+    // Up to zoom 20 for full village and street level zoomability with canvas rendering
     const map = L.map(mapContainerRef.current, {
       center: initialCenter,
       zoom: initialZoom,
@@ -130,33 +126,30 @@ export const HeatMap: React.FC<HeatMapProps> = ({
       worldCopyJump: true,
       zoomControl: false,
       attributionControl: true,
+      preferCanvas: true,
+      zoomAnimation: true,
+      fadeAnimation: true,
+      markerZoomAnimation: true,
+      wheelDebounceTime: 40,
+      wheelPxPerZoomLevel: 100,
     });
 
     // Add zoom control to top-right
     L.control.zoom({ position: 'topright' }).addTo(map);
 
-    // Initial tile layer with maxZoom 20
+    // Initial tile layer with instant zoom caching and Google/Carto CDN subdomains
+    const isGoogle = basemap === 'satellite' || basemap === 'terrain';
     const tileLayer = L.tileLayer(basemapUrls[basemap], {
-      attribution: '&copy; OpenStreetMap contributors &copy; Esri &copy; CARTO',
-      subdomains: 'abcd',
+      attribution: isGoogle ? '&copy; Google' : '&copy; OpenStreetMap contributors &copy; CARTO',
+      subdomains: isGoogle ? ['mt0', 'mt1', 'mt2', 'mt3'] : 'abcd',
       maxZoom: 20,
       maxNativeZoom: 19,
+      updateWhenIdle: true,
+      updateWhenZooming: false,
+      keepBuffer: 8,
     }).addTo(map);
 
     tileLayerRef.current = tileLayer;
-
-    // Satellite hybrid labels (places, village names, roads)
-    if (basemap === 'satellite' && !googleKey) {
-      referenceLayerRef.current = L.tileLayer(
-        'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-        { maxZoom: 20, maxNativeZoom: 19 }
-      ).addTo(map);
-    } else if (basemap === 'dark' && !cartoKey) {
-      referenceLayerRef.current = L.tileLayer(
-        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
-        { maxZoom: 20, maxNativeZoom: 16 }
-      ).addTo(map);
-    }
 
     // Layer groups for markers and overlays
     const markersGroup = L.layerGroup().addTo(map);
@@ -192,25 +185,17 @@ export const HeatMap: React.FC<HeatMapProps> = ({
       referenceLayerRef.current = null;
     }
 
+    const isGoogle = basemap === 'satellite' || basemap === 'terrain';
     const newTile = L.tileLayer(basemapUrls[basemap], {
-      attribution: '&copy; OpenStreetMap &copy; Esri &copy; CARTO',
-      subdomains: 'abcd',
+      attribution: isGoogle ? '&copy; Google' : '&copy; OpenStreetMap &copy; CARTO',
+      subdomains: isGoogle ? ['mt0', 'mt1', 'mt2', 'mt3'] : 'abcd',
       maxZoom: 20,
       maxNativeZoom: 19,
+      updateWhenIdle: true,
+      updateWhenZooming: false,
+      keepBuffer: 8,
     }).addTo(mapInstanceRef.current);
     tileLayerRef.current = newTile;
-
-    if (basemap === 'satellite' && !googleKey) {
-      referenceLayerRef.current = L.tileLayer(
-        'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-        { maxZoom: 20, maxNativeZoom: 19 }
-      ).addTo(mapInstanceRef.current);
-    } else if (basemap === 'dark' && !cartoKey) {
-      referenceLayerRef.current = L.tileLayer(
-        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
-        { maxZoom: 20, maxNativeZoom: 16 }
-      ).addTo(mapInstanceRef.current);
-    }
   }, [basemap]);
 
   // Center on selected location when changed (smooth flyTo down to village level or world zoom out)
@@ -359,8 +344,7 @@ export const HeatMap: React.FC<HeatMapProps> = ({
             </div>
           </div>
 
-          <div class="text-[11px] text-slate-300 mb-3 bg-slate-900/60 p-2 rounded-xl border border-slate-800/80 leading-snug">
-            <span class="text-slate-400 text-[10px] font-semibold uppercase block mb-0.5">Primary Heat Driver</span>
+          <div class="text-[11px] text-slate-300 mb-3 bg-slate-900/60 p-2 rounded-xl border border-slate-800/80 leading-snug font-medium">
             ${city.primaryContributor}
           </div>
 
@@ -442,72 +426,6 @@ export const HeatMap: React.FC<HeatMapProps> = ({
   useEffect(() => {
     if (!heatZonesLayerGroupRef.current) return;
     heatZonesLayerGroupRef.current.clearLayers();
-
-    const isLstActive = activeLayers.find((l) => l.id === 'lst')?.active;
-    const isTreeCanopyActive = activeLayers.find((l) => l.id === 'treeCanopy')?.active;
-    const isRoadsActive = activeLayers.find((l) => l.id === 'roads')?.active;
-    const isUhiActive = activeLayers.find((l) => l.id === 'uhi')?.active;
-
-    // For the selected location, draw simulated GIS micro-hotspots around the core
-    const { lat, lng } = selectedCoordinates;
-
-    if (isLstActive) {
-      // High LST zone (asphalt corridor)
-      L.circle([lat + 0.015, lng + 0.012], {
-        radius: 1800,
-        color: '#dc2626',
-        fillColor: '#ef4444',
-        fillOpacity: 0.35,
-        weight: 1.5,
-        dashArray: '4, 4',
-      })
-        .bindTooltip('High LST Hotspot • Low Albedo Commercial Strip')
-        .addTo(heatZonesLayerGroupRef.current);
-    }
-
-    if (isRoadsActive) {
-      // Arterial road vector buffer
-      const roadLine = L.polyline(
-        [
-          [lat - 0.04, lng - 0.03],
-          [lat, lng],
-          [lat + 0.05, lng + 0.035],
-        ],
-        {
-          color: '#f97316',
-          weight: 6,
-          opacity: 0.7,
-        }
-      )
-        .bindTooltip('Major Arterial Corridor • High Asphalt Heat Retention')
-        .addTo(heatZonesLayerGroupRef.current);
-    }
-
-    if (isTreeCanopyActive) {
-      // Tree canopy deficit zone
-      L.circle([lat - 0.018, lng - 0.015], {
-        radius: 2200,
-        color: '#eab308',
-        fillColor: '#ca8a04',
-        fillOpacity: 0.3,
-        weight: 1.5,
-      })
-        .bindTooltip('Tree Canopy Deficit Polygon (<8% vegetative cover)')
-        .addTo(heatZonesLayerGroupRef.current);
-    }
-
-    if (isUhiActive) {
-      // Urban Heat Island Boundary
-      L.circle([lat, lng], {
-        radius: 6500,
-        color: '#8b5cf6',
-        fillColor: '#a855f7',
-        fillOpacity: 0.15,
-        weight: 2,
-      })
-        .bindTooltip('UHI Thermal Boundary • Elevated Urban Core Excess')
-        .addTo(heatZonesLayerGroupRef.current);
-    }
 
     // Section 34: Scenario Map Intervention Zones
     if (scenarioZones && scenarioZones.length > 0) {

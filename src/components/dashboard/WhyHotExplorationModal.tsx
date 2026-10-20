@@ -185,7 +185,7 @@ export const WhyHotExplorationModal: React.FC<WhyHotExplorationModalProps> = ({
 
             <div className="pt-2 border-t border-slate-800/80">
               <span className="text-[11px] font-mono text-slate-400 block mb-2">
-                Strongest Measurable Physical Signals (Ranked by Satellite & Sensor Evidence):
+                Strongest Measurable Physical Signals (Ranked by Empirical Observations):
               </span>
               <ol className="space-y-1.5 font-sans text-xs">
                 <li className="flex items-start space-x-2">
